@@ -1,2 +1,2 @@
-# vstr_phase_stim
+# mm_phase_stim
 Repository for vStr Phase Stim project
