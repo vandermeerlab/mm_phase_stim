@@ -408,34 +408,7 @@ mean_mid_start_delay_2 = cellfun(@(x) mean(x)*1000000/32000, all_mid_start_delay
 error_mid_start_delay_2 = cellfun(@(x) std(x)*1000000/32000, all_mid_start_delay_2, 'UniformOutput', 1);
 errorbar(all_pw, mean_mid_start_delay_2, error_mid_start_delay_2);
 xlim([0,3000]);
-legend("Mid Bump Width", "Mid Bump onset delay from Pulse OFF", "Mid Bump onset delay from Signal OFF");
-grid on;
-grid minor;
-ylabel("Time (microsec)");
-xlabel("Laser Pulse Width (microsec)");
-WriteFig(fig, char( "Mid_bump_aggregate"), 1);
-close all;
+legend("Mid Bump width", "Mid 
 
-fig = figure('WindowState', 'maximized');
-all_pw = [500:100:2500];
-mean_last_widths = cellfun(@(x) mean(x)*1000000/32000, all_last_widths, 'UniformOutput', 1);
-error_last_widths = cellfun(@(x) std(x)*1000000/32000, all_last_widths, 'UniformOutput', 1);
-errorbar(all_pw, mean_last_widths, error_last_widths);
-hold on;
-mean_last_start_delay_1 = cellfun(@(x) mean(x)*1000000/32000, all_last_start_delay_1, 'UniformOutput', 1);
-error_last_start_delay_1 = cellfun(@(x) std(x)*1000000/32000, all_last_start_delay_1, 'UniformOutput', 1);
-errorbar(all_pw, mean_last_start_delay_1, error_last_start_delay_1);
-hold on;
-mean_last_start_delay_2 = cellfun(@(x) mean(x)*1000000/32000, all_last_start_delay_2, 'UniformOutput', 1);
-error_last_start_delay_2 = cellfun(@(x) std(x)*1000000/32000, all_last_start_delay_2, 'UniformOutput', 1);
-errorbar(all_pw, mean_last_start_delay_2, error_last_start_delay_2);
-xlim([0,3000]);
-legend("Last Bump Width", "Last Bump onset delay from Pulse OFF", "Last Bump onset delay from Signal OFF");
-grid on;
-grid minor;
-ylabel("Time (microsec)");
-xlabel("Laser Pulse Width (microsec)");
-WriteFig(fig, char( "Last_bump_aggregate"), 1);
-close all;
 
     
