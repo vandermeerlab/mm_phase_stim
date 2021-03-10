@@ -1,14 +1,12 @@
-% cd('D:\M074\new_artifacts');
-% cd('D:\M075\artifacts');
-cd('D:\M078\11-26-artifacts');
+cd('D:\Dropbox (Dartmouth College)\manish_data\M075\artifacts');
 cfg_in.uint= '64';
 S = LoadSpikes([cfg_in]);
 evs = LoadEvents([]);
 all_OFF_times = evs.t{9};
 
 %% pre-trial stim
-p_start = evs.t{18};
-p_end = evs.t{6};
+p_start = evs.t{15};
+p_end = evs.t{5};
 p_on = evs.t{10};
 p_off = all_OFF_times(all_OFF_times > p_start & all_OFF_times < p_end);
 p_iv = iv(p_start, p_end);
@@ -24,8 +22,8 @@ for i = 1:length(p_S.t)
 end
 
 %% trial stim
-p_start = evs.t{6};
-p_end = evs.t{5};
+p_start = evs.t{5};
+p_end = evs.t{2};
 p_on = evs.t{11};
 p_off = all_OFF_times(all_OFF_times > p_start & all_OFF_times < p_end);
 p_iv = iv(p_start, p_end);
@@ -41,8 +39,8 @@ for i = 1:length(p_S.t)
 end
 
 %% post-trial stim
-p_start = evs.t{16};
-p_end = evs.t{17};
+p_start = evs.t{6};
+p_end = evs.t{14};
 p_on = evs.t{12};
 p_off = all_OFF_times(all_OFF_times > p_start & all_OFF_times < p_end);
 p_iv = iv(p_start, p_end);
@@ -59,8 +57,8 @@ end
 
 %% post_long stim
 
-p_start = evs.t{17};
-p_end = evs.t{8}(2);
+p_start = evs.t{14};
+p_end = evs.t{8};
 p_on = evs.t{13};
 p_off = all_OFF_times(all_OFF_times > p_start & all_OFF_times < p_end);
 p_iv = iv(p_start, p_end);

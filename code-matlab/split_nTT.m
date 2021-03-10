@@ -1,4 +1,4 @@
-cd('D:\M075\M075-2021-01-26');
+cd('D:\Dropbox (Dartmouth College)\manish_data\M074\M074-2020-12-04');
 evs = LoadEvents([]);
 
 % The delay between in the time stamps of when the ttl reaches neuralynx
@@ -7,7 +7,7 @@ evs = LoadEvents([]);
 %  evs.t{14} and evs.t{15}
 
 % All Laser off_events
-laser_off = evs.t{9}; % evs.t{9} for M078-11-26
+laser_off = evs.t{11}; % evs.t{9} for M078-11-26 and M075-2021-26, evs.t{11} fot M074
 
 %Extract all records from the Tetorde File:
 [Timestamps, ScNumbers, CellNumbers, Features, Samples, Header] = ...
@@ -23,7 +23,7 @@ laser_off = evs.t{9}; % evs.t{9} for M078-11-26
 % Get all Pulse_ON_events
 all_on = zeros(1,length(laser_off));
 k = 1;
-for i = 10:13 %10:13 for M078-11-26, 12:15 for M074
+for i = 12:15 %10:13 for M078-11-26 and M075-2021-01-26, 12:15 for M074
     for j = 1:length(evs.t{i})
         all_on(k) = evs.t{i}(j);
         k = k+1;
@@ -38,13 +38,12 @@ temp_ts = Timestamps * 1e-6; %
 
 to_be_removed = zeros(1,length(temp_ts));
 
-% For M074 (LED), remove spikes between ON + 1 ms to ON + 2 ms
+% For M074 (Laser) and M075 (Laser), remove spikes between ON + 1 ms to ON + 2 ms
 % For M078 (LED), remove spikes between ON to ON + 1 ms
 for i = 1:length(all_on)
-    this_tbr = find(temp_ts > all_on(i) + 1e-3 & temp_ts < all_on(i)+ 3e-3);
+    this_tbr = find(temp_ts > all_on(i) + 1e-3 & temp_ts < all_on(i)+ 2e-3);
     to_be_removed(this_tbr) = 1;
 end
-disp(sum(to_be_removed));
 %% Remove the to_be_removed stuff
 Timestamps_r = Timestamps(~to_be_removed);
 ScNumbers_r = ScNumbers(~to_be_removed);
