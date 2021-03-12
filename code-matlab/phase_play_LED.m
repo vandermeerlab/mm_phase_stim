@@ -44,103 +44,104 @@ f_list = {[3 5], [7 10],[15 25], [30 40],[40 60], [60 80]};
 f_list_label = {'3 - 5', '7 - 10', '15 - 25', '30 - 40', '40 - 60', '60 - 80'};
 fstop_list = {[2.5 5.5], [5.5 10.5],[14 26], [28 42],[38 62], [55 85]};
 
-phase_estimates = cell(length(f_list), length(lfp_prefilt));
+% Save filtered LFP and all_phase for later diagnosis
+lfp_filtered = cell(length(f_list), length(lfp_prefilt));
 all_phase = cell(length(f_list), length(lfp_prefilt));
+
+phase_estimates = cell(length(f_list), length(lfp_prefilt));
 for iF = 1:length(f_list)
      cfg_filt = []; cfg_filt.type = 'fdesign'; cfg_filt.f  = f_list{iF};
      for iL = 1:length(lfp_prefilt)
          this_filt = FilterLFP(cfg_filt, lfp_prefilt{iL});
-         this_res = angle(hilbert(this_filt.data));
+         lfp_filtered{iF,iL} = this_filt;
+         this_res = zeros(size(this_filt.data));
+         for iC = 1:4
+            this_res(iC,:) = angle(hilbert(this_filt.data(iC,:)));
+         end
          all_phase{iF,iL} = this_res;
          phase_estimates{iF,iL} = this_res(:,on_idx);
 
      end
 end
 
-%% Diagnosis to see what's wrong with Hilbert
+%% STA for artifact detection
 
-% Take a few ON_indices to see how the raw, filtered and hilbert
-% transformed signal looks like
+w = [-.5 .5]; % time window to compute STA over
+tvec = w(1):1/Fs:w(2); % time axis for STA
 
-% for i = 1:4
-%     for j = 1:length(f_list)
-%         figure;
-%         cfg_filt = []; cfg_filt.type = 'fdesign'; cfg_filt.f  = f_list{j};
-%         this_filt = FilterLFP(cfg_filt, lfp_prefilt{1});
-%         this_angle = angle(hilbert(this_filt.data));
-%         t_angle = angle(hilbert(this_filt.data(1,:)));
-%         subplot(3,1,1);
-%         plot(trial_lfp.data(1,on_idx(1)-1000:on_idx(1)+1000))
-%         hold on;
-%         plot(this_filt.data(1,on_idx(1)-1000:on_idx(1)+1000))
-%         subplot(3,1,2);
-%         plot(this_angle(1,on_idx(1)-1000:on_idx(1)+1000))
-%         subplot(3,1,3);
-%         plot(t_angle(on_idx(1)-1000:on_idx(1)+1000))
-%         close;
-%     end
-% end
-%% Eric's method (no spline, phase at led_on)
-figure;
-k = 1;
-for i = 1:4
-    for j = 1:6
-        subplot(4,6,k);
-        hist(phase_estimates{j,1}(i,:),5);
-        k = k+1;
-    end
+ 
+for iEvt = 1:length(led_on) % for each stim ...
+ 
+   on_sta_t = led_on(iEvt)+w(1);
+   on_sta_idx = nearest_idx3(on_sta_t,trial_lfp.tvec); % find index of leading window edge
+    
+   on_toAdd = trial_lfp.data(4,on_sta_idx:on_sta_idx+length(tvec)-1); % grab LFP snippet for this window
+   % note this way can be dangerous if there are gaps in the data
+ 
+   on_sta(iEvt,:) = on_toAdd';
 end
-%%
 figure;
-k = 1;
-for i = 1:4
-    for j = 1:6
-        subplot(4,6,k);
-        hist(all_phase{j,1}(i,:),5);
-        k = k+1;
-    end
-end
+q1 = mean(on_sta,1);
+plot(q1);
+hold on
+vline(1334);
+title('Aligned with LED ON')
 
+suptitle('STA for LED stim')
 
-%% No spline + Stim_delay
+%% histogram for all_phase
 figure;
 k = 1;
-for i = 1:4
-    for j = 1:6
-        subplot(4,6,k);
-        hist(phase_estimates{j,1,2}(i,:),5);
+for i = 1:5
+    for j = 1:7
+        switch k
+            case 1
+               disp('Skipped')
+            case 2
+                subplot(5,7,k)
+                text(0.5,0.5,f_list_label(1), 'FontSize', 14)
+                axis off
+            case 3
+                subplot(5,7,k)
+                text(0.5,0.5,f_list_label(2), 'FontSize', 14)
+                axis off
+            case 4
+                subplot(5,7,k)
+                text(0.5,0.5,f_list_label(3), 'FontSize', 14)
+                axis off
+            case 5
+                subplot(5,7,k)
+                text(0.5,0.5,f_list_label(4), 'FontSize', 14)
+                axis off
+            case 6
+                subplot(5,7,k)
+                text(0.5,0.5,f_list_label(5), 'FontSize', 14)
+                axis off
+            case 7
+                subplot(5,7,k)
+                text(0.5,0.5,f_list_label(6), 'FontSize', 14)
+                axis off
+            case 8
+                subplot(5,7,k)
+                text(0.5,0.5,trial_lfp.label{1}, 'FontSize', 14)
+                axis off
+            case 15
+                subplot(5,7,k)
+                text(0.5,0.5,trial_lfp.label{2}, 'FontSize', 14)
+                axis off
+            case 22
+                subplot(5,7,k)
+                text(0.5,0.5,trial_lfp.label{3}, 'FontSize', 14)
+                axis off
+            case 29
+                subplot(5,7,k)
+                text(0.5,0.5,trial_lfp.label{4}, 'FontSize', 14)
+                axis off
+            otherwise
+                subplot(5,7,k)
+                hist(all_phase{j-1,1}(i-1,:),5);
+        end
         k = k+1;
     end
-end
-%% 1 msec spline + stim_delay
-figure;
-k = 1;
-for i = 1:4
-    for j = 1:6
-        subplot(4,6,k);
-        hist(phase_estimates{j,3,2}(i,:),5);
-        k = k+1;
-    end
-end
-
-%% 2.2 msec spline + stim_delay
-figure;
-k = 1;
-for i = 1:4
-    for j = 1:6
-        subplot(4,6,k);
-        hist(phase_estimates{j,4,2}(i,:),5);
-        k = k+1;
-    end
-end
-
-%% 2.7 msec spline + stim_delay
-figure;
-k = 1;
-for i = 1:4
-    for j = 1:6
-        subplot(4,6,k);
-        hist(phase_estimates{j,5,2}(i,:),5);
-        k = k+1;
-    end
+    suptitle('Phase across all LFP samples')
 end
