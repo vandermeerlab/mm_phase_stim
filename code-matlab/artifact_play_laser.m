@@ -1,5 +1,5 @@
-
-cfg_in.fc = {'LFP4.ncs', 'LFP6.ncs', 'LFP28.ncs', 'LFP30.ncs'};
+cd('D:\Dropbox (Dartmouth College)\manish_data\M074\M074-2020-12-04');
+cfg_in.fc = {'LFP30.ncs'};
 all_lfp  = LoadCSC(cfg_in);
 cfg_in.fc = {'CSC30.ncs', 'CSC11.ncs'};
 all_csc = LoadCSC(cfg_in);
@@ -88,7 +88,7 @@ for iF = 1:length(f_list)
 end
 %% STA for artifact detection
 
-w = [-.5 .5]; % time window to compute STA over
+w = [-.1 .1]; % time window to compute STA over
 lfp_Fs = trial_lfp.cfg.hdr{1}.SamplingFrequency;
 lfp_tvec = w(1):1/lfp_Fs:w(2); % time axis for STA
 
@@ -120,13 +120,6 @@ for iEvt = 1:length(laser_on) % for each stim ...
    csc_actual_sta(iEvt,:) = csc_actual_toAdd'; 
 end
 
-
-%%
-
-figure;
-plot(csc_actual_sta(2,:))
-hold on;
-vline(16001);
 
 
 %% PLOT STA
