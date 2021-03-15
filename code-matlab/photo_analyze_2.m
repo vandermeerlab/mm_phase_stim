@@ -1,6 +1,6 @@
 clear;
 close all;
-cd('D:\Dropbox (Dartmouth College)\manish_data\PhotoSensor Tests\PhotoSensor-2021-03-12')
+cd('/Users/manishm/Dropbox (Dartmouth College)/manish_data/PhotoSensor Tests/PhotoSensor-2021-03-12')
 evs = LoadEvents([]);
 cfg.fc = {'PhotoSensor.ncs'};
 photo_signal = LoadCSC(cfg);
@@ -27,6 +27,26 @@ led_start_delay = [];
 led_end_delay = [];
 [led_pw, led_sort_idx] = sort(led_pw);
 
+
+
+led_labels = led_labels(led_sort_idx);
+for i = 1:length(led_labels)
+    start_idx = find(cellfun(@(x) contains(x,led_labels{i}), evs.label) == 1);
+    start_time = evs.t{start_idx}(end); % 'end' because only the final LED label is correct
+    if i ~= length(led_labels)
+        end_idx = find(cellfun(@(x) contains(x,led_labels{i+1}), evs.label) == 1);
+        end_time = evs.t{end_idx}(end);
+    else
+        end_time = evs.t{51}(end); % Because the correct set of LED recordings was the last
+    end
+    this_led_ON_times = pulse_ON_times(pulse_ON_times > start_time & pulse_ON_times < end_time);
+    this_led_OFF_times= pulse_OFF_times(pulse_OFF_times > start_time & pulse_OFF_times < end_time);
+    snippet_starts = nearest_idx3(this_led_ON_times - 1e-3, photo_signal.tvec);
+    plot(photo_signal.data(snippet_starts(1)-1000:snippet_starts(11)+1000));
+    close;
+end
+
+%%
 led_labels = led_labels(led_sort_idx);
 for i = 1:length(led_labels)
     start_idx = find(cellfun(@(x) contains(x,led_labels{i}), evs.label) == 1);
