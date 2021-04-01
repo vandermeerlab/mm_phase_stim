@@ -1,16 +1,16 @@
-cd('D:\Dropbox (Dartmouth College)\manish_data\M078\M078-2020-11-26');
+cd('D:\Dropbox (Dartmouth College)\manish_data\M078\M078-2020-11-28');
 evs = LoadEvents([]);
-csc_fn = cell(1,32);
-for iF = 1:32
+csc_fn = cell(1,16); % cell(1,32);
+for iF = 1:16
    csc_fn{iF} = strcat('CSC',num2str(iF),'.ncs');
 end
-csc_fn(33:36) = {'LFP3.ncs', 'LFP15.ncs', 'LFP18.ncs', 'LFP29.ncs'};
-t_start = evs.t{6}; % Fixed ISI protocol start
-t_end = evs.t{5}; % post trial baseline recording statt
+csc_fn(17:18) = {'LFP3.ncs', 'LFP15.ncs'}; % {'LFP3.ncs', 'LFP15.ncs', 'LFP18.ncs', 'LFP29.ncs'};
+t_start = evs.t{5}; % Fixed ISI protocol start
+t_end = evs.t{3}; % post trial baseline recording statt
 t_iv = iv(t_start, t_end);
-led_on = evs.t{11};
+led_on = evs.t{10};
 control_on = led_on + 0.5;
-for iF = 1:length(csc_fn)
+for iF = 17:length(csc_fn)
     close all;
     if iF ==4
         continue
