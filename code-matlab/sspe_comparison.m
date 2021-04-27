@@ -1,29 +1,30 @@
-cd('/Users/manishm/Work/vanDerMeerLab/Tutorials/data/R016-2012-10-08');
+cd('/Users/manishm/Work/vanDerMeerLab/Tutorials/data/R016-2012-10-03');
 % goodGamma: {'R016-2012-10-03-CSC04d.ncs'
 % goodSWR: {'R016-2012-10-03-CSC02b.ncs'}
 % goodTheta: {'R016-2012-10-03-CSC02b.ncs'}
-% cfg_in.fc = {'LFP4.ncs', 'LFP6.ncs', 'LFP28.ncs', 'LFP30.ncs'};
-cfg_in.fc = {'R016-2012-10-08-CSC02d.ncs'};
-all_lfp  = LoadCSC(cfg_in);
+cfg_in.fc = {'R016-2012-10-03-CSC04d.ncs', 'R016-2012-10-03-CSC02b.ncs'};
+trial_lfp  = LoadCSC(cfg_in);
 evs = LoadEvents([]);
-%%
-% 
-% t_start = evs.t{5}; % pre trial baseline recording start
-% t_end = evs.t{4}; % pre trial baseline recording ended
-% t_iv = iv(t_start, t_end);
-% trial_lfp  = restrict(all_lfp, t_iv);
-trial_lfp = all_lfp;
+
 %% Check PSD
 Fs = trial_lfp.cfg.hdr{1}.SamplingFrequency;
 wsize = Fs;
-figure;
 for i = 1:length(trial_lfp.label)
+    figure;
+    subplot(2,1,1)
     [Pxx, F] = pwelch(trial_lfp.data(i,:), rectwin(wsize), wsize/2, [], Fs);
     plot(F, 10*log10(Pxx));
-    hold on
+    xlim([0,120]);
+    title('PSD')
+    subplot(2,1,2)
+    [S,F,T,P] = spectrogram(trial_lfp.data(i,:),hanning(round(Fs*4)),round(Fs*2),1:120,Fs);
+    imagesc(T,F,10*log10(P)); % converting to dB as usual
+%     yline(60, 'LineWidth', 1);
+    axis xy; xlabel('time (s)'); ylabel('Frequency (Hz)'); 
+    title('Spectrogram')
+    suptitle(trial_lfp.label{i})
 end
-legend(trial_lfp.label)
-xlim([0,120]);
+
 
 %% Estimate ground truth phases using FilterLFP + Hilbert transform
 
@@ -55,56 +56,58 @@ end
 
 %% Create random trials
 
-
 trial_data = cell(1,25);
+trial_phase = cell(1,25);
+trial_filt = cell(1,25);
 seeds = randi(length(lfp_prefilt{1}.data),1,25);
 for i = 1:25
     t2 = lfp_prefilt{1}.tvec(seeds(i));
-    t1 = nearest_idx3(t2 - 2.5, lfp_prefilt{1}.tvec);
+    t1_idx = nearest_idx3(t2 - 2.5, lfp_prefilt{1}.tvec);
     % If the trial length is not even, make it so!
-    if rem(seeds(i)-t1, 2) == 0
-        t1 = t1-1;
+    if rem(seeds(i)-t1_idx, 2) == 0
+        t1_idx = t1_idx-1;
     end
-    t1 = lfp_prefilt{1}.tvec(t1);
-    trial_data{i} = restrict(lfp_prefilt{1}, iv(t1,t2));     
+    t1 = lfp_prefilt{1}.tvec(t1_idx);
+    trial_data{i} = restrict(lfp_prefilt{1}, iv(t1,t2));
+    trial_filt{i} = zeros(length(trial_lfp.label),length(all_phase),length(trial_data{i}.tvec));
+    trial_phase{i} = zeros(length(all_phase),length(trial_data{i}.tvec));
+    for j = 1:length(all_phase)
+        trial_phase{i}(j,:) = all_phase{j}(t1_idx:seeds(i));
+        trial_filt{i}(:,j,:) = lfp_filtered{j}.data(:,t1_idx:seeds(i));
+    end
 end
 
 %% Use SSPE
 for iD = 1:25
-    close all;
-    fig = figure;
-    this_data = trial_data{iD}.data;
-    this_tvec = trial_data{iD}.tvec;
-    subplot(8,1,1);
-    plot(this_tvec, this_data);
-    subplot(8,1,2);
-    [Pxx, F] = pwelch(this_data, rectwin(wsize), wsize/2, [], Fs);
-    plot(F, 10*log10(Pxx));
-    xlim([0,120]);
-    
-    
-    
-    for iF = 1%:length(f_list)
-        close all;
+    for iF = 2%1:length(f_list)
+        this_data = trial_data{1}.data(1,:);
+        this_filt_data = trial_filt{iD}(1,iF,:);
         fig = figure;
-        cfg_sspe.freqs = 60%mean(f_list{iF}); % initialization using above not great at identifying starting freq
+        cfg_sspe.freqs = mean(f_list{iF}); % initialization using above not great at identifying starting freq
         cfg_sspe.Fs = Fs;
         cfg_sspe.ampVec = 0.99;
         cfg_sspe.sigmaFreqs = 1;
         cfg_sspe.sigmaObs = 1;
-        cfg_sspe.window = length(trial_data{1}.data)/2;
-        cfg_sspe.lowFreqBand = [50,70]%f_list{iF};
-        [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(trial_data{1}.data, cfg_sspe);
+        cfg_sspe.window = length(this_data)/2;
+        cfg_sspe.lowFreqBand = fstop_list{iF};
+        [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(this_data, cfg_sspe);
         phase = reshape(phase', size(phase,1) * size(phase,2),1);
         phaseBounds = reshape(permute(phaseBounds,[2,1,3]), size(phaseBounds,1) * size(phaseBounds,2),size(phaseBounds,3));
         fullX = reshape(permute(fullX,[2,1,3]), size(fullX,1) * size(fullX,2),size(fullX,3));
         wsize = 1024;
-        [Pxx, F] = pwelch(trial_data{1}.data, rectwin(wsize), wsize/2, [], Fs);
-        subplot(2,1,1)
+        [Pxx, F] = pwelch(this_data, rectwin(wsize), wsize/2, [], Fs);
+        subplot(3,1,1)
         plot(F, 10*log10(Pxx));
         xlim([0,120]);
-        subplot(2,1,2)
+        subplot(3,1,2)
         plot(phase);
+        hold on;
+        plot(trial_phase{iD}(iF,:))
+        subplot(3,1,3)
+        plot(this_data);
+        hold on
+        plot(this_filt_data(:));
+        dummy = 0;
     end
 end
 
