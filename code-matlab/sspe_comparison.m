@@ -1,4 +1,4 @@
-cd('/Users/manishm/Work/vanDerMeerLab/Tutorials/data/R016-2012-10-03');
+cd('D:\Dropbox (Dartmouth College)\vandermeerlab_tutorial\data\R016-2012-10-03');
 % goodGamma: {'R016-2012-10-03-CSC04d.ncs'
 % goodSWR: {'R016-2012-10-03-CSC02b.ncs'}
 % goodTheta: {'R016-2012-10-03-CSC02b.ncs'}
@@ -62,7 +62,7 @@ trial_filt = cell(1,25);
 seeds = randi(length(lfp_prefilt{1}.data),1,25);
 for i = 1:25
     t2 = lfp_prefilt{1}.tvec(seeds(i));
-    t1_idx = nearest_idx3(t2 - 2.5, lfp_prefilt{1}.tvec);
+    t1_idx = nearest_idx3(t2 - 5, lfp_prefilt{1}.tvec);
     % If the trial length is not even, make it so!
     if rem(seeds(i)-t1_idx, 2) == 0
         t1_idx = t1_idx-1;
@@ -70,9 +70,9 @@ for i = 1:25
     t1 = lfp_prefilt{1}.tvec(t1_idx);
     trial_data{i} = restrict(lfp_prefilt{1}, iv(t1,t2));
     trial_filt{i} = zeros(length(trial_lfp.label),length(all_phase),length(trial_data{i}.tvec));
-    trial_phase{i} = zeros(length(all_phase),length(trial_data{i}.tvec));
+    trial_phase{i} = zeros(length(trial_lfp.label),length(all_phase),length(trial_data{i}.tvec));
     for j = 1:length(all_phase)
-        trial_phase{i}(j,:) = all_phase{j}(t1_idx:seeds(i));
+        trial_phase{i}(:,j,:) = all_phase{j}(:,t1_idx:seeds(i));
         trial_filt{i}(:,j,:) = lfp_filtered{j}.data(:,t1_idx:seeds(i));
     end
 end
@@ -82,6 +82,7 @@ for iD = 1:25
     for iF = 2%1:length(f_list)
         this_data = trial_data{1}.data(1,:);
         this_filt_data = trial_filt{iD}(1,iF,:);
+        this_filt_phase = trial_phase{iD}(1,iF,:);
         fig = figure;
         cfg_sspe.freqs = mean(f_list{iF}); % initialization using above not great at identifying starting freq
         cfg_sspe.Fs = Fs;
@@ -100,13 +101,13 @@ for iD = 1:25
         plot(F, 10*log10(Pxx));
         xlim([0,120]);
         subplot(3,1,2)
-        plot(phase);
+        plot((1:length(phase))/Fs,phase);
         hold on;
-        plot(trial_phase{iD}(iF,:))
+        plot((1:length(phase))/Fs,this_filt_phase(:))
         subplot(3,1,3)
-        plot(this_data);
+        plot((1:length(phase))/Fs,this_data);
         hold on
-        plot(this_filt_data(:));
+        plot((1:length(phase))/Fs,this_filt_data(:));
         dummy = 0;
     end
 end

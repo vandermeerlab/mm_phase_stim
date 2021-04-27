@@ -1,6 +1,6 @@
 clear;
 close all;
-cd('/Users/manishm/Dropbox (Dartmouth College)/manish_data/PhotoSensor Tests/PhotoSensor-2021-03-12')
+cd('D:\Dropbox (Dartmouth College)\manish_data\PhotoSensor Tests\PhotoSensor-2021-03-12')
 evs = LoadEvents([]);
 cfg.fc = {'PhotoSensor.ncs'};
 photo_signal = LoadCSC(cfg);
