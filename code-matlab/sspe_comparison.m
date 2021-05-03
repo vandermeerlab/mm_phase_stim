@@ -1,8 +1,8 @@
-cd('D:\Dropbox (Dartmouth College)\vandermeerlab_tutorial\data\R016-2012-10-03');
+cd('/Users/manishm/Dropbox (Dartmouth College)/vandermeerlab_tutorial/data/R016-2012-10-03');
 % goodGamma: {'R016-2012-10-03-CSC04d.ncs'
 % goodSWR: {'R016-2012-10-03-CSC02b.ncs'}
 % goodTheta: {'R016-2012-10-03-CSC02b.ncs'}
-cfg_in.fc = {'R016-2012-10-03-CSC04d.ncs', 'R016-2012-10-03-CSC02b.ncs'};
+cfg_in.fc = {'R016-2012-10-03-CSC02b.ncs'};
 trial_lfp  = LoadCSC(cfg_in);
 evs = LoadEvents([]);
 
@@ -87,32 +87,34 @@ for iD = 1:25
         cfg_sspe.freqs = mean(f_list{iF}); % initialization using above not great at identifying starting freq
         cfg_sspe.Fs = Fs;
         cfg_sspe.ampVec = 0.99;
-        cfg_sspe.sigmaFreqs = 1;
+        cfg_sspe.sigmaFreqs = 10^(1-iF);;
         cfg_sspe.sigmaObs = 1;
         cfg_sspe.window = length(this_data)/2;
         cfg_sspe.lowFreqBand = fstop_list{iF};
-        [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(this_data, cfg_sspe);
-        phase = reshape(phase', size(phase,1) * size(phase,2),1);
-        phaseBounds = reshape(permute(phaseBounds,[2,1,3]), size(phaseBounds,1) * size(phaseBounds,2),size(phaseBounds,3));
-        fullX = reshape(permute(fullX,[2,1,3]), size(fullX,1) * size(fullX,2),size(fullX,3));
+        
+%         [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(this_data, cfg_sspe);
+        [~,~,~,~,stateVec,~ ] = fit_MKModel_multSines(this_data, ...
+                                    cfg_sspe.freqs, cfg_sspe.Fs, ...
+                                    cfg_sspe.ampVec, cfg_sspe.sigmaFreqs, ...
+                                    cfg_sspe.sigmaObs);
+        phase = angle(stateVec( 1, :) + 1i*stateVec( 2, :));
         wsize = 1024;
         [Pxx, F] = pwelch(this_data, rectwin(wsize), wsize/2, [], Fs);
-        subplot(3,1,1)
+        tiledlayout(3,1)
+        ax1 = nexttile;
         plot(F, 10*log10(Pxx));
         xlim([0,120]);
-        subplot(3,1,2)
+        title('PSD')
+        ax2 = nexttile;
         plot((1:length(phase))/Fs,phase);
         hold on;
         plot((1:length(phase))/Fs,this_filt_phase(:))
-        subplot(3,1,3)
+        ax3 = nexttile;
         plot((1:length(phase))/Fs,this_data);
         hold on
         plot((1:length(phase))/Fs,this_filt_data(:));
+        linkaxes([ax2 ax3], 'x');
         dummy = 0;
     end
 end
-
-
-
-
-
+%%
