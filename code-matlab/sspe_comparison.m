@@ -80,24 +80,26 @@ end
 %% Use SSPE
 for iD = 1:25
     for iF = 2%1:length(f_list)
-        this_data = trial_data{1}.data(1,:);
+        this_data = trial_data{iD}.data(1,:);
         this_filt_data = trial_filt{iD}(1,iF,:);
         this_filt_phase = trial_phase{iD}(1,iF,:);
         fig = figure;
-        cfg_sspe.freqs = mean(f_list{iF}); % initialization using above not great at identifying starting freq
+        cfg_sspe.freqs = [2,7,15]; % initialization using above not great at identifying starting freq
         cfg_sspe.Fs = Fs;
-        cfg_sspe.ampVec = 0.99;
-        cfg_sspe.sigmaFreqs = 10^(1-iF);;
+        cfg_sspe.ampVec = [0.99,0.99,0.99];
+        cfg_sspe.sigmaFreqs = [10,1,0.1];
         cfg_sspe.sigmaObs = 1;
         cfg_sspe.window = length(this_data)/2;
-        cfg_sspe.lowFreqBand = fstop_list{iF};
+        cfg_sspe.lowFreqBand = [5.5, 10.5];
         
-%         [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(this_data, cfg_sspe);
-        [~,~,~,~,stateVec,~ ] = fit_MKModel_multSines(this_data, ...
-                                    cfg_sspe.freqs, cfg_sspe.Fs, ...
-                                    cfg_sspe.ampVec, cfg_sspe.sigmaFreqs, ...
-                                    cfg_sspe.sigmaObs);
-        phase = angle(stateVec( 1, :) + 1i*stateVec( 2, :));
+        [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(this_data, cfg_sspe);
+        phase = reshape(phase', size(phase,1) * size(phase,2),1);
+%         phaseBounds = reshape(permute(phaseBounds,[2,1,3]), size(phaseBounds,1) * size(phaseBounds,2),size(phaseBounds,3));
+%         [omega, ampEst, allQ, R, stateVec, stateCov] = fit_MKModel_multSines(this_data, ...
+%                                     cfg_sspe.freqs, cfg_sspe.Fs, ...
+%                                     cfg_sspe.ampVec, cfg_sspe.sigmaFreqs, ...
+%                                     cfg_sspe.sigmaObs);
+%         phase = angle(stateVec(3, :) + 1i*stateVec( 4, :));
         wsize = 1024;
         [Pxx, F] = pwelch(this_data, rectwin(wsize), wsize/2, [], Fs);
         tiledlayout(3,1)
