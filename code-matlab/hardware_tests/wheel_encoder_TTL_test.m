@@ -22,10 +22,10 @@ linkaxes([ax1 ax2],'x');
 this_csc = restrict(we_csc, we_csc.tvec(1), we_csc.tvec(1) + 11.5);
 up_thresh = 0.03;
 down_thresh = -0.03;
-we1up_idx = find(diff(this_csc.data(1,:)) > up_thresh);
-we1down_idx = find(diff(this_csc.data(1,:)) < down_thresh);
-we2up_idx = find(diff(this_csc.data(2,:)) > up_thresh);
-we2down_idx = find(diff(this_csc.data(2,:)) < down_thresh);
+some_vec = (this_csc.data(1,:) > 0);
+some_dif = diff(some_vec);
+some_up = find(some_dif >0);
+some_down = find(some_dif < 0);
 
 %% Find up and down transition times from TTL
 
