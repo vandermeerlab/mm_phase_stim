@@ -1,8 +1,8 @@
-cd('/Users/manishm/Dropbox (Dartmouth College)/vandermeerlab_tutorial/data/R016-2012-10-03');
+cd('D:\Dropbox (Dartmouth College)\vandermeerlab_tutorial\data\R016-2012-10-03');
 % goodGamma: {'R016-2012-10-03-CSC04d.ncs'
 % goodSWR: {'R016-2012-10-03-CSC02b.ncs'}
 % goodTheta: {'R016-2012-10-03-CSC02b.ncs'}
-cfg_in.fc = {'R016-2012-10-03-CSC02b.ncs'};
+cfg_in.fc = {'R016-2012-10-03-CSC04d.ncs'};
 trial_lfp  = LoadCSC(cfg_in);
 evs = LoadEvents([]);
 
@@ -62,7 +62,7 @@ trial_filt = cell(1,25);
 seeds = randi(length(lfp_prefilt{1}.data),1,25);
 for i = 1:25
     t2 = lfp_prefilt{1}.tvec(seeds(i));
-    t1_idx = nearest_idx3(t2 - 5, lfp_prefilt{1}.tvec);
+    t1_idx = nearest_idx3(t2 - 2.5, lfp_prefilt{1}.tvec);
     % If the trial length is not even, make it so!
     if rem(seeds(i)-t1_idx, 2) == 0
         t1_idx = t1_idx-1;
@@ -79,18 +79,18 @@ end
 
 %% Use SSPE
 for iD = 1:25
-    for iF = 2%1:length(f_list)
+    for iF = 6%1:length(f_list)
         this_data = trial_data{iD}.data(1,:);
         this_filt_data = trial_filt{iD}(1,iF,:);
         this_filt_phase = trial_phase{iD}(1,iF,:);
         fig = figure;
-        cfg_sspe.freqs = [2,7,15]; % initialization using above not great at identifying starting freq
+        cfg_sspe.freqs = [2,7,56,80]; % initialization using above not great at identifying starting freq
         cfg_sspe.Fs = Fs;
-        cfg_sspe.ampVec = [0.99,0.99,0.99];
-        cfg_sspe.sigmaFreqs = [10,1,0.1];
+        cfg_sspe.ampVec = [0.99,0.99,0.99,0.99];
+        cfg_sspe.sigmaFreqs = [10,1,0.1,0.01];
         cfg_sspe.sigmaObs = 1;
         cfg_sspe.window = length(this_data)/2;
-        cfg_sspe.lowFreqBand = [5.5, 10.5];
+        cfg_sspe.lowFreqBand = [55 85];
         
         [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(this_data, cfg_sspe);
         phase = reshape(phase', size(phase,1) * size(phase,2),1);
@@ -100,7 +100,7 @@ for iD = 1:25
 %                                     cfg_sspe.ampVec, cfg_sspe.sigmaFreqs, ...
 %                                     cfg_sspe.sigmaObs);
 %         phase = angle(stateVec(3, :) + 1i*stateVec( 4, :));
-        wsize = 1024;
+        wsize = 512;
         [Pxx, F] = pwelch(this_data, rectwin(wsize), wsize/2, [], Fs);
         tiledlayout(3,1)
         ax1 = nexttile;
