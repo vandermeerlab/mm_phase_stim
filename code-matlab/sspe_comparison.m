@@ -1,4 +1,5 @@
-cd('D:\Dropbox (Dartmouth College)\vandermeerlab_tutorial\data\R016-2012-10-03');
+% cd('D:\Dropbox (Dartmouth College)\vandermeerlab_tutorial\data\R016-2012-10-03');
+cd('/Users/manishm/Dropbox (Dartmouth College)/vandermeerlab_tutorial/data/R016-2012-10-03');
 % goodGamma: {'R016-2012-10-03-CSC04d.ncs'
 % goodSWR: {'R016-2012-10-03-CSC02b.ncs'}
 % goodTheta: {'R016-2012-10-03-CSC02b.ncs'}
@@ -31,9 +32,9 @@ end
 % make a cell array of the various processed LFPS
 lfp_prefilt{1} = trial_lfp;
 
-f_list = {[2 5], [6 10],[15 25], [30 40],[40 60], [60 80]};
-f_list_label = {'2 - 5', '6 - 10', '15 - 25', '30 - 40', '40 - 60', '60 - 80'};
-fstop_list = {[1.5 5.5], [5.5 10.5],[14 26], [28 42],[38 62], [55 85]};
+f_list = {[2 5], [6.5 9.5],[14 25] ,[40 65], [70 100]};
+f_list_label = {'2 - 5', '6.5 - 9.5', '14 - 25', '40 - 65', '70 - 100'};
+fstop_list = {[1.5 5.5], [6 10],[13 26],[38 67], [68 102]};
 
 % Save filtered LFP and all_phase for later diagnosis
 lfp_filtered = cell(length(f_list), length(lfp_prefilt));
@@ -70,16 +71,17 @@ for i = 1:25
     t1 = lfp_prefilt{1}.tvec(t1_idx);
     trial_data{i} = restrict(lfp_prefilt{1}, iv(t1,t2));
     trial_filt{i} = zeros(length(trial_lfp.label),length(all_phase),length(trial_data{i}.tvec));
-    trial_phase{i} = zeros(length(trial_lfp.label),length(all_phase),length(trial_data{i}.tvec));
+    phase_length = length(trial_data{i}.tvec) - round(length(trial_data{i}.tvec)*0.9);
+    trial_phase{i} = zeros(length(trial_lfp.label),length(all_phase),phase_length);
     for j = 1:length(all_phase)
-        trial_phase{i}(:,j,:) = all_phase{j}(:,t1_idx:seeds(i));
+        trial_phase{i}(:,j,:) = all_phase{j}(:,seeds(i)+1-phase_length:seeds(i));
         trial_filt{i}(:,j,:) = lfp_filtered{j}.data(:,t1_idx:seeds(i));
     end
 end
 
 %% Use SSPE
 for iD = 1:25
-    for iF = 6%1:length(f_list)
+    for iF = 2%1:length(f_list)
         this_data = trial_data{iD}.data(1,:);
         this_filt_data = trial_filt{iD}(1,iF,:);
         this_filt_phase = trial_phase{iD}(1,iF,:);
@@ -87,19 +89,21 @@ for iD = 1:25
         cfg_sspe.freqs = [2,7,56,80]; % initialization using above not great at identifying starting freq
         cfg_sspe.Fs = Fs;
         cfg_sspe.ampVec = [0.99,0.99,0.99,0.99];
-        cfg_sspe.sigmaFreqs = [10,1,0.1,0.01];
+        cfg_sspe.sigmaFreqs = [1,0.1,0.01,0.001];
         cfg_sspe.sigmaObs = 1;
-        cfg_sspe.window = length(this_data)/2;
-        cfg_sspe.lowFreqBand = [55 85];
+        cfg_sspe.window = round(length(this_data)*0.9);
+        cfg_sspe.freqBands = {[2 5], [6.5 9.5] ,[40 65], [70 100]};
         
-        [phase,phaseBounds, fullX] = causalPhaseEM_MKmdl(this_data, cfg_sspe);
-        phase = reshape(phase', size(phase,1) * size(phase,2),1);
+        [omega, phase,phaseBounds, fullX] = causalPhaseEM_MKmdl_temp(this_data, cfg_sspe);
 %         phaseBounds = reshape(permute(phaseBounds,[2,1,3]), size(phaseBounds,1) * size(phaseBounds,2),size(phaseBounds,3));
 %         [omega, ampEst, allQ, R, stateVec, stateCov] = fit_MKModel_multSines(this_data, ...
 %                                     cfg_sspe.freqs, cfg_sspe.Fs, ...
 %                                     cfg_sspe.ampVec, cfg_sspe.sigmaFreqs, ...
 %                                     cfg_sspe.sigmaObs);
 %         phase = angle(stateVec(3, :) + 1i*stateVec( 4, :));
+
+        % TODO: FIX PLotting and Loops
+        
         wsize = 512;
         [Pxx, F] = pwelch(this_data, rectwin(wsize), wsize/2, [], Fs);
         tiledlayout(3,1)
@@ -108,7 +112,7 @@ for iD = 1:25
         xlim([0,120]);
         title('PSD')
         ax2 = nexttile;
-        plot((1:length(phase))/Fs,phase);
+        plot((1:length(phase))/Fs,phase(iF,:));
         hold on;
         plot((1:length(phase))/Fs,this_filt_phase(:))
         ax3 = nexttile;
