@@ -153,6 +153,25 @@ for iS = 1:25
 end
 %% Plot results
 
-
-
-
+cd('D:\vstr_phase_stim\Results\SSPE_Comparison_results')
+load('sspe_good_theta.mat')
+%%
+subplot(4,1,1)
+plot(sspe_pack{1}.psd.F, sspe_pack{1}.psd.Pxx)
+xlim([0 120]);
+subplot(4,1,2)
+plot(sspe_pack{1}.data)
+subplot(4,1,3);
+plot(squeeze(sspe_pack{1}.filt_data)
+squeeze(sspe_pack{1}.filt_data))
+squeeze(sspe_pack{1}.filt_data)
+x = zeros(1, length(sspe_pack.data);
+x = zeros(1, length(sspe_pack.data));
+x = zeros(1, length(sspe_pack{1}.data));
+x(end - length(sspe_pack{1}.filt_data(1,1,:) + 1:end) = sspe_pack{1}.filt_data(1,1,:)
+length(sspe_pack{1}.filt_data(1,1,:)
+length(sspe_pack{1}.filt_data(1,1,:))
+x(end - length(sspe_pack{1}.filt_data(1,1,:)) + 1:end) = sspe_pack{1}.filt_data(1,1,:)
+subplot(4,1,2)
+hold on
+plot(x)
