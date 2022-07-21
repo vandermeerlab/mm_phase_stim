@@ -9,7 +9,7 @@ evs = LoadEvents([]);
 % All Laser off_events
 laser_off = evs.t{11}; % evs.t{9} for M078-11-26 and M075-2021-26, evs.t{11} fot M074
 
-%Extract all records from the Tetorde File:
+%Extract all records from the Tetrode File:
 [Timestamps, ScNumbers, CellNumbers, Features, Samples, Header] = ...
     Nlx2MatSpike( 'TT8.ntt', [1 1 1 1 1], 1, 1, []);
 

@@ -1,26 +1,24 @@
-cd('E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-28');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-19\');
+filtered_lfp ={'LFP15.ncs','LFP29.ncs'};
+unfiltered_lfp = {'LFP3.ncs', 'LFP18.ncs'};
+all_lfp = {'LFP16.ncs', 'LFP31.ncs', 'LFP34.ncs'};
+csc_fn= all_lfp;
 evs = LoadEvents([]);
-csc_fn = cell(1,16); % cell(1,32);
-for iF = 1:16
-   csc_fn{iF} = strcat('CSC',num2str(iF),'.ncs');
-end
-csc_fn(17:18) = {'LFP3.ncs', 'LFP15.ncs'}; % {'LFP3.ncs', 'LFP15.ncs', 'LFP18.ncs', 'LFP29.ncs'};
-t_start = evs.t{5}; % Fixed ISI protocol start
-t_end = evs.t{3}; % post trial baseline recording statt
+t_start = evs.t{19}; % Fixed ISI protocol start
+t_end = evs.t{2}; % post trial baseline recording statt
 t_iv = iv(t_start, t_end);
-led_on = evs.t{10};
+led_on = evs.t{16};
 control_on = led_on + 0.5;
-for iF = 17:length(csc_fn)
+%%
+for iF = 1:length(csc_fn)
     close all;
-    if iF ==4
-        continue
-    end
     fig = figure('WindowState', 'maximized');
     this_cfg.fc = csc_fn(iF);
     this_csc = LoadCSC(this_cfg);
     this_csc = restrict(this_csc, t_iv);
+    %Filter the LFPS 
     Fs = this_csc.cfg.hdr{1}.SamplingFrequency;
-    wsize = round(Fs/2.5);  % arbitrary decision on Window Size
+    wsize = round(4*Fs);  % arbitrary decision on Window Size
     [Pxx, F] = pwelch(this_csc.data(:), rectwin(wsize), round(wsize/2), [], Fs);
     subplot(4,1,1)
     plot(F, 10*log10(Pxx));
