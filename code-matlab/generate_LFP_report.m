@@ -1,6 +1,6 @@
 % Assumes that references and all LFP channels have the same sampling
 % frequency
-cd('E:\Dropbox (Dartmouth College)\manish_data\M321\M321-2022-07-13');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M321\M321-2022-07-08');
 LoadExpKeys;
 evs = LoadEvents([]);
 
