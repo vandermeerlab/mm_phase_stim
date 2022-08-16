@@ -1,5 +1,5 @@
 %Script to fix funky LFP recordings due to filter settings
-cd('E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-26');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-30');
 file_list = {'LFP3_OG.ncs', 'LFP15_OG.ncs', 'LFP18_OG.ncs', ...
     'R1_OG.ncs', 'R4_OG.ncs'};
 

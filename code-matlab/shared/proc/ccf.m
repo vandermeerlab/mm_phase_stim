@@ -1,6 +1,5 @@
 function [ccf,tvec] = ccf(cfg_in,ts1,ts2)
-% function [ccf,tvec] = ccf(cfg,ts1,ts2)
-%
+% function [ccf,tvec] = ccf(cfg_in,ts1,ts2)
 % estimate crosscorrelation of input spike trains
 %
 % INPUTS:
@@ -45,13 +44,13 @@ if cfg.smooth % SDF (spike density function) version
     ts1_sdf = histc(ts1,tbin_edges); ts1_sdf = ts1_sdf(1:end-1);
     ts2_sdf = histc(ts2,tbin_edges); ts2_sdf = ts2_sdf(1:end-1);
     
-    % convolve with kernel
-    gauss_window = cfg.gauss_w./cfg.binsize; % 1 second window
-    gauss_SD = cfg.gauss_sd./cfg.binsize; % 0.02 seconds (20ms) SD
-    gk = gausskernel(gauss_window,gauss_SD); gk = gk./cfg.binsize; % normalize by binsize
-    
-    ts1_sdf = conv2(ts1_sdf,gk,'same'); % convolve with gaussian window
-    ts2_sdf = conv2(ts2_sdf,gk,'same'); % convolve with gaussian window
+% %     convolve with kernel
+%     gauss_window = cfg.gauss_w./cfg.binsize; % 1 second window
+%     gauss_SD = cfg.gauss_sd./cfg.binsize; % 0.02 seconds (20ms) SD
+%     gk = gausskernel(gauss_window,gauss_SD); gk = gk./cfg.binsize; % normalize by binsize
+%     
+%     ts1_sdf = conv2(ts1_sdf,gk,'same'); % convolve with gaussian window
+%     ts2_sdf = conv2(ts2_sdf,gk,'same'); % convolve with gaussian window
     
     [ccf,tvec] = xcorr(ts1_sdf,ts2_sdf,cfg.max_t./cfg.binsize,cfg.xcorr);
     tvec = tvec.*cfg.binsize;
@@ -72,7 +71,7 @@ else % raw spike count version
     tvec = xbin_centers(2:end-1); % remove unwanted bins
     ccf = ccf(2:end-1);
     
-    ccf = ccf./(length(ts1)); % normalize by number of spikes of first input
+%     ccf = ccf./(length(ts1)); % normalize by number of spikes of first input
     
     ccf = ccf(end:-1:1); % reverse to make consistent with MATLAB xcorr()
     
