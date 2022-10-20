@@ -1,5 +1,5 @@
 % Assumes that spike-sorting has been done
-cd('E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-19');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-28');
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg_spk.min_cluster_quality = 3;
@@ -16,11 +16,6 @@ all_short_stim = [evs.t{strcmp(evs.label, ExpKeys.pre_trial_stim_on)}; ...
     evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)}];
 
 all_long_stim = [evs.t{strcmp(evs.label, ExpKeys.long_stim_on)}];
-
-%Tske only the first 25 long stim if special stim present
-if strcmp(ExpKeys.special_stim, 'Yes')
-   all_long_stim = all_long_stim(1:25); 
-end
 to_be_removed = [all_short_stim,  all_short_stim + ExpKeys.short_stim_pulse_width; ...
     all_long_stim, all_long_stim + ExpKeys.long_stim_pulse_width];
 
@@ -170,6 +165,10 @@ for iC = 1:length(restricted_S.label)
     %Long-stim raster
     subplot(4,4,[12,16])
     this_on_events = evs.t{strcmp(evs.label, ExpKeys.long_stim_on)};
+    %Take only the first 25 long stim if special stim present
+    if strcmp(ExpKeys.hasSpecialStim, 'Yes')
+        this_on_events = this_on_events(1:25); 
+    end
     [outputS, outputT, outputGau, outputIT, cfg] = SpikePETHvdm([], ...
         this_cell, this_on_events, '', 0.5);
     hold on

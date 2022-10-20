@@ -20,6 +20,45 @@ for i = 1:length(folders)
     target = ExpKeys.target;
     cfg_lfp.fc = {ExpKeys.goodCSC};
     this_lfp = LoadCSC(cfg_lfp);
+    
+    %temp_edit
+%     ExpKeys.timeOffWheel = ExpKeys.timeOnWheel + 600;
+    this_lfp = restrict(this_lfp, iv(ExpKeys.timeOnWheel, ExpKeys.timeOffWheel));
+    Fs = this_lfp.cfg.hdr{1}.SamplingFrequency;
+    wsize = Fs;
+    [Pxx, F] = pwelch(this_lfp.data, rectwin(wsize), wsize/2, [], Fs);
+    test_F = (F(F < 200 & F > 0))';
+    test_P = (Pxx(1:length(test_F)))';
+    reshaped_P = reshape(test_P,1 ,1, length(test_P));
+    opt.freq_range = [test_F(1) test_F(end)];
+    opt.power_line = 'inf';
+    opt.peak_width_limits = [0.5,12];
+    opt.max_peaks = 3;
+    opt.min_peak_height = 0.3;
+    opt.aperiodic_mode = 'fixed';
+    opt.peak_threshold = 2;
+    opt.return_spectrum = 1;
+    opt.border_threshold = 1;
+    opt.peak_type = 'gaussian';
+    opt.proximity_threshold = 2;
+    opt.guess_weight = 'none';
+    opt.thresh_after = 1;
+    opt.sort_type = 'param';
+    opt.sort_param = 'frequency';
+    opt.sort_bands = {{'delta'}, {'2', '4'}; {'theta'}, {'5', '7'}; ...
+        {'alpha'}, {'8','12'}; {'beta'}, {'15', '29'}; {'gamma1'}, {'30',' 59'};
+        {'gamma2'}, {'60','90'}};
+    [test_fs, test_fg] = process_fooof('FOOOF_matlab', reshaped_P, test_F, opt, 1);
+    powspctrm_f = cat(1, test_fg.ap_fit);
+    for k = 1:size(powspctrm_f,1)
+        powspctrm(k,:) = interp1(test_fs, powspctrm_f(k,:), test_F, 'linear', nan);
+    end
+    plot(test_F, log10(test_P));
+    hold on
+    plot(test_F, log10(powspctrm));
+    plot(test_F, log10(test_P - powspctrm))
+%end of temp edit
+
     this_lfp = restrict(this_lfp, iv(ExpKeys.timeOnWheel, ExpKeys.timeOffWheel));
     Fs = this_lfp.cfg.hdr{1}.SamplingFrequency;
     wsize = Fs;

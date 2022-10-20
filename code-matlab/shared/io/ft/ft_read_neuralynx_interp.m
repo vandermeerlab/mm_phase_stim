@@ -97,13 +97,15 @@ for i = 1:nchans
   else  
     % interpolate the data
     datinterp   = interp1(ts, data.trial{1}, tsinterp);
-
-    % you can use NaN to replace the data in the gaps
-    gaps     = find(diff(ts)>2*mode_dts); % skips at least a sample
-    for igap = 1:length(gaps)
-      sel = tsinterp < ts(gaps(igap)+1) & tsinterp > ts(gaps(igap));
-      datinterp(sel) = NaN;
-    end
+    
+    % temp_edit
+%     % you can use NaN to replace the data in the gaps
+%     gaps     = find(diff(ts)>2*mode_dts); % skips at least a sample
+%     for igap = 1:length(gaps)
+%       sel = tsinterp < ts(gaps(igap)+1) & tsinterp > ts(gaps(igap));
+%       datinterp(sel) = NaN;
+%     end
+    % end of temp_edit
   
     % set data at the end and beginning to nans
     if startflag==1

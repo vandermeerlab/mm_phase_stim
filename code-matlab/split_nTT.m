@@ -1,6 +1,26 @@
-cd('D:\Dropbox (Dartmouth College)\manish_data\M074\M074-2020-12-04');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M348\M348-2022-05-14\');
 evs = LoadEvents([]);
+clean_start = evs.t{10}(3); % Timestamp associated with the last clean Timestamp
 
+%%
+for i = 1:8
+    old_file = strcat('oldTT',num2str(i),'.ntt');
+    new_file = strcat('TT',num2str(i),'.ntt');
+    [Timestamps, ScNumbers, CellNumbers, Features, Samples, Header] = ...
+    Nlx2MatSpike( old_file, [1 1 1 1 1], 1, 1, []);
+    keep = (Timestamps * 1e-6) > clean_start;
+    Timestamps_r = Timestamps(keep);
+    ScNumbers_r = ScNumbers(keep);
+    CellNumbers_r = CellNumbers(keep);
+    Features_r = Features(:,keep);
+    Samples_r = Samples(:,:,keep);
+    Mat2NlxSpike(new_file, 0, 1, [], ...
+    [1 1 1 1 1 1] , Timestamps_r, ScNumbers_r, CellNumbers_r,...
+                  Features_r, Samples_r, Header);
+end
+
+%Clean start is 
+%%
 % The delay between in the time stamps of when the ttl reaches neuralynx
 % (evs.t{9}) from Master-8 and after routing through cyclops + op-amp
 % (evs.t{14}) is in the order of 10s of microseconds. Thus we can ignore

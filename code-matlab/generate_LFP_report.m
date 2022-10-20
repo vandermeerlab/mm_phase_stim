@@ -1,8 +1,14 @@
 % Assumes that references and all LFP channels have the same sampling
 % frequency
-cd('E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-08-03');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M074\M074-2020-12-04');
 LoadExpKeys;
 evs = LoadEvents([]);
+% Add delay to timing offsets if source is LED
+if contains(ExpKeys.light_source, 'LASER')
+    on_delay = 0.0011;
+else
+    on_delay = 0;
+end
 
 
 %% Set variables and parameters
@@ -118,6 +124,7 @@ cfg_pre.sta_calculation_wsize = sta_calculation_wsize;
 cfg_pre.sta_plot_wsize = sta_plot_wsize;
 cfg_pre.lfp_plot_wsize = lfp_plot_wsize;
 cfg_pre.stim_on = evs.t{strcmp(evs.label, ExpKeys.pre_trial_stim_on)};
+cfg_pre.stim_delay = on_delay;
 cfg_pre.snip_idx = sort(randsample(1:length(cfg_pre.stim_on),num_snips));
 cfg_pre.plot_prefix = "Pre-stim";
 cfg_pre.probe_depth = ExpKeys.probeDepth;
@@ -143,6 +150,7 @@ cfg_trial.sta_calculation_wsize = sta_calculation_wsize;
 cfg_trial.sta_plot_wsize = sta_plot_wsize;
 cfg_trial.lfp_plot_wsize = lfp_plot_wsize;
 cfg_trial.stim_on = evs.t{strcmp(evs.label, ExpKeys.trial_stim_on)};
+cfg_trial.stim_delay = on_delay;
 cfg_trial.snip_idx = sort(randsample(1:length(cfg_trial.stim_on),num_snips));
 cfg_trial.plot_prefix = "Trial-stim";
 cfg_trial.probe_depth = ExpKeys.probeDepth;
@@ -168,6 +176,7 @@ cfg_post.sta_calculation_wsize = sta_calculation_wsize;
 cfg_post.sta_plot_wsize = sta_plot_wsize;
 cfg_post.lfp_plot_wsize = lfp_plot_wsize;
 cfg_post.stim_on = evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)};
+cfg_post.stim_delay = on_delay;
 cfg_post.snip_idx = sort(randsample(1:length(cfg_post.stim_on),num_snips));
 cfg_post.plot_prefix = "Post-stim";
 cfg_post.probe_depth = ExpKeys.probeDepth;
@@ -193,6 +202,7 @@ cfg_long.sta_calculation_wsize = sta_calculation_wsize;
 cfg_long.sta_plot_wsize = sta_plot_wsize;
 cfg_long.lfp_plot_wsize = lfp_plot_wsize;
 cfg_long.stim_on = evs.t{strcmp(evs.label, ExpKeys.long_stim_on)};
+cfg_long.stim_delay = on_delay;
 cfg_long.snip_idx = sort(randsample(1:length(cfg_long.stim_on),num_snips));
 cfg_long.plot_prefix = "Long-stim";
 cfg_long.probe_depth = ExpKeys.probeDepth;
@@ -222,6 +232,7 @@ function fh = createFigure(cfg_in)
     wsz2 = cfg_in.sta_plot_wsize;
     wsz3 = cfg_in.lfp_plot_wsize;
     stim_on = cfg_in.stim_on;
+    stim_delay = cfg_in.stim_delay;
     snip_idx = cfg_in.snip_idx;
     stim_width = cfg_in.stim_width;
     depth = cfg_in.probe_depth;
@@ -265,7 +276,7 @@ function fh = createFigure(cfg_in)
     this_on_sta = zeros(num_stim, length(this_tvec));
     filtered_snips = zeros(size(this_on_sta));
     for iEvt = 1:num_stim % for each stim ...
-        on_sta_t = stim_on(iEvt)+wsz1(1);
+        on_sta_t = stim_on(iEvt)+wsz1(1)+stim_delay; % To account for LASER stim delays
         this_on_sta_idx = (nearest_idx3(on_sta_t,this_lfp.tvec));
         % grab LFP snippet for this window
         this_on_toAdd = this_lfp.data(idx,this_on_sta_idx:this_on_sta_idx+ ...

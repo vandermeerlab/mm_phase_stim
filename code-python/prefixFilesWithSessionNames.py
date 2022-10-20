@@ -4,7 +4,7 @@ import os
 import shutil
 
 # Change this to the folder where you want the renaming to happen
-target_dir = "E:/Dropbox (Dartmouth College)/manish_data/M321/M321-2022-07-08"
+target_dir = "E:/Dropbox (Dartmouth College)/manish_data/M265/M265-2021-12-27"
 # Might need to hard-code this in some-cases 
 session_name = target_dir.split('/')[-1]
 os.chdir(target_dir)

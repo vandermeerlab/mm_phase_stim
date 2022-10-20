@@ -4,7 +4,7 @@ import os
 import shutil
 
 #Change this to the folder where you want the renaming to happen
-target_dir = "E:/Dropbox (Dartmouth College)/manish_data/M321/M321-2022-07-08"
+target_dir = "E:/Dropbox (Dartmouth College)/manish_data/M265/M265-2021-12-27"
 os.chdir(target_dir)
 all_files = os.listdir()
 all_files = [file for file in all_files if os.path.isfile(file) and 'TT' in file and 'TT0' not in file]
