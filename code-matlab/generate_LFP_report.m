@@ -61,7 +61,7 @@ Fs = all_lfp.cfg.hdr{1}.SamplingFrequency;
 wsize = round(4*Fs);  % arbitrary decision on Window Size
 fig1 = figure;
 for i = 1:length(all_lfp.label)
-    [Pxx, F] = pwelch(all_lfp.data(i,:), rectwin(wsize), wsize/2, [], Fs);
+    [Pxx, F] = pwelch(all_lfp.data(i,:), hanning(wsize), wsize/2, [], Fs);
     plot(F, 10*log10(Pxx));
     hold on
 end
@@ -78,7 +78,7 @@ if strcmp(ExpKeys.isReferenceRecordedSeparately,'Yes')
     wsize = round(4*Fs);  % arbitrary decision on Window Size
     fig2 = figure;
     for i = 1:length(og_lfp.label)
-        [Pxx, F] = pwelch(og_lfp.data(i,:), rectwin(wsize), wsize/2, [], Fs);
+        [Pxx, F] = pwelch(og_lfp.data(i,:), hanning(wsize), wsize/2, [], Fs);
         plot(F, 10*log10(Pxx));
         hold on
     end
@@ -95,7 +95,7 @@ if strcmp(ExpKeys.isReferenceRecordedSeparately,'Yes')
     wsize = round(4*Fs);  % arbitrary decision on Window Size
     fig3 = figure;
     for i = 1:length(all_refs.label)
-        [Pxx, F] = pwelch(all_refs.data(i,:), rectwin(wsize), wsize/2, [], Fs);
+        [Pxx, F] = pwelch(all_refs.data(i,:), hanning(wsize), wsize/2, [], Fs);
         plot(F, 10*log10(Pxx));
         hold on
     end
@@ -262,7 +262,7 @@ function fh = createFigure(cfg_in)
     % Plot PSD
     subplot(nRows,nCols,3)
     hold on
-    [Pxx, F] = pwelch(this_lfp.data(idx,:), rectwin(wsize), wsize/2, [], Fs);
+    [Pxx, F] = pwelch(this_lfp.data(idx,:), hanning(wsize), wsize/2, [], Fs);
     plot(F, 10*log10(Pxx), 'black');
     xlabel('Frequency in Hertz')
     xlim([0 120])

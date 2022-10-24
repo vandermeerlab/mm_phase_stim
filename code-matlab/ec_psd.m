@@ -24,7 +24,7 @@ for i = 1:length(folders)
     this_lfp = restrict(this_lfp, iv(ExpKeys.timeOnWheel, ExpKeys.timeOffWheel));
     Fs = this_lfp.cfg.hdr{1}.SamplingFrequency;
     wsize = Fs;
-    [welch_P, F] = pwelch(this_lfp.data, rectwin(wsize), wsize/2, [], Fs); 
+    [welch_P, F] = pwelch(this_lfp.data, hanning(wsize), wsize/2, [], Fs); 
     F = (F(F > 0 & F < 200))'; % very important to get rid of the '0' frequency for FOOOF to work, and shape it into 1 x N array
     welch_P = (welch_P(1:length(F)))';
     reshaped_P = reshape(welch_P,1 ,1, length(welch_P));
@@ -47,8 +47,9 @@ for i = 1:length(folders)
 %     opt.sort_bands = {{'delta'}, {'2', '4'}; {'theta'}, {'5', '7'}; ...
 %         {'alpha'}, {'8','12'}; {'beta'}, {'15', '29'}; {'gamma1'}, {'30',' 59'};
 %         {'gamma2'}, {'60','90'}};
-    opt.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '9'}; ...
-        {'gamma1'}, {'30',' 59'}; {'gamma2'}, {'61','90'}};
+    opt.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '10'}; ...
+        {'beta'},{'15', '29'}; {'gamma1'}, {'30',' 55'}; ...
+        {'gamma2'}, {'65','90'}};
     % Putting try blocks here because it keeps crashing
     try
         fprintf("\nStarting FOOOF in %s\n", folders{i});
