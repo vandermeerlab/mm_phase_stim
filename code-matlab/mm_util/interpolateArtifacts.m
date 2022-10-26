@@ -1,16 +1,16 @@
-function csc_out = interpolateArtifacts(method, stim_times, stim_window,  csc_in)
-    stim_start = stim_times;
-    stim_end = stim_start + stim_window;
-    art_idx = false(size(csc_in.tvec));
-    % set indices for the  artifact samples
-    for i = 1:length(stim_times)
-        art_idx(csc_in.tvec > stim_start(i) & csc_in.tvec < stim_end(i)) = 1;
+function csc_out = interpolateArtifacts(method, stim_times, artifact_window,  csc_in)
+    stim_start = nearest_idx3(stim_times, csc_in.tvec);
+    stim_end = nearest_idx3(stim_times + artifact_window, csc_in.tvec);
+    to_be_int = false(size(csc_in.tvec));
+    for iS = 1:length(stim_start)
+        this_idx = stim_start(iS):stim_end(iS);
+        to_be_int(this_idx) = true;
     end
-    midx = find(art_idx);
-    pidx = find(~art_idx);
+    midx = find(to_be_int);
+    pidx = find(~to_be_int);
     csc_out = csc_in;
-    for i = 1:length(csc_in.label)
-        mval = interp1(pidx, csc_out.data(i,pidx), midx, method);
-        csc_in.data(i,midx) = mval;
+    for iC = 1:length(csc_out.label)
+        mval = interp1(pidx, csc_out.data(iC,pidx), midx, method);
+        csc_out.data(iC,midx) = mval;
     end
 end
