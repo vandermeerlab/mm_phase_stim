@@ -4,7 +4,7 @@
 % 'E:\Dropbox (Dartmouth College)\manish_data\M235\M235-2021-07-16' % Laser
 % 'E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-08-03' % LED
 
-folder = 'E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-08-03';
+folder = 'E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-21';
 cd(folder);
 LoadExpKeys;
 evs = LoadEvents([]);
@@ -67,7 +67,7 @@ hold on
 plot(this_tvec, on_sta);
 plot(this_tvec, control_sta);
 xline(0);
-xlim([-0.01 0.01])
+xlim([-0.1 0.1])
 legend({'STA', 'Control', 'Stim Time'},'Location','southeast');
 title('STA');
 
@@ -76,7 +76,7 @@ for iS = 1:num_snips
     subplot(num_snips+1,1,iS+1)
     plot(this_tvec, this_on_sta(sample_idx(iS),:));
     xline(0);
-    xlim([-0.01 0.01])
+    xlim([-0.1 0.1])
 end
 
 
@@ -125,7 +125,7 @@ hold on
 plot(this_tvec, on_sta);
 plot(this_tvec, control_sta);
 xline(0);
-xlim([-0.01 0.01])
+xlim([-0.1 0.1])
 legend({'STA', 'Control', 'Stim Time'});
 title('STA for original signal');
 
@@ -134,7 +134,7 @@ hold on
 plot(this_tvec, int_on_sta);
 plot(this_tvec, int_control_sta);
 xline(0);
-xlim([-0.01 0.01])
+xlim([-0.1 0.1])
 legend({'STA', 'Control', 'Stim Time'});
 title('STA for interpolated signal');
 for iS = 1:5
@@ -142,17 +142,17 @@ for iS = 1:5
     subplot(num_snips+1,2,(iS*2)+1)
     plot(this_tvec, this_on_sta(sample_idx(iS),:));
     xline(0);
-    xlim([-0.01 0.01])
+    xlim([-0.1 0.1])
     
     hold on
     subplot(num_snips+1,2,(iS*2)+2)
     plot(this_tvec, int_this_on_sta(sample_idx(iS),:));
     xline(0);
-    xlim([-0.01 0.01])
+    xlim([-0.1 0.1])
 end
 
 %% Filter the original and the interpolated signals in 2 actual bands and 2 sanity check bands and calculate the hilbert phases
-f_list = {[2 5], [6 10], [25 50], [70 90]};
+f_list = {[2 5], [6 10], [25 55], [65 90]};
 filt_lfp = cell(length(f_list),2);
 filt_phase = cell(length(f_list),2);
 for iB = 1:length(f_list)
@@ -233,4 +233,164 @@ subplot(4,4,16)
 hist(filt_phase{4,2}(control_idx), 5);
 title('Interpolated Fast Gamma-ish Phases at Control times')
 
+
+%% Uncomment and run if you want to change number and/or identity of snips
+% num_snips = 5;
+% sample_idx = randi(length(var_stim_on), 1, num_snips);
+
+%% Extract snippets of filtered signal and their hilbert phase near stim_times
+
+filt_snips = cell(num_snips,2);
+filt_snip_phases = cell(num_snips,2);
+filt_stim_start = nearest_idx3(var_stim_on(sample_idx) + w(1), this_lfp.tvec);
+filt_control_start = nearest_idx3(control_on(sample_idx) + w(1), this_lfp.tvec);
+
+%% Add desctiption to how the data is organized in these cells
+for iS = 1:num_snips
+    filt_snips{iS,1} = cellfun(@(x) [x.data(filt_stim_start(iS):filt_stim_start(iS) + length(this_tvec) - 1)], filt_lfp, 'UniformOutput', false);
+    filt_snip_phases{iS,1} = cellfun(@(x) [x(filt_stim_start(iS):filt_stim_start(iS) +  length(this_tvec) - 1)], filt_phase, 'UniformOutput', false);
+    filt_snips{iS,2} = cellfun(@(x) [x.data(filt_control_start(iS):filt_control_start(iS) + length(this_tvec) - 1)], filt_lfp, 'UniformOutput', false);
+    filt_snip_phases{iS,2} = cellfun(@(x) [x(filt_control_start(iS):filt_control_start(iS) +  length(this_tvec) - 1)], filt_phase, 'UniformOutput', false);
+end
+
+%% Plot a figure for each Snippet 
+for iS = 1:num_snips
+    figure
+    
+    % Plot Delta stuff
+    
+    % Plot stim stuff
+    subplot(4,4,1)
+    hold on
+    plot(this_tvec, filt_snips{iS,1}{1,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,1}{1,2}, 'red');
+    plot(this_tvec, this_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Delta Signal at stim')
+
+    subplot(4,4,5)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,1}{1,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,1}{1,2}, 'red');
+    xline(0, 'black')
+    title('Delta Phase at stim')
+    
+    % Plot control stuff
+    subplot(4,4,9)
+    hold on
+    plot(this_tvec, filt_snips{iS,2}{1,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,2}{1,2}, 'red');
+    plot(this_tvec, control_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Delta Signal at control')
+    
+    subplot(4,4,13)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,2}{1,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,2}{1,2}, 'red');
+    xline(0, 'black')
+    title('Delta Phase at control')
+    
+    % Plot Theta stuff
+    
+    % Plot stim stuff
+    subplot(4,4,2)
+    hold on
+    plot(this_tvec, filt_snips{iS,1}{2,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,1}{2,2}, 'red');
+    plot(this_tvec, this_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Theta Signal at stim')
+
+    subplot(4,4,6)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,1}{2,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,1}{2,2}, 'red');
+    xline(0, 'black')
+    title('Theta Phase at stim')
+    
+    % Plot control stuff
+    subplot(4,4,10)
+    hold on
+    plot(this_tvec, filt_snips{iS,2}{2,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,2}{2,2}, 'red');
+    plot(this_tvec, control_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Theta Signal at control')
+    
+    subplot(4,4,14)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,2}{2,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,2}{2,2}, 'red');
+    xline(0, 'black')
+    title('Theta Phase at control')
+    
+    % Plot Slow Gamma-ish stuff
+    
+    % Plot stim stuff
+    subplot(4,4,3)
+    hold on
+    plot(this_tvec, filt_snips{iS,1}{3,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,1}{3,2}, 'red');
+    plot(this_tvec, this_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Slow Gamma-ish Signal at stim')
+
+    subplot(4,4,7)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,1}{3,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,1}{3,2}, 'red');
+    xline(0, 'black')
+    title('Slow Gamma-ish Phase at stim')
+    
+    % Plot control stuff
+    subplot(4,4,11)
+    hold on
+    plot(this_tvec, filt_snips{iS,2}{3,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,2}{3,2}, 'red');
+    plot(this_tvec, control_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Slow Gamma-ish Signal at control')
+    
+    subplot(4,4,15)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,2}{3,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,2}{3,2}, 'red');
+    xline(0, 'black')
+    title('Slow Gamma-ish Phase at control')
+    
+    % Plot Fast Gamma-ish stuff
+    
+    % Plot stim stuff
+    subplot(4,4,4)
+    hold on
+    plot(this_tvec, filt_snips{iS,1}{4,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,1}{4,2}, 'red');
+    plot(this_tvec, this_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Fast Gamma-ish Signal at stim')
+
+    subplot(4,4,8)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,1}{4,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,1}{4,2}, 'red');
+    xline(0, 'black')
+    title('Fast Gamma-ish Phase at stim')
+    
+    % Plot control stuff
+    subplot(4,4,12)
+    hold on
+    plot(this_tvec, filt_snips{iS,2}{4,1}, 'blue');
+    plot(this_tvec, filt_snips{iS,2}{4,2}, 'red');
+    plot(this_tvec, control_on_sta(sample_idx(iS),:), 'green');
+    xline(0, 'black')
+    title('Fast Gamma-ish Signal at control')
+    
+    subplot(4,4,16)
+    hold on
+    plot(this_tvec, filt_snip_phases{iS,2}{4,1}, 'blue');
+    plot(this_tvec, filt_snip_phases{iS,2}{4,2}, 'red');
+    xline(0, 'black')
+    title('Fast Gamma-ish Phase at control')
+end
 

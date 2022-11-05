@@ -200,7 +200,7 @@ if cfg.getRatings
 end
 
 % check if ExpKeys available
-keys_f = FindFiles('*keys.m');
+keys_f = FindFiles('*Keys.m');
 if ~isempty(keys_f)
     try
     run(keys_f{1});

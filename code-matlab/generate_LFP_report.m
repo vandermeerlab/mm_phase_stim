@@ -1,6 +1,6 @@
 % Assumes that references and all LFP channels have the same sampling
 % frequency
-cd('E:\Dropbox (Dartmouth College)\manish_data\M074\M074-2020-12-04');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-28');
 LoadExpKeys;
 evs = LoadEvents([]);
 % Add delay to timing offsets if source is LED
