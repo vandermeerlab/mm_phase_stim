@@ -4,32 +4,38 @@ function statedep_summary
 %
 %
 %
-STATE_init
-%% defaults
+% STATE_init
+% %% defaults
+% 
+% 
+% global PARAMS
+% if isunix
+%     addpath(genpath('/Users/jericcarmichael/Documents/GitHub/vandermeerlab/code-matlab/shared'));
+%     addpath('/Users/jericcarmichael/Documents/GitHub/EC_state/Basic_functions');
+%     
+%     all_fig_dir = '/Volumes/Fenrir/State_dep/all_checks/';
+%     all_lat_dir = '/Volumes/Fenrir/State_dep/all_lat/';
+%     all_ccf_dir = '/Volumes/Fenrir/State_dep/all_ccf/';
+%     summary_dir = '/Volumes/Fenrir/State_dep/Summary/';
+% else
+%     addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\vandermeerlab\code-matlab\shared'));
+%     addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\EC_State'))
+%     
+%     all_fig_dir = 'G:\State_data\all_checks\';
+%     all_lat_dir = 'G:\State_data\all_lat\';
+%     
+% end
 
+% mkdir(all_lat_dir); mkdir(all_fig_dir);
 
-global PARAMS
-if isunix
-    addpath(genpath('/Users/jericcarmichael/Documents/GitHub/vandermeerlab/code-matlab/shared'));
-    addpath('/Users/jericcarmichael/Documents/GitHub/EC_state/Basic_functions');
-    
-    all_fig_dir = '/Volumes/Fenrir/State_dep/all_checks/';
-    all_lat_dir = '/Volumes/Fenrir/State_dep/all_lat/';
-    all_ccf_dir = '/Volumes/Fenrir/State_dep/all_ccf/';
-    summary_dir = '/Volumes/Fenrir/State_dep/Summary/';
-else
-    addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\vandermeerlab\code-matlab\shared'));
-    addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\EC_State'))
-    
-    all_fig_dir = 'G:\State_data\all_checks\';
-    all_lat_dir = 'G:\State_data\all_lat\';
-    
-end
+all_lat_dir = 'E:\temp_phase_stim\ED\all_latencies';
+% all_fig_dir = 'E:\temp_phase_stim\ED\M16-2019-02-18_vStr_4p0_light_cells_TT4_min\figures';
+summary_dir = 'E:\temp_phase_stim\ED\summary\';
 
-mkdir(all_lat_dir); mkdir(all_fig_dir);
+set(0, 'DefaultTextInterpreter', 'none')
+set(0, 'DefaultLegendInterpreter', 'none')
 
-
-
+PARAMS.Good_cells = {'M16_2019_02_18_TT04_01_Good'};
 font_size = 18;
 %% generate a latency and count summary
 cd(all_lat_dir);
@@ -252,7 +258,7 @@ SetFigure([], gcf)
 set(gcf, 'position', [282   50  1100  800])
 ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['Zscore v Shuf per stim across cells'], 'fontsize', font_size)
-saveas(gcf, [summary_dir 'Summary_resp_v_shuf.png']);
+saveas(gcf, [summary_dir 'Summary_resp_v_shuf.fig']);
 saveas_eps('Summary_resp_v_shuf', summary_dir)
 
 % make a plot just for the color bar
@@ -332,7 +338,7 @@ line([0 0.7], [1.96, 1.96], 'color', [0.3 0.3 0.3])
 line([0 0.7], [3.1, 3.1], 'color', [0.3, 0.3, 0.3])
 
 SetFigure([], gcf)
-saveas(gcf, [summary_dir 'Summary_resp_ratio.png']);
+saveas(gcf, [summary_dir 'Summary_resp_ratio.fig']);
 saveas_eps('Summary_resp_ratio', summary_dir)
 
 % extra legend figure
@@ -561,7 +567,7 @@ end
 title('vStr')
 
 SetFigure([], gcf)
-saveas(gcf, [summary_dir 'Summary_Pie.png']);
+saveas(gcf, [summary_dir 'Summary_Pie.fig']);
 saveas_eps('Summary_Pie', summary_dir)
 %% format for GLM
 cell_list = fieldnames(all_cells);
@@ -767,14 +773,14 @@ set(gca,'xtick', 1:length(models), 'xticklabel', strrep(models,'_', ' '),'XTickL
 set(gca, 'yticklabel', [])
 ylabel('cell number')
 title('RMSE relative to baseline model')
-saveas(gcf, [summary_dir 'GLM_MSE.png']);
+saveas(gcf, [summary_dir 'GLM_MSE.fig']);
 saveas_eps('GLM_MSE', summary_dir)
 
 figure(211)
 imagesc(all_tstat.mat)
 set(gca,'xtick', 1:length(all_tstat_name), 'xticklabel', strrep(all_tstat_name, '_', ' '),'XTickLabelRotation', 45)
 title('mean t-stat')
-saveas(gcf, [summary_dir 'GLM_tstat.png']);
+saveas(gcf, [summary_dir 'GLM_tstat.fig']);
 saveas_eps('GLM_tstat', summary_dir)
 
 figure(212)
@@ -944,7 +950,7 @@ ylabel('cell number')
 % ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['Latency to first spike across cells'], 'fontsize', font_size)
 %
-% saveas(gcf, [summary_dir 'Summary_latency_raw.png']);
+% saveas(gcf, [summary_dir 'Summary_latency_raw.fig']);
 % saveas_eps('Summary_latency_raw', summary_dir)
 % %%
 % figure(2)
@@ -969,7 +975,7 @@ ylabel('cell number')
 % ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['Latency to first spike across cells (above 2d of shuf)'], 'fontsize', font_size)
 %
-% saveas(gcf, [summary_dir 'Summary_latency_zshuf.png']);
+% saveas(gcf, [summary_dir 'Summary_latency_zshuf.fig']);
 % saveas_eps('Summary_latency_z_shuf', summary_dir)
 % %%
 % % same but for zscore
@@ -994,7 +1000,7 @@ ylabel('cell number')
 % set(gcf, 'position', [282   50  1200  720])
 % ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['Zscore first spike latency across cells'], 'fontsize', font_size)
-% saveas(gcf, [summary_dir 'Summary_zscore.png']);
+% saveas(gcf, [summary_dir 'Summary_zscore.fig']);
 % saveas_eps('Summary_zscore', summary_dir)
 %
 % %% count version
@@ -1020,7 +1026,7 @@ ylabel('cell number')
 % set(gcf, 'position', [282   50  1200  720])
 % ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['nSpikes per stim across cells'], 'fontsize', font_size)
-% saveas(gcf, [summary_dir 'Summary_count.png']);
+% saveas(gcf, [summary_dir 'Summary_count.fig']);
 % saveas_eps('Summary_count', summary_dir)
 %
 %
@@ -1046,7 +1052,7 @@ ylabel('cell number')
 % set(gcf, 'position', [282   50  1200  720])
 % ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['Response per stim across cells'], 'fontsize', font_size)
-% saveas(gcf, [summary_dir 'Summary_resp.png']);
+% saveas(gcf, [summary_dir 'Summary_resp.fig']);
 % saveas_eps('Summary_resp', summary_dir)
 %
 % % zscore
@@ -1071,7 +1077,7 @@ ylabel('cell number')
 % set(gcf, 'position', [282   50  1200  720])
 % ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['Zscore response per stim across cells'], 'fontsize', font_size)
-% saveas(gcf, [summary_dir 'Summary_resp_z.png']);
+% saveas(gcf, [summary_dir 'Summary_resp_z.fig']);
 % saveas_eps('Summary_resp_z', summary_dir)
 %
 % % relative to all
@@ -1097,7 +1103,7 @@ ylabel('cell number')
 % set(gcf, 'position', [282   50  1200  720])
 % ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
 % text(0.35, 0.98,['Relative response per stim across cells'], 'fontsize', font_size)
-% saveas(gcf, [summary_dir 'Summary_resp_v_all.png']);
+% saveas(gcf, [summary_dir 'Summary_resp_v_all.fig']);
 % saveas_eps('Summary_resp_v_all', summary_dir)
 %%
 
