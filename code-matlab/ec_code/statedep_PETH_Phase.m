@@ -1,34 +1,36 @@
 function statedep_latency_phase_sandbox
 % restoredefaultpath;
 
-if isunix
-    addpath(genpath('/Users/jericcarmichael/Documents/GitHub/vandermeerlab/code-matlab/shared'));
-    addpath('/Users/jericcarmichael/Documents/GitHub/EC_state/Basic_functions');
-    
-    all_fig_dir = '/Volumes/Fenrir/State_dep/all_checks/';
-    %     all_lat_dir = '/Volumes/Fenrir/State_dep/all_lat/';
-    
-else
-    %     addpath(genpath('C:\Users\mvdm\Documents\GitHub\vandermeerlab\code-matlab\shared'));
-    addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\vandermeerlab\code-matlab\shared'));
-    %addpath(genpath('D:\My_Documents\GitHub\vandermeerlab\code-matlab\shared'));
-    %     addpath('C:\Users\mvdm\Documents\GitHub\EC_state\Basic_functions');
-    addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\EC_State'))
-    %addpath('D:\My_Documents\GitHub\EC_state\Basic_functions');
-    all_fig_dir = 'G:\State_data\all_checks\';
-    %     all_lat_dir = 'G:\State_data\all_lat\';
-    
-    %     %cd('D:\data\EC_state\M14_2018-12-01_vStr_light_min');
-    %     cd('C:\data\state-dep\M14_2018-12-01_vStr_light_min');
-    %     %cd('D:\data\EC_state\M13-2018-12-05_dStr_2p2_light_min');
-    %     cd('C:\data\state-dep\M13-2018-12-05_dStr_2p2_light_min');
-    
-end
+% if isunix
+%     addpath(genpath('/Users/jericcarmichael/Documents/GitHub/vandermeerlab/code-matlab/shared'));
+%     addpath('/Users/jericcarmichael/Documents/GitHub/EC_state/Basic_functions');
+%     
+%     all_fig_dir = '/Volumes/Fenrir/State_dep/all_checks/';
+%     %     all_lat_dir = '/Volumes/Fenrir/State_dep/all_lat/';
+%     
+% else
+%     %     addpath(genpath('C:\Users\mvdm\Documents\GitHub\vandermeerlab\code-matlab\shared'));
+%     addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\vandermeerlab\code-matlab\shared'));
+%     %addpath(genpath('D:\My_Documents\GitHub\vandermeerlab\code-matlab\shared'));
+%     %     addpath('C:\Users\mvdm\Documents\GitHub\EC_state\Basic_functions');
+%     addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\EC_State'))
+%     %addpath('D:\My_Documents\GitHub\EC_state\Basic_functions');
+%     all_fig_dir = 'G:\State_data\all_checks\';
+%     %     all_lat_dir = 'G:\State_data\all_lat\';
+%     
+%     %     %cd('D:\data\EC_state\M14_2018-12-01_vStr_light_min');
+%     %     cd('C:\data\state-dep\M14_2018-12-01_vStr_light_min');
+%     %     %cd('D:\data\EC_state\M13-2018-12-05_dStr_2p2_light_min');
+%     %     cd('C:\data\state-dep\M13-2018-12-05_dStr_2p2_light_min');
+%     
+% end
+% 
+% global PARAMS
+% 
 
-global PARAMS
+% mkdir(all_fig_dir);
 
-
-mkdir(all_fig_dir);
+cd('E:\temp_phase_stim\ED\M19-2019-04-15_dStr_4p0_light_cells_TT6_min')
 %% defaults
 font_size = 18;
 LoadExpKeys
@@ -72,7 +74,7 @@ if isfield(ExpKeys, 'goodCell')
     cfg.fc = ExpKeys.goodCell;
 end
 S = LoadSpikes(cfg);
-
+%%
 for iC = 1:length(S.label)
     
     
@@ -85,8 +87,9 @@ for iC = 1:length(S.label)
         continue
     end
     %% get some LFP phases (filtfilt)
-    f_list = {[3 5], [7 10],[15 25], [30 40],[40 60], [60 80]};
-    f_list_label = {'3 - 5', '7 - 10', '15 - 25', '30 - 40', '40 - 60', '60 - 80'};
+    f_list = {[2 5], [6 10],[25 55], [65 100]};
+    f_list_label = {'2 - 5', '6 - 10', '25 - 55', '65 - 100'};
+    fstop_list = {[1.5 5.5], [5.5 10.5],[24.5 55.5], [64.5 100.5]};
 
     
     for iF = 1:length(f_list) % loop across freqs

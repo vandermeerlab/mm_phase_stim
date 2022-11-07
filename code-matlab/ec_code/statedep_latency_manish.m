@@ -1,4 +1,4 @@
-function statedep_latency_phase_sandbox
+function statedep_latency_phase_manish
 % restoredefaultpath;
 
 % if isunix
@@ -16,7 +16,7 @@ function statedep_latency_phase_sandbox
 %     addpath(genpath('D:\Users\mvdmlab\My_Documents\GitHub\EC_State'))
 %     %addpath('D:\My_Documents\GitHub\EC_state\Basic_functions');
 %     all_fig_dir = 'G:\State_data\all_checks\';
-%     all_lat_dir = 'G:\State_data\all_lat\';
+%     all_lat_dir = 'G:\State_data\all_lat\';good
 %     
 %     %     %cd('D:\data\EC_state\M14_2018-12-01_vStr_light_min');
 %     %     cd('C:\data\state-dep\M14_2018-12-01_vStr_light_min');
@@ -62,53 +62,47 @@ cfg_def.baseline_cor = 'on';
 
 %% load CSC
 cfg = [];
-%cfg.decimateByFactor = 30;
-cfg.fc = {ExpKeys.goodCSC};
-% cfg.decimateByFactor = 16;
-
-this_csc = LoadCSC(cfg);
-Fs = 1 ./ median(diff(this_csc.tvec));
-
-if this_csc.cfg.hdr{1}.SamplingFrequency >2000
-    cfg = [];
-    
-    d_fac = this_csc.cfg.hdr{1}.SamplingFrequency/2000;
-    cfg.decimateByFactor = d_fac; % get it to 2000Hz
-    
-    cfg.fc = {ExpKeys.goodCSC};    
+cfg.fc = ExpKeys.goodLFP;
+if contains(cfg.fc, '-')
+    temp = split(cfg.fc,'-');
+    cfg.fc = {cat(2,temp{1},'.ncs')};
     this_csc = LoadCSC(cfg);
+    cfg_temp.fc = {cat(2,temp{2},'.ncs')};
+    ref = LoadCSC(cfg_temp);
+    this_csc.data = this_csc.data - ref.data;
+    clear temp ref;
+else
+    this_csc = LoadCSC(cfg);
+end
+Fs = 1 ./ median(diff(this_csc.tvec));
+% Downsample the LFP
+if this_csc.cfg.hdr{1}.SamplingFrequency >2000
+    d_fac = this_csc.cfg.hdr{1}.SamplingFrequency/2000;
+    this_csc.data = decimate(this_csc.data,d_fac);
+    this_csc.tvec = this_csc.tvec(1:d_fac:end);
+    this_csc.cfg.hdr{1}.SamplingFrequency = this_csc.cfg.hdr{1}.SamplingFrequency./d_fac;
 end
 
 %% load events
-cfg = [];
-cfg.eventList = {ExpKeys.laser_on};
-cfg.eventLabel = {'laser on'};
-laser_on = LoadEvents(cfg);
+evs = LoadEvents([]);
+% cfg = [];
+% cfg.eventList = {'Starting Recording', 'Stopping Recording'};
+% cfg.eventLabel = {'start', 'stop'};
+% start_stop = LoadEvents(cfg);
 
-cfg = [];
-cfg.eventList = {'Starting Recording', 'Stopping Recording'};
-cfg.eventLabel = {'start', 'stop'};
-start_stop = LoadEvents(cfg);
-
-% find the longest recording
-for ii = 1:length(start_stop.t{1})
-    rec_times(ii) = start_stop.t{2}(ii)-start_stop.t{1}(ii);
-end
-[duration, main_rec_idx] = max(rec_times);
-disp(['Longest Recording interval is ' num2str(duration/60) ' minutes in recording slot number ' num2str(main_rec_idx)])
+% % find the longest recording
+% for ii = 1:length(start_stop.t{1})
+%     rec_times(ii) = start_stop.t{2}(ii)-start_stop.t{1}(ii);
+% end
+% [duration, main_rec_idx] = max(rec_times);
+% disp(['Longest Recording interval is ' num2str(duration/60) ' minutes in recording slot number ' num2str(main_rec_idx)])
+laser_on = evs.t{strcmp(evs.label,ExpKeys.trial_stim_on)};
 
 
-laser_on = restrict(laser_on, start_stop.t{1}(main_rec_idx), start_stop.t{2}(main_rec_idx));
-%Add the correction in delay for Laser
-laser_on.t{1} = laser_on.t{1} + 0.0011;
-% check number of pulses.
-if length(laser_on.t{1}) ~= 1000 && length(laser_on.t{1}) ~= 600 && length(laser_on.t{1}) ~= 1500
-    warning('Wrong number of laser pulses. %0.2f when it should be 1000 or in early sessions 600',length(laser_on.t{1}))
-    
-end
 
 %% load spikes
 cfg = []; cfg.getTTnumbers = 0;
+cfg.uint = '64';
 S = LoadSpikes(cfg);
 
 %% select a cell
@@ -118,7 +112,6 @@ for iC = 1:length(S.label)
     cfg_select.verbose = 0; 
     this_S = SelectTS(cfg_select, S, iC);
     cell_id = this_S.label{1}(1:end-2);
-    cell_id = strrep(cell_id, '_SS', '');
     
     % check if this is a 'good cell' and not an artifact or non-light mod
     % cell
@@ -126,7 +119,11 @@ for iC = 1:length(S.label)
     continue
     end
     
-
+%     if strcmpi(this_S.label{1}(end-4:end-2), 'Art')  || ~ismember([ExpKeys.subject_id '_' ExpKeys.date '_' cell_id], PARAMS.Good_cells) % don't bother processing artifacts
+%         continue
+%     end
+    
+    
     %% get some LFP phases (filtfilt)
     f_list = {[2 5], [6 10],[25 55], [65 100]};
     f_list_label = {'2 - 5', '6 - 10', '25 - 55', '65 - 100'};
@@ -148,7 +145,7 @@ for iC = 1:length(S.label)
                 
         
                 % get phase for each laser stim (actual)
-                stim_phase_idx = nearest_idx3(laser_on.t{1}, csc_f.tvec);
+                stim_phase_idx = nearest_idx3(laser_on, csc_f.tvec);
                 stim_phase = csc_f.data(stim_phase_idx);
                 % get the amp for each laser stim
                 stim_amp = csc_f.data_amp(stim_phase_idx);
@@ -164,39 +161,14 @@ for iC = 1:length(S.label)
 %                 subplot(4, 3, iF+3);
 %                 hist(stim_phase, 36);
                 pie(n_val)
-%                 saveas(gcf, [all_fig_dir ExpKeys.subject '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_phase_dist.fig']);
-                
-                
-%         cfg_filt = [];
-%         cfg_filt.fpass = f_list{iF};
-%         cfg_filt.fstop = fstop_list{iF};
-%         cfg_filt.debug = 0;
-%         cfg_filt.filtfilt = 0;
-%         cfg_filt.pad = [];
-%         cfg_filt.filter_dir = PARAMS.filter_dir; % where to put built filters
-%         if length(laser_on.t{1}) < 1500
-%             cfg_filt.isi = 3;
-%         else
-%             cfg_filt.isi = 2;
-%             
-%         end
-%         % find any prebuilt filters
-%         if exist([PARAMS.filter_dir 'Filt_' num2str(round(f_list{iF}(1))) '_' num2str(round(f_list{iF}(2))) '_Fs_' num2str(this_csc.cfg.hdr{1}.SamplingFrequency) '.mat'], 'file')
-%             load([PARAMS.filter_dir 'Filt_' num2str(round(f_list{iF}(1))) '_' num2str(round(f_list{iF}(2))) '_Fs_' num2str(this_csc.cfg.hdr{1}.SamplingFrequency) '.mat']);
-%             cfg_filt.filter_in = flt;
-%         else
-%             cfg_filt.filter_in = [];
-%         end
-%         
-%         stim_phase = FindPreStimPhase(cfg_filt, laser_on, this_csc);
-
+%                 saveas(gcf, [all_fig_dir ExpKeys.subject_id '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_phase_dist.fig']);
+   
 
         % convert to histogram of spikes relative to laser onset (based on ccf function by MvdM
         cfg_ccf =[];
         cfg_ccf.smooth = 0; % get raw values
         cfg_ccf.binsize = 0.0001;
         cfg_ccf.max_t = 0.015;
-        %         [ccf_raw, tvec] = ccf(cfg_ccf, laser_on.t{1}, this_S.t{1});
         
         xbin_centers = -cfg_ccf.max_t-cfg_ccf.binsize:cfg_ccf.binsize:cfg_ccf.max_t+cfg_ccf.binsize; % first and last bins are to be deleted later
         
@@ -207,14 +179,14 @@ for iC = 1:length(S.label)
         [~, edges, ~] = histcounts(-pi:pi, n_phases, 'BinLimits', [-pi, pi]);
         
         % allocate some space
-        all_lat =  NaN(2, length(laser_on.t{1}));
-        all_lat_shuf =  NaN(2, length(laser_on.t{1}),nShuf);
-        all_count = NaN(2,length(laser_on.t{1}));
-        all_count_shuf = NaN(2,length(laser_on.t{1}), nShuf);
-        all_phase_vals = NaN(1,length(laser_on.t{1}));
-        all_resp = NaN(2, length(laser_on.t{1}));
-        all_resp_shuf = NaN(2,length(laser_on.t{1}), nShuf);
-        all_amp =  NaN(2, length(laser_on.t{1})); % get the phase at each stim
+        all_lat =  NaN(2, length(laser_on));
+        all_lat_shuf =  NaN(2, length(laser_on),nShuf);
+        all_count = NaN(2,length(laser_on));
+        all_count_shuf = NaN(2,length(laser_on), nShuf);
+        all_phase_vals = NaN(1,length(laser_on));
+        all_resp = NaN(2, length(laser_on));
+        all_resp_shuf = NaN(2,length(laser_on), nShuf);
+        all_amp =  NaN(2, length(laser_on)); % get the phase at each stim
         
         % track the amplitude at each stim
         all_amp(2, :) = stim_amp; % get the amplitude at each stim for the given frequency
@@ -238,10 +210,10 @@ for iC = 1:length(S.label)
         
         % get the latencies
         [~, cell_idx] = ismember(this_S.label, ExpKeys.goodCell);
-        for iEvt = ExpKeys.goodTrials(cell_idx,1):1:min(ExpKeys.goodTrials(cell_idx,2), length(laser_on.t{1}))
+        for iEvt = ExpKeys.goodTrials(cell_idx,1):1:ExpKeys.goodTrials(cell_idx,2)
             
-            if this_S.t{1}(nearest_idx3(laser_on.t{1}(iEvt), this_S.t{1}, 1)) > laser_on.t{1}(iEvt)
-                all_lat(2, iEvt) = this_S.t{1}(nearest_idx3(laser_on.t{1}(iEvt), this_S.t{1}, 1)) - laser_on.t{1}(iEvt);
+            if this_S.t{1}(nearest_idx3(laser_on(iEvt), this_S.t{1}, 1)) > laser_on(iEvt)
+                all_lat(2, iEvt) = this_S.t{1}(nearest_idx3(laser_on(iEvt), this_S.t{1}, 1)) - laser_on(iEvt);
             else
                 all_lat(2, iEvt) = NaN;
             end
@@ -257,7 +229,7 @@ for iC = 1:length(S.label)
         
         n_drops = zeros(n_phases, length(all_lat));
         
-        for iEvt = ExpKeys.goodTrials(cell_idx,1):1 :min(ExpKeys.goodTrials(cell_idx,2), length(laser_on.t{1}))
+        for iEvt = ExpKeys.goodTrials(cell_idx,1):1 :ExpKeys.goodTrials(cell_idx,2)
             if isnan(all_lat(2,iEvt))
                 continue
             else % if there is a spike within the 'pre' window remove that event.
@@ -270,13 +242,13 @@ for iC = 1:length(S.label)
                 % the histogram of spike latencies
                 if all_lat(2,iEvt) < (xbin_centers(peak_idx)+0.001) && all_lat(2,iEvt) > (xbin_centers(peak_idx)-0.001)
                     % get the spike count
-                    this_event_spikes = restrict(this_S, (xbin_centers(peak_idx)-0.001)+laser_on.t{1}(iEvt), (xbin_centers(peak_idx)+0.001)+laser_on.t{1}(iEvt));
+                    this_event_spikes = restrict(this_S, (xbin_centers(peak_idx)-0.001)+laser_on(iEvt), (xbin_centers(peak_idx)+0.001)+laser_on(iEvt));
                     all_count(2,iEvt) = length(this_event_spikes.t{1});
                     % baseline correct (take the same window before the
                     % event and subtract that from the post-event
                     if strcmp(cfg_def.baseline_cor, 'on') || cfg_def.baseline_cor ==1
                         
-                        this_event_spikes_pre = restrict(this_S, laser_on.t{1}(iEvt)-0.002,laser_on.t{1}(iEvt));
+                        this_event_spikes_pre = restrict(this_S, laser_on(iEvt)-0.002,laser_on(iEvt));
                         all_base_cout(2,iEvt) = length(this_event_spikes.t{1}) - length(this_event_spikes_pre.t{1});
                     end
                 end
@@ -290,7 +262,7 @@ for iC = 1:length(S.label)
         xbin_centers_ms = xbin_centers*1000;
         
         % get the response 1 or nan
-        for iEvt = ExpKeys.goodTrials(cell_idx,1): min(ExpKeys.goodTrials(cell_idx,2), length(laser_on.t{1}))
+        for iEvt = ExpKeys.goodTrials(cell_idx,1): ExpKeys.goodTrials(cell_idx,2)
             if ~isnan(all_count(2, iEvt)) && all_count(2,iEvt) >=1
                 all_resp(2,iEvt) = 1;
             else
@@ -312,7 +284,7 @@ for iC = 1:length(S.label)
             
         end
         % average over shuffles to get a temporary shuffle array
-        for iEvt = 1:length(laser_on.t{1})
+        for iEvt = 1:length(laser_on)
             temp_lat_shuf(iEvt) = nanmean(all_lat_shuf(2,iEvt,:));
             temp_count_shuf(iEvt) = nanmean(all_count_shuf(2,iEvt,:));
             
@@ -340,7 +312,6 @@ for iC = 1:length(S.label)
         end
         
         %% make a figure
-        figure(1);
         c_ord = linspecer(n_phases);
         
         % try to make a colored sine wave to match the phases.
@@ -391,10 +362,10 @@ for iC = 1:length(S.label)
         %         SetFigure([], gcf)
         %         set(gcf, 'position', [435, 50, 949, 697]);
         %
-        ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
-        text(0.35, 0.98,[ExpKeys.subject '_' ExpKeys.date '  Cell ' cell_id], 'fontsize', font_size)
-        saveas(gcf, [all_fig_dir ExpKeys.subject '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency.fig']);
-%         saveas_eps([ExpKeys.subject '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency'], all_fig_dir)
+        ha = axes('Position',[0 0 1 1],'Xlim',[-0.1 1.1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+        text(0.35, 0.98,cell_id, 'fontsize', font_size)
+        saveas(gcf, [all_fig_dir cell_id '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency.fig']);
+%         saveas_eps([cell_id '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency'], all_fig_dir)
         close
         %%
         %         % make a count figure
@@ -418,9 +389,9 @@ for iC = 1:length(S.label)
         %         set(gcf, 'position', [440    37   930   761]);
         %
         %         ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
-        %         text(0.35, 0.98,[ExpKeys.subject '_' ExpKeys.date '  Cell ' cell_id], 'fontsize', font_size)
-        %         saveas(gcf, [all_fig_dir ExpKeys.subject '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency.png']);
-        %         saveas_eps([ExpKeys.subject '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency'], all_fig_dir)
+        %         text(0.35, 0.98,[ExpKeys.subject_id '_' ExpKeys.date '  Cell ' cell_id], 'fontsize', font_size)
+        %         saveas(gcf, [all_fig_dir ExpKeys.subject_id '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency.png']);
+        %         saveas_eps([ExpKeys.subject_id '_' ExpKeys.date '_' cell_id(1:end-3) '_f' num2str(floor(f_list{iF}(1))) '_' num2str(floor(f_list{iF}(2))) '_latency'], all_fig_dir)
         %         %
         %         close all
         %         %                 if strfind(f_list_label{iF}), '.')
@@ -428,22 +399,22 @@ for iC = 1:length(S.label)
         %         %                 else
         %
         %                 end
-        out.(cell_id).(freq_label).latency = all_lat;
-        out.(cell_id).(freq_label).latency_shuf = temp_lat_shuf;
-        out.(cell_id).(freq_label).count = all_count;
-        out.(cell_id).(freq_label).resp = all_resp;
-        out.(cell_id).(freq_label).resp_shuf = all_resp_shuf_mean;
-        out.(cell_id).(freq_label).amp = all_amp;
-        out.(cell_id).(freq_label).phase_vals = all_phase_vals;
+        out.(strrep(cell_id,'-','_')).(freq_label).latency = all_lat;
+        out.(strrep(cell_id,'-','_')).(freq_label).latency_shuf = temp_lat_shuf;
+        out.(strrep(cell_id,'-','_')).(freq_label).count = all_count;
+        out.(strrep(cell_id,'-','_')).(freq_label).resp = all_resp;
+        out.(strrep(cell_id,'-','_')).(freq_label).resp_shuf = all_resp_shuf_mean;
+        out.(strrep(cell_id,'-','_')).(freq_label).amp = all_amp;
+        out.(strrep(cell_id,'-','_')).(freq_label).phase_vals = all_phase_vals;
 
 
         close all
     end % end freq loop
     % put the cell info in here for later
-    out.(cell_id).ExpKeys = ExpKeys;
+    out.(strrep(cell_id,'-','_')).ExpKeys = ExpKeys;
 end % end cell loop
 if exist('out', 'var')
-    save([ all_lat_dir  ExpKeys.subject '_' ExpKeys.date '_lat.mat'], 'out', '-v7.3')
+    save(strcat(all_lat_dir, ExpKeys.subject_id, '-', ExpKeys.date, '_lat.mat'), 'out', '-v7.3')
 end
 
 end % end of function

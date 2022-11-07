@@ -4,7 +4,7 @@
 % 'E:\Dropbox (Dartmouth College)\manish_data\M235\M235-2021-07-16' % Laser
 % 'E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-08-03' % LED
 
-folder = 'E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-21';
+folder = 'E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-30';
 cd(folder);
 LoadExpKeys;
 evs = LoadEvents([]);
