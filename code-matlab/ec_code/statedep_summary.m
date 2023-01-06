@@ -214,7 +214,7 @@ labels = labels(~cellfun('isempty',labels));
 %% Manish Results Figure
 fig = figure;
 %Plot 2-5 Hz
-ax1 = subplot(3,2,[1,3]);
+ax1 = subplot(1,2,1);
 iF = find(strcmp('f_2_5', f_list));
 p1 = imagesc(all_resp_v_shuf_sort(:,:,iF));
 caxis([-2.5 2.5])
@@ -222,16 +222,17 @@ ax1.Box = 'off';
 ax1.XTick = {};
 ax1.TickDir = 'out';
 ax1.YAxis.Label.String = 'Cells';
-ax1.YAxis.FontSize = 16;
+ax1.YAxis.FontSize = 24;
 ax1.XAxis.Label.String = 'Phase';
 ax1.XAxis.FontSize = 16;
 ax1.YTick = [1:length(all_resp_v_shuf_sort(:,:,iF))];
 ax1.YTickLabel = labels;
 ax1.Title.String = '2 - 5 Hz';
 ax1.Title.FontSize = 24;
+% pbaspect([0.3485 1 0.3484])
 
 %Plot 6-10 Hz
-ax2 = subplot(3,2,[2,4]);
+ax2 = subplot(1,2,2);
 iF = find(strcmp('f_6_10', f_list));
 p2 = imagesc(all_resp_v_shuf_sort(:,:,iF));
 caxis([-2.5 2.5])
@@ -239,16 +240,18 @@ ax2.Box = 'off';
 ax2.XTick = {};
 ax2.TickDir = 'out';
 ax2.YAxis.Label.String = 'Cells';
-ax2.YAxis.FontSize = 16;
+ax2.YAxis.FontSize = 24;
 ax2.XAxis.Label.String = 'Phase';
 ax2.XAxis.FontSize = 16;
 ax2.YTick = [1:length(all_resp_v_shuf_sort(:,:,iF))];
 ax2.YTickLabel = labels;
 ax2.Title.String = ' 6 - 10 Hz';
 ax2.Title.FontSize = 24;
-
+% pbaspect([0.3485 1 0.3484])
+%%
+fig = figure;
 %Plot 25-55 Hz
-ax3 = subplot(3,2,5);
+ax3 = subplot(2,2,3);
 iF = find(strcmp('f_25_55', f_list));
 p3 = imagesc(all_resp_v_shuf_sort(~isMD,:,iF));
 caxis([-2.5 2.5])
@@ -256,16 +259,17 @@ ax3.Box = 'off';
 ax3.XTick = {};
 ax3.TickDir = 'out';
 ax3.YAxis.Label.String = 'Cells';
-ax3.YAxis.FontSize = 16;
+ax3.YAxis.FontSize = 24;
 ax3.XAxis.Label.String = 'Phase';
 ax3.XAxis.FontSize = 16;
 ax3.YTick = [1:length(all_resp_v_shuf_sort(~isMD,:,iF))];
 ax3.YTickLabel = labels;
 ax3.Title.String = '25 - 55 Hz';
 ax3.Title.FontSize = 24;
+% pbaspect([2*0.3485 1 0.3484])
 
 %Plot 65-100 Hz
-ax4 = subplot(3,2,6);
+ax4 = subplot(2,2,4);
 iF = find(strcmp('f_65_100', f_list));
 p4 = imagesc(all_resp_v_shuf_sort(~isMD,:,iF));
 caxis([-2.5 2.5])
@@ -273,17 +277,16 @@ ax4.Box = 'off';
 ax4.XTick = {};
 ax4.TickDir = 'out';
 ax4.YAxis.Label.String = 'Cells';
-ax4.YAxis.FontSize = 16;
+ax4.YAxis.FontSize = 24;
 ax4.XAxis.Label.String = 'Phase';
 ax4.XAxis.FontSize = 16;
 ax4.YTick = [1:length(all_resp_v_shuf_sort(~isMD,:,iF))];
 ax4.YTickLabel = labels;
 ax4.Title.String = '65 - 100 Hz';
 ax4.Title.FontSize = 24;
+% pbaspect([2.7*0.3485 1 0.3484])
 
 %% Manish summary response plot
-
-
 f_cor = linspecer(2);
 figure(9)
 freq_colors = [];
@@ -307,9 +310,11 @@ depth_all_1d = reshape(repmat(depth_sort(isMD)',1,size(x_phase_resp_sort(isMD,:)
 for iC = 1:34 % this is really_hacky %length(resp_all_1d)
     hold on
     if depth_all_1d(iC) >3.5
-        S(iC) = scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled');
+%         S(iC) = scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled');
+        S(iC) = scatter(resp_ratio_1d(iC),resp_all_1d(iC), 300,freq_colors_1d{iC}, 'filled');
     else
-        scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled', 'd');
+%         scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled', 'd');
+        scatter(resp_ratio_1d(iC), resp_all_1d(iC),300,freq_colors_1d{iC}, 'filled', 'd');
     end
 end
 % Then scatter Eric Data
@@ -333,13 +338,16 @@ depth_all_1d = reshape(repmat(depth_sort(~isMD)',1,size(x_phase_resp_sort(~isMD,
 
 for iC = 1:length(resp_all_1d)
     if depth_all_1d(iC) >3.5
-        S(iC) = scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled');
+%         S(iC) = scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled');
+            S(iC) = scatter(resp_ratio_1d(iC), resp_all_1d(iC), 300,freq_colors_1d{iC}, 'filled');
     else
-        scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled', 'd');
+%         scatter(resp_all_1d(iC), resp_ratio_1d(iC),300,freq_colors_1d{iC}, 'filled', 'd');
+            scatter(resp_ratio_1d(iC),resp_all_1d(iC), 300,freq_colors_1d{iC}, 'filled', 'd');
     end
 end
 
 %
+%%
 xlabel('Overall Response Probability')
 ylabel('Z-scored response (max phase/min phase)')
 %ylabel('ratio of max phase / min phase response')
@@ -350,6 +358,7 @@ end
 lgd = legend(h, leg_freq, 'location', 'NorthEastOutside');
 legend('boxoff')
 lgd.FontSize = 18;
+
 q0 = yline(1.96, 'color', 'black');
 q0.Annotation.LegendInformation.IconDisplayStyle = 'off';
 h(1) = plot(NaN,NaN,'o', 'color', 'k', 'MarkerFaceColor', 'k');
@@ -366,6 +375,36 @@ ax.XLim =[0 1];
 xlim([cut_off 1])
 ylim([-2 12])
 %%
+ylabel('Overall Response Probability')
+xlabel('Z-scored response (max phase/min phase)')
+%ylabel('ratio of max phase / min phase response')
+h = zeros(size(all_resp_ratio,2), 1);
+for iF = 1:size(all_resp_ratio,2)
+    h(iF) = plot(NaN,NaN,'o', 'color', f_cor(iF, :), 'MarkerFaceColor', f_cor(iF,:));
+end
+lgd = legend(h, leg_freq, 'location', 'NorthEast');
+legend('boxoff')
+lgd.FontSize = 18;
+
+
+q0 = xline(1.96, 'color', 'black');
+q0.Annotation.LegendInformation.IconDisplayStyle = 'off';
+h(1) = plot(NaN,NaN,'o', 'color', 'k', 'MarkerFaceColor', 'k');
+h(2) = plot(NaN,NaN,'d', 'color', 'k', 'MarkerFaceColor', 'k');
+ax = gca;
+ax.Legend.String = {'2 - 5 Hz', '6 - 10 Hz', '25 - 55 Hz', '65 - 100 Hz', 'vStr', 'dStr'};
+ax.TickDir = 'out';
+ax.Box = 'off';
+ax.YTick = [0 0.25 0.5 0.75 1];
+ax.XTick = [-2 2 6 12];
+ax.XAxis.FontSize = 24;
+ax.YAxis.FontSize = 24;
+ax.YLim =[0 1];
+ylim([cut_off 1])
+xlim([-2 12])
+
+%%
+
 q0 = xline(1.96, 'color', 'black');
 q0.Annotation.LegendInformation.IconDisplayStyle = 'off';
 line([0 1.5], [1.96, 1.96], 'color', [0.3 0.3 0.3])

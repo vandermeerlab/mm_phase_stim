@@ -1,5 +1,5 @@
-% cd('D:\Dropbox (Dartmouth College)\vandermeerlab_tutorial\data\R016-2012-10-03');
-cd('/Users/manishm/Dropbox (Dartmouth College)/vandermeerlab_tutorial/data/R016-2012-10-03');
+cd('E:\Dropbox (Dartmouth College)\vandermeerlab_tutorial\data\R016\R016-2012-10-03');
+% cd('/Users/manishm/Dropbox (Dartmouth College)/vandermeerlab_tutorial/data/R016-2012-10-03');
 % goodGamma: {'R016-2012-10-03-CSC04d.ncs'
 % goodSWR: {'R016-2012-10-03-CSC02b.ncs'}
 % goodTheta: {'R016-2012-10-03-CSC02b.ncs'}
@@ -56,14 +56,15 @@ end
 
 
 %% Create random trials
-
-trial_data = cell(1,25);
-trial_phase = cell(1,25);
-trial_filt = cell(1,25);
-seeds = randi(length(lfp_prefilt{1}.data),1,25);
-for i = 1:25
+num_trials = 25;
+trial_data = cell(1,num_trials);
+trial_phase = cell(1,num_trials);
+trial_filt = cell(1,num_trials);
+prior_time = 1; %in sec
+seeds = randi(length(lfp_prefilt{1}.data),1,num_trials);
+for i = 1:num_trials
     t2 = lfp_prefilt{1}.tvec(seeds(i));
-    t1_idx = nearest_idx3(t2 - 2.5, lfp_prefilt{1}.tvec);
+    t1_idx = nearest_idx3(t2 - 1, lfp_prefilt{1}.tvec);
     % If the trial length is not even, make it so!
     if rem(seeds(i)-t1_idx, 2) == 0
         t1_idx = t1_idx-1;
@@ -88,23 +89,23 @@ all_sigmaFreqs = [1, 0.1, 0.01, 0.001, 0.0001];
 
 % model specifcations
 model_all.spec = true(1,5);
-model_lo_gamma.spec = [false(1,3), true, false];
-model_hi_gamma.spec = [false(1,4), true];
-model_gamma.spec = [false(1,3), true(1,2)];
-model_no_delta.spec = [false, true(1,4)];
-model_no_theta.spec = [true, false, true(1,3)];
-model_no_beta.spec = [true(1,2), false, true(1,2)];
-model_no_gamma.spec = ~model_gamma.spec;
-model_beta.spec = ~model_no_beta.spec;
-model_theta.spec = ~model_no_theta.spec;
-model_delta.spec = ~model_no_delta.spec;
-model_delta_theta.spec = [true(1,2), false(1,3)];
-model_gamma_delta.spec = model_gamma.spec | model_delta.spec;
-model_gamma_theta.spec = model_gamma.spec | model_theta.spec;
-model_gamma_beta.spec = model_gamma.spec | model_beta.spec;
-model_beta_theta.spec = model_beta.spec | model_theta.spec;
-model_hgamma_theta.spec = model_hi_gamma.spec | model_theta.spec;
-model_lgamma_theta.spec = model_lo_gamma.spec | model_theta.spec;
+% model_lo_gamma.spec = [false(1,3), true, false];
+% model_hi_gamma.spec = [false(1,4), true];
+% model_gamma.spec = [false(1,3), true(1,2)];
+% model_no_delta.spec = [false, true(1,4)];
+% model_no_theta.spec = [true, false, true(1,3)];
+% model_no_beta.spec = [true(1,2), false, true(1,2)];
+% model_no_gamma.spec = ~model_gamma.spec;
+% model_beta.spec = ~model_no_beta.spec;
+% model_theta.spec = ~model_no_theta.spec;
+% model_delta.spec = ~model_no_delta.spec;
+% model_delta_theta.spec = [true(1,2), false(1,3)];
+% model_gamma_delta.spec = model_gamma.spec | model_delta.spec;
+% model_gamma_theta.spec = model_gamma.spec | model_theta.spec;
+% model_gamma_beta.spec = model_gamma.spec | model_beta.spec;
+% model_beta_theta.spec = model_beta.spec | model_theta.spec;
+% model_hgamma_theta.spec = model_hi_gamma.spec | model_theta.spec;
+% model_lgamma_theta.spec = model_lo_gamma.spec | model_theta.spec;
 
 
 % add more models if necessary
@@ -113,15 +114,15 @@ model_lgamma_theta.spec = model_lo_gamma.spec | model_theta.spec;
 %% Use SSPE
 
 % models for "good theta"
-models = [model_all, model_no_gamma, model_gamma_theta, model_delta_theta, ...
-    model_beta_theta, model_hgamma_theta, model_lgamma_theta, model_theta];
+models = [model_all]; %[model_all, model_no_gamma, model_gamma_theta, model_delta_theta, ...
+   % model_beta_theta, model_hgamma_theta, model_lgamma_theta, model_theta];
 
 % models for "good-gamma"
 % models = [model_all, model_gamma, model_hi_gamma, model_lo_gamma, model_no_delta, ...
 %     model_no_theta, model_no_beta, model_gamma_delta, model_gamma_theta, model_gamma_beta];
 
-sspe_pack = cell(1,25);
-for iS = 1:25
+sspe_pack = cell(1,num_trials);
+for iS = 1:num_trials
     this_data = trial_data{iS}.data(1,:);
     this_res = cell(1, length(models));
     for iM = 1:length(models)
@@ -162,16 +163,16 @@ xlim([0 120]);
 subplot(4,1,2)
 plot(sspe_pack{1}.data)
 subplot(4,1,3);
-plot(squeeze(sspe_pack{1}.filt_data)
-squeeze(sspe_pack{1}.filt_data))
+plot(squeeze(sspe_pack{1}.filt_data))
 squeeze(sspe_pack{1}.filt_data)
-x = zeros(1, length(sspe_pack.data);
+squeeze(sspe_pack{1}.filt_data)
+x = zeros(1, length(sspe_pack.data));
 x = zeros(1, length(sspe_pack.data));
 x = zeros(1, length(sspe_pack{1}.data));
-x(end - length(sspe_pack{1}.filt_data(1,1,:) + 1:end) = sspe_pack{1}.filt_data(1,1,:)
-length(sspe_pack{1}.filt_data(1,1,:)
+x(end - length(sspe_pack{1}.filt_data(1,1,:) + 1:end)) = sspe_pack{1}.filt_data(1,1,:);
 length(sspe_pack{1}.filt_data(1,1,:))
-x(end - length(sspe_pack{1}.filt_data(1,1,:)) + 1:end) = sspe_pack{1}.filt_data(1,1,:)
+length(sspe_pack{1}.filt_data(1,1,:))
+x(end - length(sspe_pack{1}.filt_data(1,1,:) + 1:end)) = sspe_pack{1}.filt_data(1,1,:);
 subplot(4,1,2)
 hold on
 plot(x)
