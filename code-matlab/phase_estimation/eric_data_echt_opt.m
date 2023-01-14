@@ -24,14 +24,6 @@ plot(F, 10*log10(P));
 xlim([0 120]); xlabel('Frequency (Hz)'); ylabel('Power'); title('PSD');
 
 fbands = {[2 5], [6 10], [20 55], [55 95]};
-true_phase = cell(length(fbands),1);
-for iB = 1:length(fbands)
-    cfg_filt.type = 'fdesign'; 
-    cfg_filt.f  = fbands{iB};
-    filt_lfp = FilterLFP(cfg_filt, eval_csc);
-    true_phase{iB} = angle(hilbert(filt_lfp.data));
-end
-
 %% Add Path for the current method
 addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\ECHT');
 

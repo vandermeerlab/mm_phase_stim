@@ -50,6 +50,7 @@ s(1)=GetNewMeasurement; % here shall be your function that provides the
                         % already causally bandpassed, if required
 s(2)=GetNewMeasurement;
 for k=3:npt             % loop over the number of measurements
+    s(k)=GetNewMeasurement; 
     sdemean(k)=s(k)-runav;  % baseline correction
     [x,y]=OneStep(x,y,gam,eta,enuDel,ealDel,C1,C2,C3,...
         sdemean(k-2),sdemean(k-1),sdemean(k)); 
