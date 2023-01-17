@@ -40,15 +40,20 @@ for iB = 1:length(fbands)
 end
 
 %% Add Path for the current method
-addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\Rosenblum\');
+%% Add Path for the current method
+addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\SSPE');
+addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\SSPE\osc_decomp');
 
 %% Try optimization method
+
+optimize_sspe(csc, fbands, filt_phase, Fs, nSamples, popsz, bounds_window, bounds_exp)
 parpool('local');
-popsz = 50;
+popsz = 100;
 bounds_window = [10,20];
+bounds_exp = [1 10];
 nSamples = 1000;
 tic;
-[opt_params, opt_out] = optimize_rez(eval_csc, filt_phase, Fs, nSamples, seed, popsz, fbands, bounds_window);
+[opt_params, opt_out] = optimize_sspe(eval_csc, fbands, filt_phase, Fs, nSamples, popsz, bounds_window, bounds_exp);
 toc;
 delete(gcp)
 
@@ -300,33 +305,5 @@ function y = pinknoise(m, n)
     y = reshape(y, [m, n]);
     y = bsxfun(@minus, y, mean(y));
     y = bsxfun(@rdivide, y, std(y));
-end
-
-%%
-function [C1,C2,C3,eetadel,ealdel,eta]=ExSolCoefs(om0,dt,alpha) 
-% alpha is the half of the dampling: x''+2*alpha*x''+om0^2*x=input
-eta2=om0^2-alpha^2; eta=sqrt(eta2);
-eetadel=exp(1i*eta*dt); a=1/eetadel; ealdel=exp(alpha*dt);
-I1=1i*(a-1)/eta; I2=(a*(1+1i*eta*dt)-1)/eta2;
-I3=(a*(dt*eta*(2+1i*dt*eta)-2*1i)+2*1i)/eta2/eta;
-C1=(I3-I2*dt)/2/dt^2/ealdel;   C2=I1-I3/dt^2;
-C3=ealdel*(I2*dt+I3)/2/dt^2;
-end
-
-%%
-function z=OneStepInt(z,edelmu,mu,dt,ypp,yp,y)
-dt2=dt*dt;
-a=yp; b=(y-ypp)/dt/2;  c=(ypp-2*yp+y)/dt2/2;
-d=-a+b*mu-2*c*mu^2;    C0=z+d; 
-z=C0*edelmu-d+b*dt-2*c*mu*dt+c*dt2;
-end
-
-%%
-function [x,xd]=OneStep(x,xd,alpha,eta,eetaDel,ealDel,C1,C2,C3,sprev,s,snew) 
-A=x-1i*(xd+alpha*x)/eta;
-A=A-1i*(C1*sprev+C2*s+C3*snew)/eta;
-d=A*eetaDel;
-y=real(d); yd=1i*eta*(d-conj(d))/2;
-x=y/ealDel; xd=(yd-alpha*y)/ealDel;
 end
 

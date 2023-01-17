@@ -1,4 +1,4 @@
-function phases = wrapper_rez(wsz, fq, csc, filt_phase, Fs, nSamples, seed)
+function phases = wrapper_rez(wsz, fq, csc, filt_phase, Fs, nSamples)
 % This is a wrapper function that returns true and estimated phase values
 % as obtained by the resonant oscillator method
 %     Input:
@@ -8,12 +8,9 @@ function phases = wrapper_rez(wsz, fq, csc, filt_phase, Fs, nSamples, seed)
 %         filt_phase: cell array where each cell contians hilbert transformed phases of 'csc'
 %         Fs: sampling frequency of csc
 %         nSamples: Number of samples to be test this method on
-%         seed: seed for rng, to ensure reproducibility
 %     Output:
 %         phases: 1x2 cell array, phases{1} has the true phases and phases{2} has the estimated phases
-% 
 
-    rng(seed);
     wsz = wsz/10;
     min_start = ceil(wsz*Fs);
     nEnds = randi(length(csc.data) - min_start, nSamples, 1) + min_start;

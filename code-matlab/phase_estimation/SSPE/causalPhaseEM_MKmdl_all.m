@@ -31,7 +31,7 @@
 % Modify code to check if omega estimates lie within the band-stop
 % frequencies, and use that instead of the pre-defined omaega values.
 
-function [omega, phase,phaseBounds,allX_full,circstd,cosineSum] = causalPhaseEM_MKmdl_temp(y,initParams)
+function [omega, phase,phaseBounds,allX_full,circstd,cosineSum] = causalPhaseEM_MKmdl_all(y,initParams)
 
     freqs = initParams.freqs;
     Fs = initParams.Fs;

@@ -1,7 +1,5 @@
 %Testbed for comparing various phase estimation methods
 
-
-
 %% Change folder and restrict data to epoch with no opto-stim
 cd('E:\Dropbox (Dartmouth College)\EC_State_inProcess\M17\M17-2019-02-16_dStr_3p2_light_cells_TT5_lost_min')
 LoadExpKeys;
@@ -55,8 +53,8 @@ for iS = 1:nSamples
    this_cfg.ampVec = repmat(0.99, 1, length(this_cfg.freqs));
    this_cfg.sigmaObs = 1;
    this_cfg.window = round(length(this_sample)*0.99);
-   vnb m this_cfg.sigmaFreqs = [1, 0.1, 0.01, 0.001];
-   [omega, phase, phase_bounds, fullX] = causalPhaseEM_MKmdl_temp(this_sample, this_cfg);
+   this_cfg.sigmaFreqs = [1, 0.1, 0.01, 0.001];
+   [omega, phase, phase_bounds, fullX] = causalPhaseEM_MKmdl_all(this_sample, this_cfg);
    dummy = 1;
    estimated_phase(:,iS) = phase(:,end); % The last sample's phase
 end
