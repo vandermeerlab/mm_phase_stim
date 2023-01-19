@@ -4,7 +4,7 @@
 %comes from
 
 %% Change folder and restrict data to epoch with no opto-stim
-cd('E:\Dropbox (Dartmouth College)\EC_State_inProcess\M20\M20-2019-06-07_dStr_4p6_light_cells_TT6_TT8_min')
+cd('/home/manishm/Dropbox (Dartmouth College)/EC_State_inProcess/M20/M20-2019-06-07_dStr_4p6_light_cells_TT6_TT8_min')
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg.fc = {ExpKeys.goodCSC};
@@ -40,15 +40,13 @@ for iB = 1:length(fbands)
 end
 
 %% Add Path for the current method
-%% Add Path for the current method
-addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\SSPE');
-addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\SSPE\osc_decomp');
+addpath('~/code/mm_phase_stim/code-matlab/phase_estimation/SSPE');
+addpath('~/code/mm_phase_stim/code-matlab/phase_estimation/SSPE/osc_decomp');
 
 %% Try optimization method
 
-optimize_sspe(csc, fbands, filt_phase, Fs, nSamples, popsz, bounds_window, bounds_exp)
 parpool('local');
-popsz = 100;
+popsz = 200;
 bounds_window = [10,20];
 bounds_exp = [1 10];
 nSamples = 1000;

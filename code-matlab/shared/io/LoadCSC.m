@@ -226,10 +226,13 @@ for hline = 1:length(Header)
     a = regexp(line(2:end),'(?<key>^\S+)\s+(?<val>.*)|(?<key>\S+)','names');
 
     % deal with characters not allowed by MATLAB struct
-    if strcmp(a.key,'DspFilterDelay_�s') | strcmp(a.key,'DspFilterDelay_�s')
+%     if strcmp(a.key,'DspFilterDelay_ï¿½s') | strcmp(a.key,'DspFilterDelay_µs') | strcmp(a.key, 'DspFilterDelay_�s 4250')
+%         a.key = 'DspFilterDelay_us';
+%     end
+    if startsWith(a.key, 'DspFilterDelay')
         a.key = 'DspFilterDelay_us';
     end
-    
+
     csc_info = setfield(csc_info,a.key,a.val);
     
     % convert to double if possible
