@@ -17,7 +17,7 @@ function [optimal_parameters, ga_output] = optimize_echt(csc, filt_phase, fbands
 
 assert(~isempty(which('ga')), 'genetic algorithm function ga.m not found, is the Global Optimization Toolbox installed?')
 
-problem.options = optimoptions('ga', 'PlotFcn', @gaplotbestf, 'PopulationSize', popsz, 'UseParallel', true);
+problem.options = optimoptions('ga', 'PlotFcn', @gaplotbestf, 'PopulationSize', popsz,'MaxStallGenerations',500,'MaxGenerations',1000, 'UseParallel', true);
 problem.solver = 'ga';
 
 % ang_var_of_diff = @(x, y) 1-abs(mean(exp(1i*x)./exp(1i*y)));

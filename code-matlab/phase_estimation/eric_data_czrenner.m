@@ -38,11 +38,18 @@ addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\Czrenner'
 
 %%Train
 
-forders = [2 3 4 5]; % low gamma
+forders = [3 4 5]; % low gamma
 D = {};
-for iOrd = 1:length(forders)
-    D{iOrd} = designfilt('bandpassfir', 'FilterOrder', round(forders(iOrd) * (Fs/33)), 'CutoffFrequency1', 19 , 'CutoffFrequency2', 56, 'SampleRate', Fs, 'DesignMethod', 'window'); % gamma
+peak_frequency = 3.5;
+ord = [3 4 5]; % low gamma
+%filter_orders = 10; % delta
+filter_count = 1;
+for iOrd = 1:length(ord)
+    D{filter_count} = designfilt('bandpassfir', 'FilterOrder', round(ord(iOrd) * (Fs/peak_frequency)), 'StopbandFrequency1', 1, 'PassbandFrequency1', 2, 'PassbandFrequency2', 5, 'StopbandFrequency2', 6, 'SampleRate', Fs, 'DesignMethod', 'ls');
+    filter_count = filter_count + 1;
 end
+
+
 %%
 csc_filtered = eval_csc;
 csc_filtered.data = filtfilt(D{end}, csc_filtered.data);
@@ -60,8 +67,8 @@ for iI = nIter:-1:1
     ALL.true_phase(iI) = data_phase(this_sample);
     
 end
-
-optimal_parameters = phastimate_optimize(ALL.data, ALL.true_phase, D, [1 length(forders)], [600 2000], [20 80], [20 100], 64)
+%%
+optimal_parameters = phastimate_optimize(ALL.data, ALL.true_phase, D, [1 length(forders)], [600 2000], [20 80], [20 100], 64);
 
 
 %% Test  

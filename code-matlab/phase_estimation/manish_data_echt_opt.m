@@ -132,11 +132,14 @@ stim_times = evs.t{strcmp(evs.label,ExpKeys.laser_on)};
 % This sanity check is necessary because of M020
 stim_times = stim_times(stim_times > ExpKeys.timeOnWheel);
 
-
+% To check for the source of discrepancy
+c_off = 0.2; % in sec
+c_times  = stim_times - c_off;
 ISIs = [100 diff(stim_times)']; %100 is used as an arbitrarily large number so that the first stim is always included
 keep = ISIs > win_length;
 
 ht_phase = zeros(length(fbands), sum(keep));
+ht_cphase = zeros(length(fbands), sum(keep));
 
 for iB = 1:length(fbands)
     cfg_filt = [];
@@ -145,36 +148,28 @@ for iB = 1:length(fbands)
     filt_lfp = FilterLFP(cfg_filt, test_csc); %Filtering the lfp data using bandpass
     filt_phase = angle(hilbert(filt_lfp.data)); %obtaining phases from the filtered data
     ht_phase(iB, :) = filt_phase(nearest_idx3(stim_times(keep), test_csc.tvec));
+    ht_cphase(iB, :) = filt_phase(nearest_idx3(c_times(keep), test_csc.tvec));
 end
 
 %% Obtain phases thorugh causal method
 causal_phase = zeros(length(fbands), sum(keep));
 nEnds = nearest_idx3(stim_times(keep), test_csc.tvec);
 nStarts = nearest_idx3(stim_times(keep) - win_length, test_csc.tvec);
-
-% To check for the source of discrepancy
-c_off = 0.2; % in sec
-c_times = stim_times(keep) - c_off;
-%Control A (Original snippet, but look at an earlier section)
-cEnds1 = nearest_idx3(c_times, test_csc.tvec) - nStarts + 1;
-%Control B (Snippet that doesn't include the last bit)
-cEnds2 = nearest_idx3(c_times, test_csc.tvec);
-cStarts = nearest_idx3(c_times - win_length, test_csc.tvec);
-controlA_phase = zeros(length(fbands), sum(keep));
-controlB_phase = zeros(length(fbands), sum(keep));
+%Control ends
+% cEnds = nearest_idx3(stim_times(keep) - c_off, test_csc.tvec) - nStarts + 1;
+cEnds = nearest_idx3(stim_times(keep) - c_off, test_csc.tvec);
+cStarts = nearest_idx3(c_times(keep) - win_length, test_csc.tvec);
+control_phase = zeros(length(fbands), sum(keep));
 for iB = 1:length(fbands)
     for iS = 1:sum(keep)
        this_echt = echt(test_csc.data(nStarts(iS):nEnds(iS)), fbands{iB}(1), fbands{iB}(2), Fs);
+       c_echt = echt(test_csc.data(nStarts(iS)+ 188:cEnds(iS)), fbands{iB}(1), fbands{iB}(2), Fs); %Replace cStarts with nStarts to rule out inclusion of stimuli
        this_phase = angle(this_echt);
+       c_phase = angle(c_echt);
 %        plot(this_phase);
        causal_phase(iB,iS) = this_phase(end); % The last sample's phase
-% Control A
-       controlA_phase(iB,iS) = this_phase(cEnds1(iS));
-% Control B
-       %Replace cStarts with nStarts to rule out inclusion of stimuli
-       c_echt = echt(test_csc.data(nStarts(iS)+200:cEnds2(iS)), fbands{iB}(1), fbands{iB}(2), Fs); 
-       c_phase = angle(c_echt);
-       controlB_phase(iB,iS) = c_phase(end);
+%        control_phase(iB,iS) = this_phase(cEnds(iS));
+       control_phase(iB,iS) = c_phase(end);
     end
 end
 
@@ -187,11 +182,11 @@ for iB = 1:length(fbands)
    histogram(causal_phase(iB,:), 5, 'FaceColor', 'Magenta');
    title('Causal Phases')
    subplot(5,10,(2*iB)+ 41)
-   histogram(controlA_phase(iB,:), 5, 'FaceColor', 'Green');
-   title('Same Samples, fixed offset')
+   histogram(ht_cphase(iB,:), 5, 'FaceColor', 'Cyan');
+   title('HTC Phases')
    subplot(5,10,(2*iB)+ 42)
-   histogram(controlB_phase(iB,:), 5, 'FaceColor', 'Blue');
-   title('Shorter Offset')
+   histogram(control_phase(iB,:), 5, 'FaceColor', 'Magenta');
+   title('Control Phases')
 end
 
 %% Put some text

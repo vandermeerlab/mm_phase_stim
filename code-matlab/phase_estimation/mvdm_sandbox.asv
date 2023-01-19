@@ -55,12 +55,13 @@ clean_csc = restrict(csc, iv(ExpKeys.PreRecord));
 
 %% Create Filter
 clear D ALL
-peak_frequency = 3.5;
+fs = 2000;
+peak_frequency = 40;
 ord = [3 4 5]; % low gamma
 %filter_orders = 10; % delta
 filter_count = 1;
-for iOrd = 1:length(ord)
-D{filter_count} = designfilt('bandpassfir', 'FilterOrder', round(ord(iOrd) * (Fs/peak_frequency)), 'StopbandFrequency1', 1, 'PassbandFrequency1', 2, 'PassbandFrequency2', 5, 'StopbandFrequency2', 6, 'SampleRate', Fs, 'DesignMethod', 'ls');
+for iOrd = 1:length(filter_orders)
+D{filter_count} = designfilt('bandpassfir', 'FilterOrder', round(ord * (fs/peak_frequency)), 'StopbandFrequency1', 23, 'PassbandFrequency1', peak_frequency-1, 'PassbandFrequency2', peak_frequency+1, 'StopbandFrequency2', peak_frequency+4, 'SampleRate', fs, 'DesignMethod', 'ls')};
 filter_count = filter_count + 1;
 end
 
@@ -93,7 +94,7 @@ for iI = nIter:-1:1
     
 end
 
-optimal_parameters = phastimate_optimize(ALL.data, ALL.true_phase, D, [1 length(filter_orders)], [1000 2000], [20 80], [20 100], 128)
+optimal_parameters = phastimate_optimize(ALL.data, ALL.true_phase, D, [1 length(filter_orders)], [600 2000], [20 80], [20 100], 128)
 
 %% test
 %clear D;
