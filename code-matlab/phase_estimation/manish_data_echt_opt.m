@@ -189,16 +189,16 @@ end
 % Plot the distributions
 for iB = 1:length(fbands)
    subplot(5,10,(2*iB)+ 31)
-   histogram(ht_phase(iB,:), 5, 'FaceColor', 'Cyan');
+   histogram(ht_phase(iB,:), -pi:2*pi/5:pi, 'FaceColor', 'Cyan');
    title('HT phases')
    subplot(5,10,(2*iB)+ 32)
-   histogram(causal_phase(iB,:), 5, 'FaceColor', 'Magenta');
+   histogram(causal_phase(iB,:), -pi:2*pi/5:pi, 'FaceColor', 'Magenta');
    title('Causal Phases')
    subplot(5,10,(2*iB)+ 41)
-   histogram(controlA_phase(iB,:), 5, 'FaceColor', 'Green');
+   histogram(controlA_phase(iB,:), -pi:2*pi/5:pi, 'FaceColor', 'Green');
    title('Same Samples, fixed offset')
    subplot(5,10,(2*iB)+ 42)
-   histogram(controlB_phase(iB,:), 5, 'FaceColor', 'Blue');
+   histogram(controlB_phase(iB,:), -pi:2*pi/5:pi, 'FaceColor', 'Blue');
    title('Shorter Offset')
 end
 
@@ -212,6 +212,56 @@ box off
 grid off
 axis off
 WriteFig(fig, 'echt', 1)
+
+%% Testing this on some rat_data (long recording)
+cd('E:\ADRLabData\R132\R132-2007-10-09');
+cfg_r.fc = ExpKeys.goodGamma_vStr;
+csc_rat = LoadCSC(cfg_r);
+csc_rat = restrict(csc_rat, iv([ExpKeys.TimeOnTrack ExpKeys.TimeOffTrack]));
+rFs = 1./median(diff(csc_rat.tvec));
+
+%%
+rat_stim = 0.5 + 3*(rand(1,1500));
+rat_stim(1) = csc_rat.tvec(1) + rat_stim(1);
+for i = 2:1500
+    rat_stim(i) = rat_stim(i-1) + rat_stim(i);
+end
+rat_stim = rat_stim(rat_stim < csc_rat.tvec(end));
+rISIs = [rat_stim(1) - csc_rat.tvec(1), diff(rat_stim)]; 
+rkeep = rISIs > win_length;
+rEnds = nearest_idx3(rat_stim(rkeep), csc_rat.tvec);
+rStarts = nearest_idx3(rat_stim(rkeep) - win_length, csc_rat.tvec);
+
+rat_phase = zeros(length(fbands), sum(rkeep));
+for iB = 1:length(fbands)
+    cfg_filt.type = 'fdesign'; 
+    cfg_filt.f  = fbands{iB};
+    rat_lfp = FilterLFP(cfg_filt, csc_rat);
+    this_phase = angle(hilbert(rat_lfp.data));
+    rat_phase(iB, :) = this_phase(nearest_idx3(rat_stim(rkeep), csc_rat.tvec));
+end
+%%
+rc_phase = zeros(length(fbands), sum(rkeep));
+for iB = 1:length(fbands)
+    for iS = 1:sum(rkeep)
+       this_echt = echt(csc_rat.data(rStarts(iS):rEnds(iS)), fbands{iB}(1), fbands{iB}(2), rFs);
+       this_phase = angle(this_echt);
+%        plot(this_phase);
+       rc_phase(iB,iS) = this_phase(end); % The last sample's phase
+    end
+end
+
+%%
+figure;
+for iB = 1:length(fbands)
+   subplot(1,10,(2*iB)+ 1)
+   histogram(rat_phase(iB,:), 5, 'FaceColor', 'Cyan');
+   title('HT phases')
+   subplot(1,10,(2*iB)+ 2)
+   histogram(rc_phase(iB,:), 5, 'FaceColor', 'Magenta');
+   title('Causal Phases')
+end
+
 
 %% Helper functions
 function y = pinknoise(m, n)
