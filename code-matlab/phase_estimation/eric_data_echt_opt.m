@@ -172,7 +172,7 @@ for iB = 1:length(fbands)
        controlA_phase(iB,iS) = this_phase(cEnds1(iS));
 % Control B
        %Replace cStarts with nStarts to rule out inclusion of stimuli
-       c_echt = echt(test_csc.data(nStarts(iS)+200:cEnds2(iS)), fbands{iB}(1), fbands{iB}(2), Fs); 
+       c_echt = echt(test_csc.data(nStarts(iS):cEnds2(iS)), fbands{iB}(1), fbands{iB}(2), Fs); 
        c_phase = angle(c_echt);
        controlB_phase(iB,iS) = c_phase(end);
     end
