@@ -54,8 +54,8 @@ delete(gcp('nocreate'));
 %% Choose winning parameters and plot scatter and hist for data with no stim 
 
 %Choose optimal parameters from opimization above
-win_length = opt_params.window_length/10; 
-
+% win_length = opt_params.window_length/10; 
+win_length = 1.5;
 % Choose nEnds in a way such that the smallest sample is win_length long
 min_start = ceil(win_length*Fs);
 nEnds = randi(length(eval_csc.data) - min_start, nSamples, 1) + min_start;
@@ -172,7 +172,7 @@ for iB = 1:length(fbands)
        controlA_phase(iB,iS) = this_phase(cEnds1(iS));
 % Control B
        %Replace cStarts with nStarts to rule out inclusion of stimuli
-       c_echt = echt(test_csc.data(nStarts(iS)+200:cEnds2(iS)), fbands{iB}(1), fbands{iB}(2), Fs); 
+       c_echt = echt(test_csc.data(cStarts(iS):cEnds2(iS)), fbands{iB}(1), fbands{iB}(2), Fs); 
        c_phase = angle(c_echt);
        controlB_phase(iB,iS) = c_phase(end);
     end
@@ -181,21 +181,21 @@ end
 % Plot the distributions
 for iB = 1:length(fbands)
    subplot(5,10,(2*iB)+ 31)
-   histogram(ht_phase(iB,:), 5, 'FaceColor', 'Cyan');
+   histogram(ht_phase(iB,:), -pi:2*pi/5:pi, 'FaceColor', 'Cyan');
    title('HT phases')
    subplot(5,10,(2*iB)+ 32)
-   histogram(causal_phase(iB,:), 5, 'FaceColor', 'Magenta');
+   histogram(causal_phase(iB,:), -pi:2*pi/5:pi, 'FaceColor', 'Magenta');
    title('Causal Phases')
    subplot(5,10,(2*iB)+ 41)
-   histogram(controlA_phase(iB,:), 5, 'FaceColor', 'Green');
+   histogram(controlA_phase(iB,:),-pi:2*pi/5:pi, 'FaceColor', 'Green');
    title('Same Samples, fixed offset')
    subplot(5,10,(2*iB)+ 42)
-   histogram(controlB_phase(iB,:), 5, 'FaceColor', 'Blue');
+   histogram(controlB_phase(iB,:), -pi:2*pi/5:pi, 'FaceColor', 'Blue');
    title('Shorter Offset')
 end
 
 %% Put some text
-subplot(2,10, [11 12])
+subplot(5,10, [11 12])
 text(0.1, 0.6, strcat(ExpKeys.subject, '_', ExpKeys.date), 'Interpreter', 'none', 'FontSize', 16)
 text(0.1, 0.5 , strcat('Window length Used: ', num2str(win_length), ' sec'), 'Interpreter', 'none', 'FontSize', 16)
 text(0.1, 0.4 , strcat('Trials left:  ', num2str(sum(keep))), 'Interpreter', 'none', 'FontSize', 16)

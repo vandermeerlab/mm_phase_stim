@@ -1,9 +1,13 @@
-% Assumes that spike-sorting has been done
-cd('E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-26');
+%% Assumes that spike-sorting has been done
+cd('E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-22\');
 LoadExpKeys;
 evs = LoadEvents([]);
-cfg_spk.min_cluster_quality = 3;
-cfg_spk.uint = '64';
+cfg_spk = [];
+cfg_spk.getRatings = 1;
+% cfg_spk.min_cluster_quality = 3;
+if ~strcmp(ExpKeys.experimenter, 'EC')
+    cfg_spk.uint = '64';
+end
 S = LoadSpikes(cfg_spk);
 
 %% Set variables
@@ -11,13 +15,21 @@ fsz1 = 7; % Text font size
 fsz2 = 8; % 
 
 %% Remove spikes during stim times
+if contains(ExpKeys.light_source, 'LASER')
+    start_delay = 0.0011;
+    stop_delay = 0.0022;
+else
+    start_delay = 0;
+    stop_delay = 0;
+end
 all_short_stim = [evs.t{strcmp(evs.label, ExpKeys.pre_trial_stim_on)}; ...
     evs.t{strcmp(evs.label, ExpKeys.trial_stim_on)}; ...
     evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)}];
 
 all_long_stim = [evs.t{strcmp(evs.label, ExpKeys.long_stim_on)}];
-to_be_removed = [all_short_stim,  all_short_stim + ExpKeys.short_stim_pulse_width; ...
-    all_long_stim, all_long_stim + ExpKeys.long_stim_pulse_width];
+
+to_be_removed = [all_short_stim + start_delay,  all_short_stim + start_delay + ExpKeys.short_stim_pulse_width; ...
+    all_long_stim + start_delay, all_long_stim + ExpKeys.long_stim_pulse_width];
 
 
 clean_iv = InvertIV(iv(to_be_removed), ExpKeys.recording_times(1), ...
@@ -29,8 +41,7 @@ restricted_S = restrict(S, clean_iv);
 % snippet for autocorrelation
 for iC = 1:length(restricted_S.label)
     fn_prefix = extractBefore(restricted_S.label{iC}, '.t');
-    temp_idx = find(fn_prefix == '_');
-    fn_prefix(temp_idx) = '-';
+    fn_prefix = strrep(fn_prefix, '_', '-');
     
     %Extract AD2BitVoltConversioFactor from corresponding .ntt file
     temp_idx = find(fn_prefix == '-');
@@ -62,14 +73,16 @@ for iC = 1:length(restricted_S.label)
         'FontSize', fsz1);
     text(0, 0.6, sprintf("Isolation Distance: %.2f ", ...
         temp_cq.CluSep.IsolationDist), 'FontSize', fsz1);
-    text(0, 0.4, sprintf("Cluster Rating: %d", ...
-        restricted_S.usr.rating(iC)), 'FontSize', fsz1);
     text(0, 0.2, sprintf("Mean Firing Rate: %.2f Hz", ...
         length(restricted_S.t{iC})/sum(clean_iv.tend - clean_iv.tstart)), ...
         'FontSize', fsz1); 
-    text(0, 0, sprintf("Stimulus amplitude: %.2f mW", ...
-        interp1(ExpKeys.dial_values_calib, ExpKeys.output_power_calib, ...
-        ExpKeys.dial_value, 'spline')), 'FontSize', fsz1);
+    if ~strcmp(ExpKeys.experimenter, 'EC')
+        text(0, 0.4, sprintf("Cluster Rating: %d", ...
+            restricted_S.usr.rating(iC)), 'FontSize', fsz1);
+        text(0, 0, sprintf("Stimulus amplitude: %.2f mW", ...
+            interp1(ExpKeys.dial_values_calib, ExpKeys.output_power_calib, ...
+            ExpKeys.dial_value, 'spline')), 'FontSize', fsz1);
+    end
     axis off;
     
     % Plot autocorrelation
@@ -96,6 +109,7 @@ for iC = 1:length(restricted_S.label)
     %Convert_Values to microvolts
     mWV = temp_wv.mWV .* conv_factors';
     plot(mWV);
+
     ylabel('micro-Volts');
     title('Average SpikeWaveform', 'FontSize', fsz2)
     
@@ -108,6 +122,15 @@ for iC = 1:length(restricted_S.label)
         max_awv = max(temp_awv,[],3);
         max_awv = max_awv .* conv_factors';
         plot(S.t{iC}, max_awv, '.', 'MarkerSize', 10)
+        % Uncomment the following section to figure out overlay trial_stim
+        hold on;
+        trial_stim = evs.t{strcmp(evs.label, ExpKeys.trial_stim_on)};
+        % Overlay horizontal lines for every 50 stim
+        topY = max(max(max(max_awv))) - 15;
+        for iStim = 1:50:length(trial_stim)
+            xline(trial_stim(iStim), '--black')
+            text(trial_stim(iStim), topY, num2str(iStim), 'Rotation', 90, 'FontSize', fsz2)
+        end
         ylabel('micro-Volts');
         dummy2 = 0;
     else
@@ -119,7 +142,7 @@ for iC = 1:length(restricted_S.label)
     
     %Pre-stim raster
     subplot(4,4,[9,13])
-    this_on_events = evs.t{strcmp(evs.label, ExpKeys.pre_trial_stim_on)};
+    this_on_events = evs.t{strcmp(evs.label, ExpKeys.pre_trial_stim_on)} + start_delay;
     [outputS, outputT, outputGau, outputIT, cfg] = SpikePETHvdm([], ...
         this_cell, this_on_events, '', 0.5);
     hold on
@@ -134,7 +157,7 @@ for iC = 1:length(restricted_S.label)
    
     %Trial-stim raster
     subplot(4,4,[10,14])
-    this_on_events = evs.t{strcmp(evs.label, ExpKeys.trial_stim_on)};
+    this_on_events = evs.t{strcmp(evs.label, ExpKeys.trial_stim_on)} + start_delay;
     [outputS, outputT, outputGau, outputIT, cfg] = SpikePETHvdm([], ...
         this_cell, this_on_events, '', 0.5);
     hold on
@@ -149,7 +172,7 @@ for iC = 1:length(restricted_S.label)
     
     %Post-stim raster
     subplot(4,4,[11,15])
-    this_on_events = evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)};
+    this_on_events = evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)} + start_delay;
     [outputS, outputT, outputGau, outputIT, cfg] = SpikePETHvdm([], ...
         this_cell, this_on_events, '', 0.5);
     hold on
@@ -164,7 +187,7 @@ for iC = 1:length(restricted_S.label)
     
     %Long-stim raster
     subplot(4,4,[12,16])
-    this_on_events = evs.t{strcmp(evs.label, ExpKeys.long_stim_on)};
+    this_on_events = evs.t{strcmp(evs.label, ExpKeys.long_stim_on)} + start_delay;
     %Take only the first 25 long stim if special stim present
     if strcmp(ExpKeys.hasSpecialStim, 'Yes')
         this_on_events = this_on_events(1:25); 

@@ -1,12 +1,12 @@
-function [optimal_parameters, ga_output] = optimize_echt(csc, filt_phase, fbands, Fs, nSamples, popsz, bounds_window)
+function [optimal_parameters, ga_output] = optimize_echt(csc, filt_phase, fband, Fs, nSamples, popsz, bounds_window)
 % optimize_echt
 %   optimal_parameters = optimize_echt(csc, filt_phase, fbands, Fs, nSamples, popsz, bounds_window)
 %
 %     Input:
 %         wsz: window size in tenths of a second (for faster optimization)
 %         csc: mvdmlab TSD struct
-%         filt_phase: cell array where each cell contians hilbert transformed phases of 'csc'
-%         fbands: nx2 array of frequency bands [[lfq1 hfq];[lfq1 hfq2]; ..., lfqn hfqn]]
+%         filt_phase: array that containns hilbert transformed phases of 'csc'
+%         fband: Frequency band with [lfq hfq]
 %         Fs: sampling frequency of csc
 %         nSamples: Number of samples to be test this method on
 %         popsz: population size for the genetic algorithm
@@ -20,12 +20,12 @@ assert(~isempty(which('ga')), 'genetic algorithm function ga.m not found, is the
 problem.options = optimoptions('ga', 'PlotFcn', @gaplotbestf, 'PopulationSize', popsz,'MaxStallGenerations',500,'MaxGenerations',1000, 'UseParallel', true);
 problem.solver = 'ga';
 
-% ang_var_of_diff = @(x, y) 1-abs(mean(exp(1i*x)./exp(1i*y)));
+ang_var_of_diff = @(x) 1-abs(mean(exp(1i*x{1}')./exp(1i*x{2}')));
 
 % Changing the above to be the mean variance across all freq. bands
-ang_var_of_diff = @(x) mean(1-abs(mean(exp(1i*x{1}')./exp(1i*x{2}'))));
+% ang_var_of_diff = @(x) mean(1-abs(mean(exp(1i*x{1}')./exp(1i*x{2}'))));
 
-problem.fitnessfcn = @(x) ang_var_of_diff(wrapper_echt(x, csc, filt_phase, fbands, Fs, nSamples));
+problem.fitnessfcn = @(x) ang_var_of_diff(wrapper_echt(x, csc, filt_phase, fband, Fs, nSamples));
 % x(1) = window_length
 % x(2) = filter_order
 % x(3) = edge
