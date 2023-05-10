@@ -132,7 +132,7 @@ end
 disp(['Longest Recording interval is ' num2str(duration/60) ' minutes in recording slot number ' num2str(main_rec_idx)])
 
 fprintf(fid, 'ExpKeys.timeOnWheel = %.4d;\n',Evt.t{1}(main_rec_idx));
-fprintf(fid, 'ExpKeys.timeOffWheel = %.4d;\n',Evt.t{2}(main_rec_idx) );
+fprintf(fid, 'ExpKeys.timeOffWheel = %.   4d;\n',Evt.t{2}(main_rec_idx) );
 
 fprintf(fid, 'ExpKeys.PreRecord = [%.4d %.4d];\n',Evt.t{1}(1),Evt.t{2}(1));
 if length(Evt.t{2}) > main_rec_idx

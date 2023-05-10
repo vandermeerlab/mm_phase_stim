@@ -195,7 +195,7 @@ for iB = 1:length(fbands)
 end
 
 %% Put some text
-subplot(2,10, [11 12])
+subplot(5,10, [11 12])
 text(0.1, 0.6, strcat(ExpKeys.subject, '_', ExpKeys.date), 'Interpreter', 'none', 'FontSize', 16)
 text(0.1, 0.5 , strcat('Window length Used: ', num2str(win_length), ' sec'), 'Interpreter', 'none', 'FontSize', 16)
 text(0.1, 0.4 , strcat('Trials left:  ', num2str(sum(keep))), 'Interpreter', 'none', 'FontSize', 16)
