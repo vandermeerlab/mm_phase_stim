@@ -1,6 +1,8 @@
 %% Assumes that spike-sorting has been done
-top_dir = 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\';
-mice = {'M016', 'M017', 'M018', 'M019', 'M020'};
+% top_dir = 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\';
+% mice = {'M016', 'M017', 'M018', 'M019', 'M020'};
+top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+mice = {'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -17,6 +19,9 @@ function doStuff
     evs = LoadEvents([]);
     cfg_spk = [];
     cfg_spk.fc = ExpKeys.goodCell;
+    if isempty(cfg_spk.fc)
+        return
+    end
     % cfg_spk.min_cluster_quality = 3;
     if ~strcmp(ExpKeys.experimenter, 'EC')
         cfg_spk.getRatings = 1;
@@ -168,7 +173,7 @@ function doStuff
         ax.YAxis.Label.FontSize = small_label_fs;
         ax.Title.FontSize = big_label_fs;
         
-        %Extract Spike amplitudes from coresponding .awv file
+        % Extract Spike amplitudes from coresponding .awv file
         awv_fn = strcat(fn_prefix, '-awv.mat');
         if isfile(awv_fn)
             ax = subplot(5,4,[3,4]);
@@ -286,8 +291,7 @@ function doStuff
         % Trial-stim response hist
         latency = nan(size(this_on_events));
         latency_wo_stim = nan(size(this_on_events));
-        for iT = 1:length(latency_wo_stim)
-            iStim = ExpKeys.goodTrials(iC,1) + iT - 1;
+        for iStim = 1:length(latency_wo_stim)
             st = restrict(this_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
             st_wo_stim = restrict(restricted_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
             if ~isempty(st.t{1})
