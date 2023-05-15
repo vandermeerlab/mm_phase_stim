@@ -1,5 +1,5 @@
 %% Assumes that spike-sorting has been done
-cd('E:\Dropbox (Dartmouth College)\manish_data\M320\M320-2022-05-28');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-22\');
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg_spk = [];

@@ -38,7 +38,7 @@ function doStuff
     %% Remove spikes during short stim times
     if contains(ExpKeys.light_source, 'LASER')
         start_delay = 0.0011;
-        stop_delay = 0.0022;
+        stop_delay = 0.0012; %0.0022 is the spike width in the case of 1 msec laser pulse
     else
         start_delay = 0;
         stop_delay = 0;
@@ -72,7 +72,7 @@ function doStuff
     
     all_long_stim = [evs.t{strcmp(evs.label, ExpKeys.long_stim_on)}];
     
-    to_be_removed = [all_short_stim,  all_short_stim + ExpKeys.short_stim_pulse_width];
+    to_be_removed = [all_short_stim,  all_short_stim + ExpKeys.short_stim_pulse_width + stop_delay];
     
     
     clean_iv = InvertIV(iv(to_be_removed), ExpKeys.recording_times(1), ...
@@ -123,9 +123,11 @@ function doStuff
         if ~strcmp(ExpKeys.experimenter, 'EC')
             text(0, 0.4, sprintf("Cluster Rating: %d", ...
                 restricted_S.usr.rating(iC)), 'FontSize', text_fs);
+%             text(0, 0, sprintf("Stimulus amplitude: %.2f mW", ...
+%                 interp1(ExpKeys.dial_values_calib, ExpKeys.output_power_calib, ...
+%                 ExpKeys.dial_value, 'spline')), 'FontSize', text_fs);
             text(0, 0, sprintf("Stimulus amplitude: %.2f mW", ...
-                interp1(ExpKeys.dial_values_calib, ExpKeys.output_power_calib, ...
-                ExpKeys.dial_value, 'spline')), 'FontSize', text_fs);
+                ExpKeys.light_power), 'FontSize', text_fs);
         end
         axis off;
         
@@ -214,7 +216,7 @@ function doStuff
             hold on
             plot(outputS, outputT+0.5, 'k.', 'MarkerSize', 5);
             plot([0 0], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
-            plot([ExpKeys.short_stim_pulse_width ExpKeys.short_stim_pulse_width], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
+            plot([ExpKeys.short_stim_pulse_width+stop_delay ExpKeys.short_stim_pulse_width+stop_delay], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
             ylabel('Pre-Stim #')
             ylim([1 length(this_on_events)])
             xlim([-0.01 0.01]);
@@ -276,7 +278,7 @@ function doStuff
             hold on
             plot(outputS, outputT+0.5, 'k.', 'MarkerSize', 5);
             plot([0 0], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
-            plot([ExpKeys.short_stim_pulse_width ExpKeys.short_stim_pulse_width], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
+            plot([ExpKeys.short_stim_pulse_width+stop_delay ExpKeys.short_stim_pulse_width+stop_delay], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
             ylabel(' Trial Stim #');
             ylim([1 length(this_on_events)])
             xlim([-0.01 0.01]);
@@ -329,7 +331,7 @@ function doStuff
             hold on
             plot(outputS, outputT+0.5, 'k.', 'MarkerSize', 5);
             plot([0 0], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
-            plot([ExpKeys.short_stim_pulse_width ExpKeys.short_stim_pulse_width], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
+            plot([ExpKeys.short_stim_pulse_width+stop_delay ExpKeys.short_stim_pulse_width+stop_delay], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
             ylabel('Post Stim #');
             ylim([1 length(this_on_events)])
             xlim([-0.01 0.01]);
