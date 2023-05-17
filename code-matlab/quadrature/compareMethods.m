@@ -8,10 +8,10 @@ cfg.chB='WE2.ncs';
 updownTSD = getQEupdown(cfg);
 state_tsd = ConvertQEUpDownToState(updownTSD);
 [angle_tsd, wheel_tsd, bad_jumps] = ConvertQEStatesToAngle([], state_tsd);
-cfg = []; cfg.downsample = 1;
+% cfg = []; cfg.downsample = 1;
 [d, speed, cfg] = ConvertWheeltoSpeed(cfg, wheel_tsd);
 %% Script to test if quadrature encoding works on TTL data
-
+  
 % RR2 config
 % str_AB = 'TTL Input on AcqSystem1_0 board 0 port 2 value (0x0003).'; % both up
 % str_A = 'TTL Input on AcqSystem1_0 board 0 port 2 value (0x0002).'; % only chA up
@@ -41,9 +41,14 @@ sparse_states = sparse_states(sort_idx);
 % Use existing timebase
 state_tsd2 = state_tsd;
 state_tsd2.data = zeros(size(state_tsd2.data));
-change_idx = nearest_idx3(all_events, state_tsd2.tvec);
-
-
+cidx = nearest_idx3(all_events, state_tsd2.tvec);
+state_tsd2.data(1:cidx(1)) = sparse_states(1);
+state_tsd2.data(cidx(end):end) = sparse_states(end);
+for i = 1:length(cidx)-1
+    state_tsd2.data(cidx(i):cidx(i+1)-1) = sparse_states(i);
+end 
+assert(isempty(find(state_tsd2.data == 0)));
+%%
 % Create new timebase
 % dt = min(diff(all_events));
 % time = all_events(1):dt:all_events(end);
@@ -61,12 +66,10 @@ change_idx = nearest_idx3(all_events, state_tsd2.tvec);
 % end    
 % data(end) = sparse_states(end);
 % assert(isempty(find(data == 0)));
-% state_tsd2 = tsd(time,data);
-% [angle_tsd2, wheel_tsd2, bad_jumps2] = ConvertQEStatesToAngle([], state_tsd2);
+
 %% Time taking step
-cfg2 = []; 
-%cfg2.downsample = round((1/median(diff(wheel_tsd2.tvec)))/(1/median(diff(wheel_tsd.tvec))));
-cfg2.downsample = 13; % The above quantity is 16
+[angle_tsd2, wheel_tsd2, bad_jumps2] = ConvertQEStatesToAngle([], state_tsd2);
+cfg2 = []; cfg2.downsample = 13; % The above quantity is 16
 [d2, speed2, cfg2] = ConvertWheeltoSpeed(cfg2, wheel_tsd2);
 %% RR2 test plot
 figure;

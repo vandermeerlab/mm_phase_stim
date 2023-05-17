@@ -27,8 +27,7 @@ angle_tsd.data(1) = 0; % assume we start at 0
 
 % loop over state inputs; look up step given transition between current
 % state and previous state at each step
-for iState = 2:length(state_tsd.data)
-   
+for iState = 2:length(state_tsd.data)   
     angle_tsd.data(iState) = cfg.tt(state_tsd.data(iState-1), state_tsd.data(iState));
     
 end    % units of "angle" here are actual integer values that represent identical forward or backward increments of the wheel (i.e. not an actual angle value)
