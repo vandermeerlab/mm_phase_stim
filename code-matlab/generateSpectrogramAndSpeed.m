@@ -14,6 +14,7 @@ for iM  = 1:length(mice)
 end
 
 %
+
 function doStuff
 
     % Setting up parameters
@@ -28,7 +29,7 @@ function doStuff
         return
     end
     
-% %     % For debugging
+%     % For debugging
 %     if ~(ExpKeys.hasWheelData) | contains(ExpKeys.light_source, 'LASER')
 %         return
 %     end
@@ -49,14 +50,15 @@ function doStuff
     fig = figure('WindowState', 'maximized');
     ax1 = subplot(3, 1, [1 2]);
     
-    % Save the original time_base for speed_data
-    og_tvec = csc.tvec;
-    csc = restrict(csc, iv(ExpKeys.stim_times));
-    
     if csc.cfg.hdr{1}.SamplingFrequency > 30000
         cfg = []; cfg.decimateFactor = 12;
         csc = decimate_tsd(cfg, csc); 
     end
+    
+    % Save the original time_base for speed_data
+    og_tvec = csc.tvec;
+    csc = restrict(csc, iv(ExpKeys.stim_times));
+
     Fs = 1/median(diff(csc.tvec));
     wsize = 512; % pow2(floor(log2(4*Fs)));  % arbitrary decision on Window Size   
     % Plot spectrogram
@@ -67,7 +69,7 @@ function doStuff
     xlabel('Time (sec)');
     colorbar
     ax1.FontSize = 14;
-    if ExpKeys.hasWheelData
+    if isfield(ExpKeys, 'hasWheelData') & ExpKeys.hasWheelData
         % If running wheel data present, process below
         if ~strcmp(ExpKeys.experimenter, 'EC')
             if contains(ExpKeys.light_source, 'LASER')  % Surgery config
@@ -134,6 +136,6 @@ function doStuff
     end
     fn_prefix = split(pwd, '\');
     fn_prefix = fn_prefix{end};
-    savefig(fig, strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-spedNspeed'));
+    savefig(fig, strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-specNspeed'));
     close;
 end
