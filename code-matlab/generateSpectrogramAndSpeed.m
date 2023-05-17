@@ -55,13 +55,10 @@ function doStuff
     
     if csc.cfg.hdr{1}.SamplingFrequency > 30000
         cfg = []; cfg.decimateFactor = 12;
-        csc = decimate_tsd(cfg, csc);
-        Fs = 1/median(diff(csc.tvec));
-        wsize = pow2(floor(log2(4*Fs)));  % arbitrary decision on Window Size    
-    else
-        Fs = 1/median(diff(csc.tvec));
-        wsize = 512;
+        csc = decimate_tsd(cfg, csc); 
     end
+    Fs = 1/median(diff(csc.tvec));
+    wsize = 512; % pow2(floor(log2(4*Fs)));  % arbitrary decision on Window Size   
     % Plot spectrogram
     [S F T P] = spectrogram(csc.data, hanning(wsize), wsize/2, 1:120, Fs);
     imagesc(T,F,10*log10(P));
@@ -70,7 +67,7 @@ function doStuff
     xlabel('Time (sec)');
     colorbar
     ax1.FontSize = 14;
-    if ~(ExpKeys.hasWheelData) 
+    if ExpKeys.hasWheelData
         % If running wheel data present, process below
         if ~strcmp(ExpKeys.experimenter, 'EC')
             if contains(ExpKeys.light_source, 'LASER')  % Surgery config
