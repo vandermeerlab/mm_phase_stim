@@ -10,7 +10,6 @@ else
     on_delay = 0;
 end
 
-
 %% Set variables and parameters
 title_font_size = 18;
 subplot_font_size = 14;

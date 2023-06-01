@@ -96,16 +96,20 @@ for i = 1:nchans
     fprintf('there are no gaps and all channels start and end at same time, no interpolation performed\n');
   else  
     % interpolate the data
+    [unique_ts,keep_idx] = unique(ts);
+    if length(ts) ~= length(unique_ts)
+    disp('Duplicate timestamps removed!'); 
+        ts = unique(ts);
+        data.trial{1} = data.trial{1}(keep_idx);
+    end
     datinterp   = interp1(ts, data.trial{1}, tsinterp);
-    
-    % temp_edit
-%     % you can use NaN to replace the data in the gaps
-%     gaps     = find(diff(ts)>2*mode_dts); % skips at least a sample
-%     for igap = 1:length(gaps)
-%       sel = tsinterp < ts(gaps(igap)+1) & tsinterp > ts(gaps(igap));
-%       datinterp(sel) = NaN;
-%     end
-    % end of temp_edit
+
+    % you can use NaN to replace the data in the gaps
+    gaps     = find(diff(ts)>2*mode_dts); % skips at least a sample
+    for igap = 1:length(gaps)
+      sel = tsinterp < ts(gaps(igap)+1) & tsinterp > ts(gaps(igap));
+      datinterp(sel) = NaN;
+    end
   
     % set data at the end and beginning to nans
     if startflag==1

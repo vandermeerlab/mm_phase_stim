@@ -1,9 +1,9 @@
 %% Assumes that good LFPs have been picked out
-% top_dir = 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\';
-% mice = {'M016', 'M017', 'M018', 'M019', 'M020'};
+
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
-mice = {'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
-for iM  = 1:length(mice)
+mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
+
+for iM  = 11:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
     for iS = 1:length(sid)
@@ -15,11 +15,10 @@ end
 
 %
 function doStuff
-
     % Declaring variables
     % Setting up parameters
-    fbands = {[2 5], [6 10], [20 55], [65 100]};
-    c_list = {'cyan', 'red', 'magenta', 'green'};
+    fbands = {[2 5], [6 10], [12 30], [30 55]};
+    c_list = {'cyan', 'red','magenta', 'green'};
 
     LoadExpKeys;
     evs = LoadEvents([]);
@@ -62,7 +61,7 @@ function doStuff
     wsize = pow2(floor(log2(4*Fs)));  % arbitrary decision on Window Size
     [Pxx, F] = pwelch(csc.data, hanning(wsize), wsize/2, [], Fs);
     %Restricting Frequency to >0 and <200 Hz for FOOOF to work
-    f_idx = find(F>0 & F<200);
+    f_idx = find(F>0 & F<120);
     Pxx = Pxx(f_idx); F = F(f_idx);
     P = 10*log10(Pxx); % Converting into decibels
     plot(F, P, 'black');
@@ -77,7 +76,7 @@ function doStuff
     opt.freq_range = [F(1) F(end)];
     opt.power_line = '60';
     opt.peak_width_limits = [0.5,12];
-    opt.max_peaks = 3;
+    opt.max_peaks = 5;
     opt.min_peak_height = 0.3;
     opt.aperiodic_mode = 'knee'; %Check with 'fixed' first
     opt.peak_threshold = 2;
@@ -89,8 +88,8 @@ function doStuff
     opt.thresh_after = 1;
     opt.sort_type = 'param';
     opt.sort_param = 'frequency';
-    opt.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '10'};
-                      {'gamma1'}, {'20',' 55'};{'gamma2'}, {'65','90'}};
+    opt.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '10'}; {'beta'},{'12', '30'}
+                      {'gamma1'}, {'30',' 55'};{'gamma2'}, {'65','90'}};
     [fs, fg] = process_fooof('FOOOF_matlab', reshaped_P, F_fooof, opt, 1);
     powspctrm_f = cat(1, fg.ap_fit);
     for k = 1:size(powspctrm_f,1)
@@ -222,7 +221,7 @@ function doStuff
     save('good_lfp_phases','od'); % should add option to save in specified output dir
     fn_prefix = split(pwd, '\');
     fn_prefix = fn_prefix{end};
-    print(fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-LFP-Report'));
+    print(fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\', fn_prefix, '-LFP-Report'));
     close;
 end
 

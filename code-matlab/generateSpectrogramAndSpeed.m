@@ -1,8 +1,8 @@
 %% Assumes that good LFPs have been picked out
-% top_dir = 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\';
-% mice = {'M016', 'M017', 'M018', 'M019', 'M020'};
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
-mice = {'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
+top_dir = 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\';
+mice = {'M016', 'M017', 'M018', 'M019', 'M020'};
+% top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+% mice = {'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -13,14 +13,8 @@ for iM  = 1:length(mice)
     end
 end
 
-%
 
 function doStuff
-
-    % Setting up parameters
-    fbands = {[2 5], [6 10], [20 55], [65 100]};
-    c_list = {'cyan', 'red', 'magenta', 'green'};
-
     LoadExpKeys;
     evs = LoadEvents([]);
     cfg_spk = [];
@@ -60,10 +54,32 @@ function doStuff
     csc = restrict(csc, iv(ExpKeys.stim_times));
 
     Fs = 1/median(diff(csc.tvec));
-    wsize = 512; % pow2(floor(log2(4*Fs)));  % arbitrary decision on Window Size   
+    % 1 sec window works for most sessions except some
+    weird_spec_8 = {'2021-12-27'};
+    weird_spec_4 = {'2022-05-28'};
+    weird_spec_2 = {'2022-08-03'};
+    if contains(pwd, weird_spec_8)
+        wsize = pow2(floor(log2(8*Fs)));
+    elseif contains(pwd, weird_spec_4)
+        wsize = pow2(floor(log2(4*Fs)));
+    elseif contains(pwd, weird_spec_2)
+        wsize = pow2(floor(log2(2*Fs)));
+    else
+        wsize = pow2(floor(log2(Fs)));
+    end
     % Plot spectrogram
     [S F T P] = spectrogram(csc.data, hanning(wsize), wsize/2, 1:120, Fs);
-    imagesc(T,F,10*log10(P));
+%     imagesc(T,F,10*log10(P));
+    % Saving spectrogram stuff that was calculated for the trial stimperiod
+    spec_data = [];
+    spec_data.wsize  = wsize;
+    spec_data.Fs = Fs;
+    spec_data.S = S;
+    spec_data.T = T;
+    spec_data.P = P;
+    spec_data.F = F;
+    spec_data.firstTimeStamp = csc.tvec(1);
+    save('spectrogram_data', 'spec_data');
     title('Spectrogram');
     ylabel('Freq (Hz)');
     xlabel('Time (sec)');
@@ -114,7 +130,7 @@ function doStuff
                 [d, speed, cfg_w] = ConvertWheeltoSpeed(cfg_w, wheel_tsd);
             end
                 % Assume you are in the correct folder
-                save('speed_data','speed'); % should add option to save in specified output dir
+                save('speed_data','speed');
                 keep = (speed.tvec >= ExpKeys.stim_times(1) & speed.tvec <= ExpKeys.stim_times(2));
                 sub_speed = [];
                 sub_speed.tvec = speed.tvec(keep);
@@ -132,10 +148,24 @@ function doStuff
                 linkaxes([ax1, ax2], 'x');
         else
             % Depends on what Eric says about the running data
+%             run_file = FindFiles('*run.csv');
+%             if ~isempty(run_file)
+%                 [Sys_time, Real_time, Encoder] = Load_Wheel_EC(run_file{1});
+%                 figure;
+% %                 subplot(3,ceil(length(S.label)/3)+1, length(S.label)+1) ;
+%                 tvec = (Real_time-Real_time(1))/60;
+%                 plot(tvec, [0 ;diff(Encoder)]);
+%                 xlabel('Time (min)');
+%                 ylabel('Encoder position')
+%                 [~,breaks] = findpeaks(diff(tvec), 'MinPeakHeight', 0.05);
+%                 hold on
+%                 plot(tvec([breaks]), zeros(1,length(breaks)), '*r', 'markersize', 4)
+%                 xlim([tvec(1) tvec(end)])
+%             end
         end
     end
     fn_prefix = split(pwd, '\');
     fn_prefix = fn_prefix{end};
-    savefig(fig, strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-specNspeed'));
+    WriteFig(fig, strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-specNspeed'),1);
     close;
 end
