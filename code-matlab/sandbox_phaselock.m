@@ -2,9 +2,9 @@
 
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
-for iM  = 6:length(mice)
+for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
-    sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
+    sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess)); 
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
@@ -35,8 +35,14 @@ function doStuff
         csc = LoadCSC(cfg);
         ft_csc = ft_read_neuralynx_interp(cfg.fc);
     end
-    overall_max = max(csc.data(1,:));
-    overall_min = min(csc.data(1,:));
+    % Because of the way ft_read_data has been rewritten, the sampleinfo
+    % field needs to be changed accordingly
+    if ft_csc.sampleinfo(2) ~= length(ft_csc.time{1})
+        fprintf('Adjusting sample info manually to avoid running into problems later\n');
+        ft_csc.sampleinfo(2) = length(ft_csc.time{1});
+    end
+    overall_max = csc.cfg.hdr{1}.InputRange * 1e-6;
+    overall_min = -overall_max;
     all_saturated = (csc.data(1,:) == overall_max | csc.data(1,:) == overall_min);
     all_saturated = csc.tvec(all_saturated);
     % The units of ft_csc are not the same as LoadCSC
@@ -115,451 +121,45 @@ function doStuff
         % For clean_spikes, use restricted_S
         S.ft_clean_spikes{iC} = S.ft_spikes{iC};
         S.ft_clean_spikes{iC}.timestamp{1} = restricted_S.t{iC}*1e6; % TODO: Check for EC data too
+
         all_spike_data = ft_appendspike([], ft_csc, S.ft_spikes{iC});
         clean_spike_data = ft_appendspike([], ft_csc, S.ft_clean_spikes{iC});
     
-        % code to separate out pre-stim duration
-        temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
-        this_start = ExpKeys.recording_times(1);
-        this_stop = ExpKeys.pre_stim_times(2);
-        % Find the maximum unsaturated period in this epoch
-        if ~isempty(all_saturated)
-            this_saturated = (all_saturated > this_start) & (all_saturated < this_stop);
-            this_saturated = all_saturated(this_saturated);
-            if ~isempty(this_saturated)
-                this_segments = [this_start; this_saturated; this_stop];
-                [max_len, midx] = max(diff(this_segments));
-                fprintf('Taking the longest unsaturated segment of %f sec out of total %f sec\n', ...
-                    max_len, this_stop-this_start);
-                this_start = this_segments(midx);
-                this_stop = this_segments(midx+1);
-            end
-        end
-        temp_start = nearest_idx3(this_start, temp_tvec);
-        temp_end = nearest_idx3(this_stop, temp_tvec);
-        cfg=[];
-        cfg.begsample = temp_start;
-        cfg.endsample = temp_end;
-        pre_data = ft_redefinetrial(cfg, all_spike_data);
-        pre_clean_data = ft_redefinetrial(cfg, clean_spike_data);
-        
-        if ~isempty(find(isnan(pre_data.time{1}),1))
-            warning('Pre Stim data has gaps');
-        end
-        
-        pre_spk_count = sum(pre_data.trial{1}(2,:));
-        pre_clean_spk_count = sum(pre_clean_data.trial{1}(2,:));
-        
-        if pre_spk_count ~= 0
-            % Calculate STA
-            cfg = [];
-            cfg.timwin = [-0.5 0.5];
-            cfg.spikechannel = S.ft_spikes{iC}.label{1};
-            cfg.channel = ft_csc.label(1);
-            this_sta = ft_spiketriggeredaverage(cfg, pre_data);
-            pre_sta = [];
-            pre_sta.time = this_sta.time;
-            pre_sta.vals = this_sta.avg(:,:)';
-            if pre_clean_spk_count ~= 0
-                this_sta = ft_spiketriggeredaverage(cfg, pre_clean_data);
-                pre_clean_sta.time = this_sta.time;
-                pre_clean_sta.vals = this_sta.avg(:,:)';
-            else
-                pre_clean_sta = [];
-            end
-        
-            % Calculate STS
-            cfg = [];
-            cfg.method = 'mtmconvol';
-            cfg.foi = 1:1:100;
-            cfg.t_ftimwin = 5./cfg.foi;
-            cfg.taper = 'hanning';
-            cfg.spikechannel = S.ft_spikes{iC}.label{1};
-            cfg.channel = ft_csc.label{1};
-            this_sts = ft_spiketriggeredspectrum(cfg, pre_data);
-            pre_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
-            pre_sts.freqs = this_sts.freq;
-            pre_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
-            if pre_clean_spk_count ~= 0
-                clean_sts = ft_spiketriggeredspectrum(cfg, pre_clean_data);
-                pre_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
-                pre_clean_sts.freqs = clean_sts.freq;
-                pre_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
-            else
-                pre_clean_sts = [];
-            end
-        
-            % Calculate PPC
-            cfg               = [];
-            cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
-            cfg.spikechannel  = this_sts.label;
-            cfg.channel       = this_sts.lfplabel; % selected LFP channels
-            cfg.avgoverchan   = 'weighted';
-            cfg.timwin        = 'all'; % compute over all available spikes in the window
-            this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
-            pre_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
-            pre_ppc.vals = this_ppc.ppc0';
-            if pre_clean_spk_count ~= 0
-                this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
-                pre_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
-                pre_clean_ppc.vals = this_ppc.ppc0';
-            else
-                pre_clean_sts = [];
-            end
-        else
-            pre_sta = [];
-            pre_clean_sta = [];
-            pre_sts = [];
-            pre_clean_sts = [];
-            pre_ppc =  [];
-            pre_clean_ppc = [];
-        end
-        
-        subplot(3,4,1)
-        hold off
-        plot(pre_sta.time, pre_sta.vals)
-        if pre_clean_spk_count ~= 0
-            hold on
-            plot(pre_sta.time, pre_clean_sta.vals)
-        end
-        xlabel('Time')
-        ylabel('STA')
-        yticks([])
-        title('Pre-stim')
-        
-        subplot(3,4,5)
-        hold off
-        plot(pre_sts.freqs, pre_sts.vals)
-        if pre_clean_spk_count ~= 0
-            hold on
-            plot(pre_sts.freqs, pre_clean_sts.vals)
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        yticks([])
-        ylabel('STS')
-        
-        ax = subplot(3,4,9);
-        hold off
-        plot(pre_sts.freqs, pre_ppc.vals)
-        if pre_clean_spk_count ~= 0
-            hold on
-            plot(pre_sts.freqs, pre_clean_ppc.vals)
-            legend({sprintf('All spikes: %d', pre_spk_count), sprintf('Clean spikes: %d', pre_clean_spk_count)}, 'FontSize', 12, 'Location','best')
-        else
-            legend({sprintf('All spikes: %d', pre_spk_count)}, 'FontSize', 12, 'Location','best')
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        ylabel('PPC')
-        ax.YAxis.Exponent = 0;
-    
-        % code to separate out stim duration
-        temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
-        this_start = ExpKeys.stim_times(1);
-        this_stop = ExpKeys.stim_times(2);
-        % Find the maximum unsaturated period in this epoch
-        if ~isempty(all_saturated)
-            this_saturated = (all_saturated > this_start) & (all_saturated < this_stop);
-            this_saturated = all_saturated(this_saturated);
-            if ~isempty(this_saturated)
-                this_segments = [this_start; this_saturated; this_stop];
-                [max_len, midx] = max(diff(this_segments));
-                fprintf('Taking the longest unsaturated segment of %f sec out of total %f sec\n', ...
-                    max_len, this_stop-this_start);
-                this_start = this_segments(midx);
-                this_stop = this_segments(midx+1);
-            end
-        end
-        temp_start = nearest_idx3(this_start, temp_tvec);
-        temp_end = nearest_idx3(this_stop, temp_tvec);
-        cfg=[];
-        cfg.begsample = temp_start;
-        cfg.endsample = temp_end;
-        trial_data = ft_redefinetrial(cfg, all_spike_data);
-        trial_clean_data = ft_redefinetrial(cfg, clean_spike_data);
-        
-        if ~isempty(find(isnan(trial_data.time{1}),1))
-            warning('Trial stim data has gaps');
-        end
-        
-        trial_spk_count = sum(trial_data.trial{1}(2,:));
-        trial_clean_spk_count = sum(trial_clean_data.trial{1}(2,:));
-        
-        if trial_spk_count ~= 0
-            % Calculate STA
-            cfg = [];
-            cfg.timwin = [-0.5 0.5];
-            cfg.spikechannel = S.ft_spikes{iC}.label{1};
-            cfg.channel = ft_csc.label(1);
-            this_sta = ft_spiketriggeredaverage(cfg, trial_data);
-            trial_sta = [];
-            trial_sta.time = this_sta.time;
-            trial_sta.vals = this_sta.avg(:,:)';
-            if trial_clean_spk_count ~= 0
-                this_sta = ft_spiketriggeredaverage(cfg, trial_clean_data);
-                trial_clean_sta.time = this_sta.time;
-                trial_clean_sta.vals = this_sta.avg(:,:)';
-            else
-                trial_clean_sta = [];
-            end
-        
-            % Calculate STS
-            cfg = [];
-            cfg.method = 'mtmconvol';
-            cfg.foi = 1:1:100;
-            cfg.t_ftimwin = 5./cfg.foi;
-            cfg.taper = 'hanning';
-            cfg.spikechannel = S.ft_spikes{iC}.label{1};
-            cfg.channel = ft_csc.label{1};
-            this_sts = ft_spiketriggeredspectrum(cfg, trial_data);
-            trial_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
-            trial_sts.freqs = this_sts.freq;
-            trial_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
-            if trial_clean_spk_count ~= 0
-                clean_sts = ft_spiketriggeredspectrum(cfg, trial_clean_data);
-                trial_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
-                trial_clean_sts.freqs = clean_sts.freq;
-                trial_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
-            else
-                trial_clean_sts = [];
-            end
-        
-            % Calculate PPC
-            cfg               = [];
-            cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
-            cfg.spikechannel  = this_sts.label;
-            cfg.channel       = this_sts.lfplabel; % selected LFP channels
-            cfg.avgoverchan   = 'weighted';
-            cfg.timwin        = 'all'; % compute over all available spikes in the window
-            this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
-            trial_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
-            trial_ppc.vals = this_ppc.ppc0';
-            if trial_clean_spk_count ~= 0
-                this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
-                trial_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
-                trial_clean_ppc.vals = this_ppc.ppc0';
-            else
-                trial_clean_sts = [];
-            end
-        else
-            trial_sta = [];
-            trial_clean_sta = [];
-            trial_sts = [];
-            trial_clean_sts = [];
-            trial_ppc =  [];
-            trial_clean_ppc = [];
-        end
-        
-        subplot(3,4,2)
-        hold off
-        plot(trial_sta.time, trial_sta.vals)
-        if trial_clean_spk_count ~= 0
-            hold on
-            plot(trial_sta.time, trial_clean_sta.vals)
-        end
-        xlabel('Time')
-        ylabel('STA')
-        yticks([])
-        title('Trial-stim')
-        
-        subplot(3,4,6)
-        hold off
-        plot(trial_sts.freqs, trial_sts.vals)
-        if trial_clean_spk_count ~= 0
-            hold on
-            plot(trial_sts.freqs, trial_clean_sts.vals)
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        yticks([])
-        ylabel('STS')
-        
-        ax=subplot(3,4,10);
-        hold off
-        plot(trial_sts.freqs, trial_ppc.vals)
-        if trial_clean_spk_count ~= 0
-            hold on
-            plot(trial_sts.freqs, trial_clean_ppc.vals)
-            legend({sprintf('All spikes: %d', trial_spk_count), sprintf('Clean spikes: %d', trial_clean_spk_count)}, 'FontSize', 12, 'Location','best')
-        else
-            legend({sprintf('All spikes: %d', trial_spk_count)}, 'FontSize', 12, 'Location','best')
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        ylabel('PPC')
-        ax.YAxis.Exponent = 0;
-        
-        % code to separate out post stim duration
-        temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
-        this_start = ExpKeys.post_baseline_times(1);
-        this_stop = 0.5*(ExpKeys.long_stim_times(2) + long_stim_on(end));
-        % Find the maximum unsaturated period in this epoch
-        if ~isempty(all_saturated)
-            this_saturated = (all_saturated > this_start) & (all_saturated < this_stop);
-            this_saturated = all_saturated(this_saturated);
-            if ~isempty(this_saturated)
-                this_segments = [this_start; this_saturated; this_stop];
-                [max_len, midx] = max(diff(this_segments));
-                fprintf('Taking the longest unsaturated segment of %f sec out of total %f sec\n', ...
-                    max_len, this_stop-this_start);
-                this_start = this_segments(midx);
-                this_stop = this_segments(midx+1);
-            end
-        end
-        temp_start = nearest_idx3(this_start, temp_tvec);
-        temp_end = nearest_idx3(this_stop, temp_tvec);
-        % This temp_end has to be chosen carefully to avoid no Nan values at
-        % the end of post_data.trial{1}(1,:)
-        cfg=[];
-        cfg.begsample = temp_start;
-        cfg.endsample = temp_end;
-        post_data = ft_redefinetrial(cfg, all_spike_data);
-        post_clean_data = ft_redefinetrial(cfg, clean_spike_data);
-        
-        if ~isempty(find(isnan(post_data.time{1}),1))
-            warning('Post Stim data has gaps');
-        end
-        
-        post_spk_count = sum(post_data.trial{1}(2,:));
-        post_clean_spk_count = sum(post_clean_data.trial{1}(2,:));
-        
-        if post_spk_count ~= 0
-            % Calculate STA
-            cfg = [];
-            cfg.timwin = [-0.5 0.5];
-            cfg.spikechannel = S.ft_spikes{iC}.label{1};
-            cfg.channel = ft_csc.label(1);
-            this_sta = ft_spiketriggeredaverage(cfg, post_data);
-            post_sta = [];
-            post_sta.time = this_sta.time;
-            post_sta.vals = this_sta.avg(:,:)';
-            if post_clean_spk_count ~= 0
-                this_sta = ft_spiketriggeredaverage(cfg, post_clean_data);
-                post_clean_sta.time = this_sta.time;
-                post_clean_sta.vals = this_sta.avg(:,:)';
-            else
-                post_clean_sta = [];
-            end
-        
-            % Calculate STS
-            cfg = [];
-            cfg.method = 'mtmconvol';
-            cfg.foi = 1:1:100;
-            cfg.t_ftimwin = 5./cfg.foi;
-            cfg.taper = 'hanning';
-            cfg.spikechannel = S.ft_spikes{iC}.label{1};
-            cfg.channel = ft_csc.label{1};
-            this_sts = ft_spiketriggeredspectrum(cfg, post_data);
-            post_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
-            post_sts.freqs = this_sts.freq;
-            post_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
-            if post_clean_spk_count ~= 0 
-                clean_sts = ft_spiketriggeredspectrum(cfg, post_clean_data);
-                post_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
-                post_clean_sts.freqs = clean_sts.freq;
-                post_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
-            else
-                post_clean_sts = [];
-            end
-        
-            % Calculate PPC
-            cfg               = [];
-            cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
-            cfg.spikechannel  = this_sts.label;
-            cfg.channel       = this_sts.lfplabel; % selected LFP channels
-            cfg.avgoverchan   = 'weighted';
-            cfg.timwin        = 'all'; % compute over all available spikes in the window
-            this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
-            post_ppc.hasnan = isempty(find(isnan(this_ppc.ppc0),1));
-            post_ppc.vals = this_ppc.ppc0';
-            if post_clean_spk_count ~= 0
-                this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
-                post_clean_ppc.hasnan = isempty(find(isnan(this_ppc.ppc0),1));
-                post_clean_ppc.vals = this_ppc.ppc0';
-            else
-                post_clean_sts = [];
-            end
-        else
-            post_sta = [];
-            post_clean_sta = [];
-            post_sts = [];
-            post_clean_sts = [];
-            post_ppc =  [];
-            post_clean_ppc = [];
-        end
-        
-        subplot(3,4,3)
-        hold off
-        plot(post_sta.time, post_sta.vals)
-        if post_clean_spk_count ~= 0
-            hold on
-            plot(post_sta.time, post_clean_sta.vals)
-        end
-        xlabel('Time')
-        ylabel('STA')
-        yticks([])
-        title('Post-stim')
-        
-        subplot(3,4,7)
-        hold off
-        plot(post_sts.freqs, post_sts.vals)
-        if post_clean_spk_count ~= 0
-            hold on
-            plot(post_sts.freqs, post_clean_sts.vals)
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        yticks([])
-        ylabel('STS')
-        
-        ax = subplot(3,4,11);
-        hold off
-        plot(post_sts.freqs, post_ppc.vals)
-        if post_clean_spk_count ~= 0
-            hold on
-            plot(post_sts.freqs, post_clean_ppc.vals)
-            legend({sprintf('All spikes: %d', post_spk_count), sprintf('Clean spikes: %d', post_clean_spk_count)}, 'FontSize', 12, 'Location','best')
-        else
-            legend({sprintf('All spikes: %d', post_spk_count)}, 'FontSize', 12, 'Location','best')
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        ylabel('PPC')
-        ax.YAxis.Exponent = 0;
-    
-        sgtitle(S.label{iC}, 'Interpreter', 'None')
-        
+        % Find the spike indices of the clean spikes among all_spikes
+        all_idx = find(all_spike_data.trial{1}(2,:));
+        clean_idx = find(clean_spike_data.trial{1}(2,:)); 
+        clean_spk_idx = nearest_idx3(all_spike_data.time{1}(1,clean_idx), all_spike_data.time{1}(1,all_idx));
+
+        % Find the largest Unsaturated block and calculate everything for
+        % that and then subset
         % code to separate out all stim duration
         temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
-        this_start = ExpKeys.recording_times(1);
-        this_stop = 0.5*(ExpKeys.long_stim_times(2) + long_stim_on(end));
+        big_start = ExpKeys.recording_times(1);
+        big_stop = ExpKeys.recording_times(2);
         % Find the maximum unsaturated period in this epoch
         if ~isempty(all_saturated)
-            this_saturated = (all_saturated > this_start) & (all_saturated < this_stop);
+            this_saturated = (all_saturated > big_start) & (all_saturated < big_stop);
             this_saturated = all_saturated(this_saturated);
             if ~isempty(this_saturated)
-                this_segments = [this_start; this_saturated; this_stop];
+                this_segments = [big_start; this_saturated; big_stop];
                 [max_len, midx] = max(diff(this_segments));
                 fprintf('Taking the longest unsaturated segment of %f sec out of total %f sec\n', ...
-                    max_len, this_stop-this_start);
-                this_start = this_segments(midx);
-                this_stop = this_segments(midx+1);
+                    max_len, big_stop-big_start);
+                big_start = this_segments(midx);
+                big_stop = this_segments(midx+1);
             end
         end
-        temp_start = nearest_idx3(this_start, temp_tvec);
-        temp_end = nearest_idx3(this_stop, temp_tvec);
+        temp_start = nearest_idx3(big_start, temp_tvec);
+        temp_end = nearest_idx3(big_stop, temp_tvec);
         % This temp_end has to be chosen carefully to avoid no Nan values at
         % the end of all_data.trial{1}(1,:)
         cfg=[];
         cfg.begsample = temp_start;
         cfg.endsample = temp_end;
         all_data = ft_redefinetrial(cfg, all_spike_data);
-        all_clean_data = ft_redefinetrial(cfg, clean_spike_data);
-        
-        if ~isempty(find(isnan(all_data.time{1}),1))
-            warning('Whole duration data has gaps');
-        end
+        all_clean_data = all_data;
+        all_clean_data.trial{1}(2,:) = zeros(size(all_clean_data.trial{1}(2,:)));
+        all_clean_data.trial{1}(2,clean_idx) = 1;
         
         all_spk_count = sum(all_data.trial{1}(2,:));
         all_clean_spk_count = sum(all_clean_data.trial{1}(2,:));
@@ -590,12 +190,17 @@ function doStuff
             cfg.taper = 'hanning';
             cfg.spikechannel = S.ft_spikes{iC}.label{1};
             cfg.channel = ft_csc.label{1};
-            this_sts = ft_spiketriggeredspectrum(cfg, all_data);
-            all_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
-            all_sts.freqs = this_sts.freq;
-            all_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
+            cfg.rejectsaturation = 'no'; % This is important because we are manually selecting the largest unsaturated gap
+            big_sts = ft_spiketriggeredspectrum(cfg, all_data);
+            all_sts.hasnan = ~isempty(find(isnan(big_sts.fourierspctrm{1}),1));
+            all_sts.freqs = big_sts.freq;
+            all_sts.vals = nanmean(sq(abs(big_sts.fourierspctrm{1})));
             if all_clean_spk_count ~= 0 
-                clean_sts = ft_spiketriggeredspectrum(cfg, all_clean_data);
+                % Instead of recalulating, reuse the values
+                clean_sts = big_sts;
+                clean_sts.fourierspctrm{1} = big_sts.fourierspctrm{1}(clean_spk_idx,:,:);
+                clean_sts.time{1} = big_sts.time{1}(clean_spk_idx,:);
+                clean_sts.trial{1} = big_sts.trial{1}(clean_spk_idx,:);
                 all_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
                 all_clean_sts.freqs = clean_sts.freq;
                 all_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
@@ -606,11 +211,11 @@ function doStuff
             % Calculate PPC
             cfg               = [];
             cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
-            cfg.spikechannel  = this_sts.label;
-            cfg.channel       = this_sts.lfplabel; % selected LFP channels
+            cfg.spikechannel  = big_sts.label;
+            cfg.channel       = big_sts.lfplabel; % selected LFP channels
             cfg.avgoverchan   = 'weighted';
             cfg.timwin        = 'all'; % compute over all available spikes in the window
-            this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
+            this_ppc          = ft_spiketriggeredspectrum_stat(cfg,big_sts);
             all_ppc.hasnan = isempty(find(isnan(this_ppc.ppc0),1));
             all_ppc.vals = this_ppc.ppc0';
             if all_clean_spk_count ~= 0
@@ -659,15 +264,693 @@ function doStuff
         if all_clean_spk_count ~= 0
             hold on
             plot(all_sts.freqs, all_clean_ppc.vals)
-            legend({sprintf('All spikes: %d', all_spk_count), sprintf('Clean spikes: %d', all_clean_spk_count)}, 'FontSize', 12, 'Location','best')
+            legend({sprintf('All: %d', all_spk_count), sprintf('Clean: %d', all_clean_spk_count)}, 'FontSize', 12, 'Location','best')
         else
-            legend({sprintf('All spikes: %d', all_spk_count)}, 'FontSize', 12, 'Location','best')
+            legend({sprintf('All: %d', all_spk_count)}, 'FontSize', 12, 'Location','best')
         end
         xlim([0 100])
         xlabel('Freqs')
         ylabel('PPC')
         ax.YAxis.Exponent = 0;
     
+%         clear all_data all_clean_data temp_tvec % to avoid running out of space
+
+        % code to separate out pre-stim duration
+        this_start = max(ExpKeys.recording_times(1), big_start);
+        this_stop = min(ExpKeys.pre_stim_times(2), big_stop);
+        if this_start >= this_stop 
+            % The longest overall unsaturated segment does not include this epoch, so find
+            % the longest such segment in this epoch and recalculate stuff
+            this_start = ExpKeys.recording_times(1);
+            this_stop = ExpKeys.pre_stim_times(2);
+            if ~isempty(all_saturated)
+                this_saturated = (all_saturated > this_start) & (all_saturated < this_stop);
+                this_saturated = all_saturated(this_saturated);
+                if ~isempty(this_saturated)
+                    this_segments = [this_start; this_saturated; this_stop];
+                    [max_len, midx] = max(diff(this_segments));
+                    fprintf('Taking the longest unsaturated segment of %f sec out of total %f sec\n', ...
+                        max_len, this_stop-this_start);
+                    this_start = this_segments(midx);
+                    this_stop = this_segments(midx+1);
+                end
+            end
+            temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
+            temp_start = nearest_idx3(this_start, temp_tvec);
+            temp_end = nearest_idx3(this_stop, temp_tvec);
+            cfg=[];
+            cfg.begsample = temp_start;
+            cfg.endsample = temp_end;
+            pre_data = ft_redefinetrial(cfg, all_spike_data);
+            pre_clean_data = ft_redefinetrial(cfg, clean_spike_data);
+
+            pre_spk_count = sum(pre_data.trial{1}(2,:));
+            pre_clean_spk_count = sum(pre_clean_data.trial{1}(2,:));
+        
+            if pre_spk_count ~= 0
+                % Calculate STA
+                cfg = [];
+                cfg.timwin = [-0.5 0.5];
+                cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                cfg.channel = ft_csc.label(1);
+                this_sta = ft_spiketriggeredaverage(cfg, pre_data);
+                pre_sta = [];
+                pre_sta.time = this_sta.time;
+                pre_sta.vals = this_sta.avg(:,:)';
+                if pre_clean_spk_count ~= 0
+                    this_sta = ft_spiketriggeredaverage(cfg, pre_clean_data);
+                    pre_clean_sta.time = this_sta.time;
+                    pre_clean_sta.vals = this_sta.avg(:,:)';
+                else
+                    pre_clean_sta = [];
+                end
+            
+                % Calculate STS
+                cfg = [];
+                cfg.method = 'mtmconvol';
+                cfg.foi = 1:1:100;
+                cfg.t_ftimwin = 5./cfg.foi;
+                cfg.taper = 'hanning';
+                cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                cfg.channel = ft_csc.label{1};
+                cfg.rejectsaturation = 'no'; % This is important because we are manually selecting the largest unsaturated gap
+                this_sts = ft_spiketriggeredspectrum(cfg, pre_data);
+                pre_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
+                pre_sts.freqs = this_sts.freq;
+                pre_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
+                if pre_clean_spk_count ~= 0
+                    clean_sts = ft_spiketriggeredspectrum(cfg, pre_clean_data);
+                    pre_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
+                    pre_clean_sts.freqs = clean_sts.freq;
+                    pre_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
+                else
+                    pre_clean_sts = [];
+                end
+            
+                % Calculate PPC
+                cfg               = [];
+                cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
+                cfg.spikechannel  = this_sts.label;
+                cfg.channel       = this_sts.lfplabel; % selected LFP channels
+                cfg.avgoverchan   = 'weighted';
+                cfg.timwin        = 'all'; % compute over all available spikes in the window
+                this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
+                pre_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                pre_ppc.vals = this_ppc.ppc0';
+                if pre_clean_spk_count ~= 0
+                    this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
+                    pre_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                    pre_clean_ppc.vals = this_ppc.ppc0';
+                else
+                    pre_clean_sts = [];
+                end
+            else
+                pre_sta = [];
+                pre_clean_sta = [];
+                pre_sts = [];
+                pre_clean_sts = [];
+                pre_ppc =  [];
+                pre_clean_ppc = [];
+            end
+
+        else % Use clever indexing
+            temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
+            temp_start = nearest_idx3(this_start, temp_tvec);
+            temp_end = nearest_idx3(this_stop, temp_tvec);
+            cfg=[];
+            cfg.begsample = temp_start;
+            cfg.endsample = temp_end;
+            pre_data = ft_redefinetrial(cfg, all_spike_data);
+            pre_clean_data = ft_redefinetrial(cfg, clean_spike_data);
+            pre_spk_count = sum(pre_data.trial{1}(2,:));
+            pre_clean_spk_count = sum(pre_clean_data.trial{1}(2,:));
+            
+            if pre_spk_count ~= 0
+                % Calculate STA
+                cfg = [];
+                cfg.timwin = [-0.5 0.5];
+                cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                cfg.channel = ft_csc.label(1);
+                this_sta = ft_spiketriggeredaverage(cfg, pre_data);
+                pre_sta = [];
+                pre_sta.time = this_sta.time;
+                pre_sta.vals = this_sta.avg(:,:)';
+                if pre_clean_spk_count ~= 0
+                    this_sta = ft_spiketriggeredaverage(cfg, pre_clean_data);
+                    pre_clean_sta.time = this_sta.time;
+                    pre_clean_sta.vals = this_sta.avg(:,:)';
+                else
+                    pre_clean_sta = [];
+                end
+                % Find where the spikes and 'clean' spikes in this epoch lie among all spikes
+                this_spk_idx  = nearest_idx3(find(all_data.trial{1}(2,pre_data.sampleinfo(1):pre_data.sampleinfo(2))) + ...
+                    pre_data.sampleinfo(1) - 1,  find(all_data.trial{1}(2,:)));
+                assert(length(this_spk_idx) == length(unique(this_spk_idx)), 'Clever indexing failed for pre stim epoch');
+                this_clean_spk_idx = nearest_idx3(find(all_clean_data.trial{1}(2,pre_data.sampleinfo(1):pre_data.sampleinfo(2))) + ...
+                    pre_data.sampleinfo(1) - 1, find(all_data.trial{1}(2,:)));
+                assert(length(this_clean_spk_idx) == length(unique(this_clean_spk_idx)), 'Clever indexing failed for pre stim epoch');
+                this_sts = big_sts;
+                this_sts.fourierspctrm{1} = big_sts.fourierspctrm{1}(this_spk_idx,:,:);
+                this_sts.time{1} = big_sts.time{1}(this_spk_idx,:);
+                this_sts.trial{1} = big_sts.trial{1}(this_spk_idx,:);
+                this_sts.trialtime(1) = (pre_data.sampleinfo(1) - all_data.sampleinfo(1))'/diff(all_data.sampleinfo)*big_sts.trialtime(2);
+                this_sts.trialtime(2) = (pre_data.sampleinfo(2) - all_data.sampleinfo(1))'/diff(all_data.sampleinfo)*big_sts.trialtime(2);
+                pre_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
+                pre_sts.freqs = this_sts.freq;
+                pre_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
+                if pre_clean_spk_count ~= 0
+                    clean_sts = big_sts;
+                    clean_sts.fourierspctrm{1} = big_sts.fourierspctrm{1}(this_clean_spk_idx,:,:);
+                    clean_sts.time{1} = big_sts.time{1}(this_clean_spk_idx,:);
+                    clean_sts.trial{1} = big_sts.trial{1}(this_clean_spk_idx,:);
+                    clean_sts.trialtime = this_sts.trialtime;
+                    pre_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
+                    pre_clean_sts.freqs = clean_sts.freq;
+                    pre_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
+                else
+                    pre_clean_sts = [];
+                end           
+           
+                % Calculate PPC
+                cfg               = [];
+                cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
+                cfg.spikechannel  = this_sts.label;
+                cfg.channel       = this_sts.lfplabel; % selected LFP channels
+                cfg.avgoverchan   = 'weighted';
+                cfg.timwin        = 'all'; % compute over all available spikes in the window
+                this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
+                pre_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                pre_ppc.vals = this_ppc.ppc0';
+                if pre_clean_spk_count ~= 0
+                    this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
+                    pre_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                    pre_clean_ppc.vals = this_ppc.ppc0';
+                else
+                    pre_clean_sts = [];
+                end
+            else
+                pre_sta = [];
+                pre_clean_sta = [];
+                pre_sts = [];
+                pre_clean_sts = [];
+                pre_ppc =  [];
+                pre_clean_ppc = [];
+            end
+        end
+
+        subplot(3,4,1)
+        hold off
+        plot(pre_sta.time, pre_sta.vals)
+        if pre_clean_spk_count ~= 0
+            hold on
+            plot(pre_sta.time, pre_clean_sta.vals)
+        end
+        xlabel('Time')
+        ylabel('STA')
+        yticks([])
+        title('Pre-stim')
+        
+        subplot(3,4,5)
+        hold off
+        plot(pre_sts.freqs, pre_sts.vals)
+        if pre_clean_spk_count ~= 0
+            hold on
+            plot(pre_sts.freqs, pre_clean_sts.vals)
+        end
+        xlim([0 100])
+        xlabel('Freqs')
+        yticks([])
+        ylabel('STS')
+        
+        ax = subplot(3,4,9);
+        hold off
+        plot(pre_sts.freqs, pre_ppc.vals)
+        if pre_clean_spk_count ~= 0
+            hold on
+            plot(pre_sts.freqs, pre_clean_ppc.vals)
+            legend({sprintf('All: %d', pre_spk_count), sprintf('Clean: %d', pre_clean_spk_count)}, 'FontSize', 12, 'Location','best')
+        else
+            legend({sprintf('All: %d', pre_spk_count)}, 'FontSize', 12, 'Location','best')
+        end
+        xlim([0 100])
+        xlabel('Freqs')
+        ylabel('PPC')
+        ax.YAxis.Exponent = 0;
+
+        clear pre_data pre_clean_data temp_tvec % to avoid running out of space
+    
+        % code to separate out trial-stim duration
+        this_start = max(ExpKeys.stim_times(1), big_start);
+        this_stop = min(ExpKeys.stim_times(2), big_stop);
+        if this_start >= this_stop 
+            % The longest overall unsaturated segment does not include this epoch, so find
+            % the longest such segment in this epoch and recalculate stuff
+            this_start = ExpKeys.stim_times(1);
+            this_stop = ExpKeys.stim_times(2);
+            if ~isempty(all_saturated)
+                this_saturated = (all_saturated > this_start) & (all_saturated < this_stop);
+                this_saturated = all_saturated(this_saturated);
+                if ~isempty(this_saturated)
+                    this_segments = [this_start; this_saturated; this_stop];
+                    [max_len, midx] = max(diff(this_segments));
+                    fprintf('Taking the longest unsaturated segment of %f sec out of total %f sec\n', ...
+                        max_len, this_stop-this_start);
+                    this_start = this_segments(midx);
+                    this_stop = this_segments(midx+1);
+                end
+            end
+            temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
+            temp_start = nearest_idx3(this_start, temp_tvec);
+            temp_end = nearest_idx3(this_stop, temp_tvec);
+            cfg=[];
+            cfg.begsample = temp_start;
+            cfg.endsample = temp_end;
+            trial_data = ft_redefinetrial(cfg, all_spike_data);
+            trial_clean_data = ft_redefinetrial(cfg, clean_spike_data);
+
+            trial_spk_count = sum(trial_data.trial{1}(2,:));
+            trial_clean_spk_count = sum(trial_clean_data.trial{1}(2,:));
+        
+            if trial_spk_count ~= 0
+                % Calculate STA
+                cfg = [];
+                cfg.timwin = [-0.5 0.5];
+                cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                cfg.channel = ft_csc.label(1);
+                this_sta = ft_spiketriggeredaverage(cfg, trial_data);
+                trial_sta = [];
+                trial_sta.time = this_sta.time;
+                trial_sta.vals = this_sta.avg(:,:)';
+                if trial_clean_spk_count ~= 0
+                    this_sta = ft_spiketriggeredaverage(cfg, trial_clean_data);
+                    trial_clean_sta.time = this_sta.time;
+                    trial_clean_sta.vals = this_sta.avg(:,:)';
+                else
+                    trial_clean_sta = [];
+                end
+            
+                % Calculate STS
+                cfg = [];
+                cfg.method = 'mtmconvol';
+                cfg.foi = 1:1:100;
+                cfg.t_ftimwin = 5./cfg.foi;
+                cfg.taper = 'hanning';
+                cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                cfg.channel = ft_csc.label{1};
+                cfg.rejectsaturation = 'no'; % This is important because we are manually selecting the largest unsaturated gap
+                this_sts = ft_spiketriggeredspectrum(cfg, trial_data);
+                trial_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
+                trial_sts.freqs = this_sts.freq;
+                trial_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
+                if trial_clean_spk_count ~= 0
+                    clean_sts = ft_spiketriggeredspectrum(cfg, trial_clean_data);
+                    trial_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
+                    trial_clean_sts.freqs = clean_sts.freq;
+                    trial_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
+                else
+                    trial_clean_sts = [];
+                end
+            
+                % Calculate PPC
+                cfg               = [];
+                cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
+                cfg.spikechannel  = this_sts.label;
+                cfg.channel       = this_sts.lfplabel; % selected LFP channels
+                cfg.avgoverchan   = 'weighted';
+                cfg.timwin        = 'all'; % compute over all available spikes in the window
+                this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
+                trial_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                trial_ppc.vals = this_ppc.ppc0';
+                if trial_clean_spk_count ~= 0
+                    this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
+                    trial_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                    trial_clean_ppc.vals = this_ppc.ppc0';
+                else
+                    trial_clean_sts = [];
+                end
+            else
+                trial_sta = [];
+                trial_clean_sta = [];
+                trial_sts = [];
+                trial_clean_sts = [];
+                trial_ppc =  [];
+                trial_clean_ppc = [];
+            end
+
+        else % Use clever indexing
+            temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
+            temp_start = nearest_idx3(this_start, temp_tvec);
+            temp_end = nearest_idx3(this_stop, temp_tvec);
+            cfg=[];
+            cfg.begsample = temp_start;
+            cfg.endsample = temp_end;
+            trial_data = ft_redefinetrial(cfg, all_spike_data);
+            trial_clean_data = ft_redefinetrial(cfg, clean_spike_data);
+            trial_spk_count = sum(trial_data.trial{1}(2,:));
+            trial_clean_spk_count = sum(trial_clean_data.trial{1}(2,:));
+            
+            if trial_spk_count ~= 0
+                % Calculate STA
+                cfg = [];
+                cfg.timwin = [-0.5 0.5];
+                cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                cfg.channel = ft_csc.label(1);
+                this_sta = ft_spiketriggeredaverage(cfg, trial_data);
+                trial_sta = [];
+                trial_sta.time = this_sta.time;
+                trial_sta.vals = this_sta.avg(:,:)';
+                if trial_clean_spk_count ~= 0
+                    this_sta = ft_spiketriggeredaverage(cfg, trial_clean_data);
+                    trial_clean_sta.time = this_sta.time;
+                    trial_clean_sta.vals = this_sta.avg(:,:)';
+                else
+                    trial_clean_sta = [];
+                end
+                % Find where the spikes and 'clean' spikes in this epoch lie among all spikes
+                this_spk_idx  = nearest_idx3(find(all_data.trial{1}(2,trial_data.sampleinfo(1):trial_data.sampleinfo(2))) + ...
+                    trial_data.sampleinfo(1) - 1,  find(all_data.trial{1}(2,:)));
+                assert(length(this_spk_idx) == length(unique(this_spk_idx)), 'Clever indexing failed for trial stim epoch');
+                this_clean_spk_idx = nearest_idx3(find(all_clean_data.trial{1}(2,trial_data.sampleinfo(1):trial_data.sampleinfo(2))) + ...
+                    trial_data.sampleinfo(1) - 1, find(all_data.trial{1}(2,:)));
+                assert(length(this_clean_spk_idx) == length(unique(this_clean_spk_idx)), 'Clever indexing failed for trial stim epoch');
+                this_sts = big_sts;
+                this_sts.fourierspctrm{1} = big_sts.fourierspctrm{1}(this_spk_idx,:,:);
+                this_sts.time{1} = big_sts.time{1}(this_spk_idx,:);
+                this_sts.trial{1} = big_sts.trial{1}(this_spk_idx,:);
+                this_sts.trialtime(1) = (trial_data.sampleinfo(1) - all_data.sampleinfo(1))'/diff(all_data.sampleinfo)*big_sts.trialtime(2);
+                this_sts.trialtime(2) = (trial_data.sampleinfo(2) - all_data.sampleinfo(1))'/diff(all_data.sampleinfo)*big_sts.trialtime(2);
+                trial_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
+                trial_sts.freqs = this_sts.freq;
+                trial_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
+                if trial_clean_spk_count ~= 0
+                    clean_sts = big_sts;
+                    clean_sts.fourierspctrm{1} = big_sts.fourierspctrm{1}(this_clean_spk_idx,:,:);
+                    clean_sts.time{1} = big_sts.time{1}(this_clean_spk_idx,:);
+                    clean_sts.trial{1} = big_sts.trial{1}(this_clean_spk_idx,:);
+                    clean_sts.trialtime = this_sts.trialtime;
+                    trial_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
+                    trial_clean_sts.freqs = clean_sts.freq;
+                    trial_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
+                else
+                    trial_clean_sts = [];
+                end           
+           
+                % Calculate PPC
+                cfg               = [];
+                cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
+                cfg.spikechannel  = this_sts.label;
+                cfg.channel       = this_sts.lfplabel; % selected LFP channels
+                cfg.avgoverchan   = 'weighted';
+                cfg.timwin        = 'all'; % compute over all available spikes in the window
+                this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
+                trial_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                trial_ppc.vals = this_ppc.ppc0';
+                if trial_clean_spk_count ~= 0
+                    this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
+                    trial_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                    trial_clean_ppc.vals = this_ppc.ppc0';
+                else
+                    trial_clean_sts = [];
+                end
+            else
+                trial_sta = [];
+                trial_clean_sta = [];
+                trial_sts = [];
+                trial_clean_sts = [];
+                trial_ppc =  [];
+                trial_clean_ppc = [];
+            end
+        end
+
+        subplot(3,4,2)
+        hold off
+        plot(trial_sta.time, trial_sta.vals)
+        if trial_clean_spk_count ~= 0
+            hold on
+            plot(trial_sta.time, trial_clean_sta.vals)
+        end
+        xlabel('Time')
+        ylabel('STA')
+        yticks([])
+        title('Trial-stim')
+        
+        subplot(3,4,6)
+        hold off
+        plot(trial_sts.freqs, trial_sts.vals)
+        if trial_clean_spk_count ~= 0
+            hold on
+            plot(trial_sts.freqs, trial_clean_sts.vals)
+        end
+        xlim([0 100])
+        xlabel('Freqs')
+        yticks([])
+        ylabel('STS')
+        
+        ax=subplot(3,4,10);
+        hold off
+        plot(trial_sts.freqs, trial_ppc.vals)
+        if trial_clean_spk_count ~= 0
+            hold on
+            plot(trial_sts.freqs, trial_clean_ppc.vals)
+            legend({sprintf('All: %d', trial_spk_count), sprintf('Clean: %d', trial_clean_spk_count)}, 'FontSize', 12, 'Location','best')
+        else
+            legend({sprintf('All: %d', trial_spk_count)}, 'FontSize', 12, 'Location','best')
+        end
+        xlim([0 100])
+        xlabel('Freqs')
+        ylabel('PPC')
+        ax.YAxis.Exponent = 0;
+
+        clear trial_data trial_clean_data temp_tvec % to avoid running out of space
+        
+        if ~isempty(ExpKeys.post_baseline_times)
+            % code to separate out post-stim duration
+            this_start = max(ExpKeys.post_baseline_times(1), big_start);
+            this_stop = min(ExpKeys.recording_times(2), big_stop);
+            if this_start >= this_stop 
+                % The longest overall unsaturated segment does not include this epoch, so find
+                % the longest such segment in this epoch and recalculate stuff
+                this_start = ExpKeys.post_baseline_times(1);
+                this_stop = ExpKeys.recording_times(2);
+                if ~isempty(all_saturated)
+                    this_saturated = (all_saturated > this_start) & (all_saturated < this_stop);
+                    this_saturated = all_saturated(this_saturated);
+                    if ~isempty(this_saturated)
+                        this_segments = [this_start; this_saturated; this_stop];
+                        [max_len, midx] = max(diff(this_segments));
+                        fprintf('Taking the longest unsaturated segment of %f sec out of total %f sec\n', ...
+                            max_len, this_stop-this_start);
+                        this_start = this_segments(midx);
+                        this_stop = this_segments(midx+1);
+                    end
+                end
+                temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
+                temp_start = nearest_idx3(this_start, temp_tvec);
+                temp_end = nearest_idx3(this_stop, temp_tvec);
+                cfg=[];
+                cfg.begsample = temp_start;
+                cfg.endsample = temp_end;
+                post_data = ft_redefinetrial(cfg, all_spike_data);
+                post_clean_data = ft_redefinetrial(cfg, clean_spike_data);
+    
+                post_spk_count = sum(post_data.trial{1}(2,:));
+                post_clean_spk_count = sum(post_clean_data.trial{1}(2,:));
+            
+                if post_spk_count ~= 0
+                    % Calculate STA
+                    cfg = [];
+                    cfg.timwin = [-0.5 0.5];
+                    cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                    cfg.channel = ft_csc.label(1);
+                    this_sta = ft_spiketriggeredaverage(cfg, post_data);
+                    post_sta = [];
+                    post_sta.time = this_sta.time;
+                    post_sta.vals = this_sta.avg(:,:)';
+                    if post_clean_spk_count ~= 0
+                        this_sta = ft_spiketriggeredaverage(cfg, post_clean_data);
+                        post_clean_sta.time = this_sta.time;
+                        post_clean_sta.vals = this_sta.avg(:,:)';
+                    else
+                        post_clean_sta = [];
+                    end
+                
+                    % Calculate STS
+                    cfg = [];
+                    cfg.method = 'mtmconvol';
+                    cfg.foi = 1:1:100;
+                    cfg.t_ftimwin = 5./cfg.foi;
+                    cfg.taper = 'hanning';
+                    cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                    cfg.channel = ft_csc.label{1};
+                    cfg.rejectsaturation = 'no'; % This is important because we are manually selecting the largest unsaturated gap
+                    this_sts = ft_spiketriggeredspectrum(cfg, post_data);
+                    post_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
+                    post_sts.freqs = this_sts.freq;
+                    post_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
+                    if post_clean_spk_count ~= 0
+                        clean_sts = ft_spiketriggeredspectrum(cfg, post_clean_data);
+                        post_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
+                        post_clean_sts.freqs = clean_sts.freq;
+                        post_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
+                    else
+                        post_clean_sts = [];
+                    end
+                
+                    % Calculate PPC
+                    cfg               = [];
+                    cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
+                    cfg.spikechannel  = this_sts.label;
+                    cfg.channel       = this_sts.lfplabel; % selected LFP channels
+                    cfg.avgoverchan   = 'weighted';
+                    cfg.timwin        = 'all'; % compute over all available spikes in the window
+                    this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
+                    post_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                    post_ppc.vals = this_ppc.ppc0';
+                    if post_clean_spk_count ~= 0
+                        this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
+                        post_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                        post_clean_ppc.vals = this_ppc.ppc0';
+                    else
+                        post_clean_sts = [];
+                    end
+                else
+                    post_sta = [];
+                    post_clean_sta = [];
+                    post_sts = [];
+                    post_clean_sts = [];
+                    post_ppc =  [];
+                    post_clean_ppc = [];
+                end
+    
+            else % Use clever indexing
+                temp_tvec = ft_csc.time{1} + double(ft_csc.hdr.FirstTimeStamp)/1e6;
+                temp_start = nearest_idx3(this_start, temp_tvec);
+                temp_end = nearest_idx3(this_stop, temp_tvec);
+                cfg=[];
+                cfg.begsample = temp_start;
+                cfg.endsample = temp_end;
+                post_data = ft_redefinetrial(cfg, all_spike_data);
+                post_clean_data = ft_redefinetrial(cfg, clean_spike_data);
+                post_spk_count = sum(post_data.trial{1}(2,:));
+                post_clean_spk_count = sum(post_clean_data.trial{1}(2,:));
+                
+                if post_spk_count ~= 0
+                    % Calculate STA
+                    cfg = [];
+                    cfg.timwin = [-0.5 0.5];
+                    cfg.spikechannel = S.ft_spikes{iC}.label{1};
+                    cfg.channel = ft_csc.label(1);
+                    this_sta = ft_spiketriggeredaverage(cfg, post_data);
+                    post_sta = [];
+                    post_sta.time = this_sta.time;
+                    post_sta.vals = this_sta.avg(:,:)';
+                    if post_clean_spk_count ~= 0
+                        this_sta = ft_spiketriggeredaverage(cfg, post_clean_data);
+                        post_clean_sta.time = this_sta.time;
+                        post_clean_sta.vals = this_sta.avg(:,:)';
+                    else
+                        post_clean_sta = [];
+                    end
+                    % Find where the spikes and 'clean' spikes in this epoch lie among all spikes
+                    this_spk_idx  = nearest_idx3(find(all_data.trial{1}(2,post_data.sampleinfo(1):post_data.sampleinfo(2))) + ...
+                        post_data.sampleinfo(1) - 1,  find(all_data.trial{1}(2,:)));
+                    assert(length(this_spk_idx) == length(unique(this_spk_idx)), 'Clever indexing failed for post stim epoch');
+                    this_clean_spk_idx = nearest_idx3(find(all_clean_data.trial{1}(2,post_data.sampleinfo(1):post_data.sampleinfo(2))) + ...
+                        post_data.sampleinfo(1) - 1, find(all_data.trial{1}(2,:)));
+                    assert(length(this_clean_spk_idx) == length(unique(this_clean_spk_idx)), 'Clever indexing failed for post stim epoch');
+                    this_sts = big_sts;
+                    this_sts.fourierspctrm{1} = big_sts.fourierspctrm{1}(this_spk_idx,:,:);
+                    this_sts.time{1} = big_sts.time{1}(this_spk_idx,:);
+                    this_sts.trial{1} = big_sts.trial{1}(this_spk_idx,:);
+                    this_sts.trialtime(1) = (post_data.sampleinfo(1) - all_data.sampleinfo(1))'/diff(all_data.sampleinfo)*big_sts.trialtime(2);
+                    this_sts.trialtime(2) = (post_data.sampleinfo(2) - all_data.sampleinfo(1))'/diff(all_data.sampleinfo)*big_sts.trialtime(2);
+                    post_sts.hasnan = ~isempty(find(isnan(this_sts.fourierspctrm{1}),1));
+                    post_sts.freqs = this_sts.freq;
+                    post_sts.vals = nanmean(sq(abs(this_sts.fourierspctrm{1})));
+                    if post_clean_spk_count ~= 0
+                        clean_sts = big_sts;
+                        clean_sts.fourierspctrm{1} = big_sts.fourierspctrm{1}(this_clean_spk_idx,:,:);
+                        clean_sts.time{1} = big_sts.time{1}(this_clean_spk_idx,:);
+                        clean_sts.trial{1} = big_sts.trial{1}(this_clean_spk_idx,:);
+                        clean_sts.trialtime = this_sts.trialtime;
+                        post_clean_sts.hasnan = ~isempty(find(isnan(clean_sts.fourierspctrm{1}),1));
+                        post_clean_sts.freqs = clean_sts.freq;
+                        post_clean_sts.vals = nanmean(sq(abs(clean_sts.fourierspctrm{1})));
+                    else
+                        post_clean_sts = [];
+                    end           
+               
+                    % Calculate PPC
+                    cfg               = [];
+                    cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
+                    cfg.spikechannel  = this_sts.label;
+                    cfg.channel       = this_sts.lfplabel; % selected LFP channels
+                    cfg.avgoverchan   = 'weighted';
+                    cfg.timwin        = 'all'; % compute over all available spikes in the window
+                    this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
+                    post_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                    post_ppc.vals = this_ppc.ppc0';
+                    if post_clean_spk_count ~= 0
+                        this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
+                        post_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
+                        post_clean_ppc.vals = this_ppc.ppc0';
+                    else
+                        post_clean_sts = [];
+                    end
+                else
+                    post_sta = [];
+                    post_clean_sta = [];
+                    post_sts = [];
+                    post_clean_sts = [];
+                    post_ppc =  [];
+                    post_clean_ppc = [];
+                end
+            end
+    
+            subplot(3,4,3)
+            hold off
+            plot(post_sta.time, post_sta.vals)
+            if post_clean_spk_count ~= 0
+                hold on
+                plot(post_sta.time, post_clean_sta.vals)
+            end
+            xlabel('Time')
+            ylabel('STA')
+            yticks([])
+            title('Post-stim')
+            
+            subplot(3,4,7)
+            hold off
+            plot(post_sts.freqs, post_sts.vals)
+            if post_clean_spk_count ~= 0
+                hold on
+                plot(post_sts.freqs, post_clean_sts.vals)
+            end
+            xlim([0 100])
+            xlabel('Freqs')
+            yticks([])
+            ylabel('STS')
+            
+            ax = subplot(3,4,11);
+            hold off
+            plot(post_sts.freqs, post_ppc.vals)
+            if post_clean_spk_count ~= 0
+                hold on
+                plot(post_sts.freqs, post_clean_ppc.vals)
+                legend({sprintf('All: %d', post_spk_count), sprintf('Clean: %d', post_clean_spk_count)}, 'FontSize', 12, 'Location','best')
+            else
+                legend({sprintf('All: %d', post_spk_count)}, 'FontSize', 12, 'Location','best')
+            end
+            xlim([0 100])
+            xlabel('Freqs')
+            ylabel('PPC')
+            ax.YAxis.Exponent = 0;
+    
+            clear post_data post_clean_data temp_tvec % to avoid running out of space
+        end
+        
+        clear all_data all_clean_data % to avoid running out of space
+
         sgtitle(S.label{iC}, 'Interpreter', 'None')
         
         % Save figure
