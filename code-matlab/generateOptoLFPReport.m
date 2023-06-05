@@ -3,7 +3,7 @@
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 
-for iM  = 11:length(mice)
+for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
     for iS = 1:length(sid)
@@ -166,7 +166,7 @@ function doStuff
         scatter(estimated_phase, true_phase, c_list{iB});
         hold on;
         plot([-pi pi], [-pi pi], 'k'); 
-        l = {'-\pi', '-\pi/2', '0', '\pi/2', '\pi'};
+        
         axis tight; grid on; set(gca, 'XTick', -pi:pi/2:pi, 'YTick', -pi:pi/2:pi, 'XTickLabel', l, 'YTickLabel', l);
         title(sprintf("%d Hz - %d Hz", fbands{iB}(1), fbands{iB}(2))); xlabel('estimated phase'); ylabel('true phase');
         ax1.FontSize = 12;

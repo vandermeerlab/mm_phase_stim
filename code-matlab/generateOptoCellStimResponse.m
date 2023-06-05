@@ -5,7 +5,7 @@ mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
-    for iS = 2:length(sid)
+    for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
         doStuff
@@ -211,7 +211,8 @@ function doStuff
         end       
       
         % Save variables
-        save('stim_response', 'od');
+        fn_prefix = extractBefore(restricted_S.label{iC}, '.t');
+        save(strcat(fn_prefix, '_stim_response'), 'od');
         close;
     end
 end
