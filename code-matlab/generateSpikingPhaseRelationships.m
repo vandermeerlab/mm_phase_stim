@@ -45,10 +45,10 @@ function doStuff
         out.nshufs = nshufs;
         out.overall_response = sum(~isnan(all_lat))/length(all_lat);
         out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
-        [out.lat.bin, out.lat.ratio, out.lat.zscore, ...
-            out.lat_ws.bin, out.lat_ws.ratio, out.lat_ws.zscore, ...
-            out.fr.bin, out.fr.ratio, out.fr.zscore, ...
-            out.fr_ws.bin, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan);
+        
+        [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal([]);
+        [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...
+            out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,4));
 
         % Generate indices for shuffling
         shuf_idx = zeros(nshufs, length(all_lat));
@@ -70,14 +70,14 @@ function doStuff
             end
             
             % Using (max-min)/(max+min) as the ratio
-            out.lat.bin = this_lat;
-            out.lat.ratio = (max(this_lat) - min(this_lat))/(max(this_lat) + min(this_lat));
+            out.lat.bin= this_lat;
+            out.lat.ratio(iF) = (max(this_lat) - min(this_lat))/(max(this_lat) + min(this_lat));
             out.lat_ws.bin = this_lat_ws;
-            out.lat_ws.ratio = (max(this_lat_ws) - min(this_lat_ws))/(max(this_lat_ws) + min(this_lat_ws));
+            out.lat_ws.ratio(iF) = (max(this_lat_ws) - min(this_lat_ws))/(max(this_lat_ws) + min(this_lat_ws));
             out.fr.bin = this_fr;
-            out.fr.ratio = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
+            out.fr.ratio(iF) = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
             out.fr_ws.bin = this_fr_ws;
-            out.fr_ws.ratio = (max(this_fr_ws) - min(this_fr_ws))/(max(this_fr_ws) + min(this_fr_ws));
+            out.fr_ws.ratio(iF) = (max(this_fr_ws) - min(this_fr_ws))/(max(this_fr_ws) + min(this_fr_ws));
 
             % Generate shuffles
             [shuf_lat_ratio, shuf_lat_ws_ratio, shuf_fr_ratio, shuf_fr_ws_ratio] = deal(zeros(nshufs, 1));
@@ -98,10 +98,10 @@ function doStuff
             end
              
             % Saving Z-scored values
-            out.lat.zscore = (out.lat.ratio - mean(shuf_lat_ratio))/std(shuf_lat_ratio);
-            out.lat_ws.zscore = (out.lat_ws.ratio - mean(shuf_lat_ws_ratio))/std(shuf_lat_ws_ratio);
-            out.fr.zscore = (out.fr.ratio - mean(shuf_fr_ratio))/std(shuf_fr_ratio);
-            out.fr_ws.zscore = (out.fr_ws.ratio - mean(shuf_fr_ws_ratio))/std(shuf_fr_ws_ratio);
+            out.lat.zscore(iF) = (out.lat.ratio(iF) - mean(shuf_lat_ratio))/std(shuf_lat_ratio);
+            out.lat_ws.zscore(iF) = (out.lat_ws.ratio(iF) - mean(shuf_lat_ws_ratio))/std(shuf_lat_ws_ratio);
+            out.fr.zscore(iF) = (out.fr.ratio(iF) - mean(shuf_fr_ratio))/std(shuf_fr_ratio);
+            out.fr_ws.zscore(iF) = (out.fr_ws.ratio(iF) - mean(shuf_fr_ws_ratio))/std(shuf_fr_ws_ratio);
 
             ax = subplot(5,5,(iF-1)*5+1);
             bar(ax,x_ticks,this_count/sum(this_count),1,c_list{iF});
@@ -146,11 +146,11 @@ function doStuff
         ax.FontSize = 12;
         hold on
         for iF = 1:length(fbands)
-            scatter(mean(fbands{iF}), out.lat.zscore, 'MarkerFaceColor', c_list{iF}, ...
+            scatter(mean(fbands{iF}), out.lat.zscore(iF), 'MarkerFaceColor', c_list{iF}, ...
                 'MarkerEdgeColor', c_list{iF})
         end
         ax.XLim = [0 60];
-        ax.YLim = [-1.5 3.5];
+%         ax.YLim = [-3 10];
         ax.XAxis.Label.String = 'Freq (Hz)';
         ax.YAxis.Label.String = 'Z-score';
 
@@ -158,11 +158,11 @@ function doStuff
         ax.FontSize = 12;
         hold on
         for iF = 1:length(fbands)
-            scatter(mean(fbands{iF}), out.lat_ws.zscore, 'MarkerFaceColor', c_list{iF}, ...
+            scatter(mean(fbands{iF}), out.lat_ws.zscore(iF), 'MarkerFaceColor', c_list{iF}, ...
                 'MarkerEdgeColor', c_list{iF})
         end
         ax.XLim = [0 60];
-        ax.YLim = [-1.5 3.5];
+%         ax.YLim = [-3 10];
         ax.XAxis.Label.String = 'Freq (Hz)';
         ax.YAxis.Label.String = 'Z-score';
         
@@ -170,11 +170,11 @@ function doStuff
         ax.FontSize = 12;
         hold on
         for iF = 1:length(fbands)
-            scatter(mean(fbands{iF}), out.fr.zscore, 'MarkerFaceColor', c_list{iF}, ...
+            scatter(mean(fbands{iF}), out.fr.zscore(iF), 'MarkerFaceColor', c_list{iF}, ...
                 'MarkerEdgeColor', c_list{iF})
         end
         ax.XLim = [0 60];
-        ax.YLim = [-1.5 3.5];
+%         ax.YLim = [-3 10];
         ax.XAxis.Label.String = 'Freq (Hz)';
         ax.YAxis.Label.String = 'Z-score';
 
@@ -182,11 +182,11 @@ function doStuff
         ax.FontSize = 12;
         hold on
         for iF = 1:length(fbands)
-            scatter(mean(fbands{iF}), out.fr_ws.zscore, 'MarkerFaceColor', c_list{iF}, ...
+            scatter(mean(fbands{iF}), out.fr_ws.zscore(iF), 'MarkerFaceColor', c_list{iF}, ...
                 'MarkerEdgeColor', c_list{iF})
         end
         ax.XLim = [0 60];
-        ax.YLim = [-1.5 3.5];
+%         ax.YLim = [-3 10];
         ax.XAxis.Label.String = 'Freq (Hz)';
         ax.YAxis.Label.String = 'Z-score';
         
