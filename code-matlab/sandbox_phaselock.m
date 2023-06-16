@@ -209,7 +209,7 @@ function doStuff
                 all_clean_sts = [];
             end
         
-            % Calculate PPC
+            % Calculate PPC and mean phase
             cfg               = [];
             cfg.method        = 'ppc0'; % compute the Pairwise Phase Consistency
             cfg.spikechannel  = big_sts.label;
@@ -219,12 +219,19 @@ function doStuff
             this_ppc          = ft_spiketriggeredspectrum_stat(cfg,big_sts);
             all_ppc.hasnan = isempty(find(isnan(this_ppc.ppc0),1));
             all_ppc.vals = this_ppc.ppc0';
+            cfg2               = [];
+            cfg2.method        = 'ang';
+            cfg2.foi           = 'all';
+            this_ang = ft_spiketriggeredspectrum_stat(cfg2, big_sts);
+            all_ppc.ang = this_ang.ang'; 
             if all_clean_spk_count ~= 0
                 this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
                 all_clean_ppc.hasnan = isempty(find(isnan(this_ppc.ppc0),1));
                 all_clean_ppc.vals = this_ppc.ppc0';
+                this_ang  = ft_spiketriggeredspectrum_stat(cfg2, clean_sts);
+                all_clean_ppc.ang = this_ang.ang';
             else
-                all_clean_sts = [];
+                all_clean_ppc = [];
             end
         else
             all_sta = [];
@@ -364,12 +371,19 @@ function doStuff
             this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
             pre_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
             pre_ppc.vals = this_ppc.ppc0';
+            cfg2               = [];
+            cfg2.method        = 'ang';
+            cfg2.foi           = 'all';
+            this_ang = ft_spiketriggeredspectrum_stat(cfg2, this_sts);
+            pre_ppc.ang = this_ang.ang';
             if pre_clean_spk_count ~= 0
                 this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
                 pre_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
                 pre_clean_ppc.vals = this_ppc.ppc0';
+                this_ang  = ft_spiketriggeredspectrum_stat(cfg2, clean_sts);
+                pre_clean_ppc.ang = this_ang.ang';
             else
-                pre_clean_sts = [];
+                pre_clean_ppc = [];
             end
         else
             pre_sta = [];
@@ -510,12 +524,19 @@ function doStuff
             this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
             trial_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
             trial_ppc.vals = this_ppc.ppc0';
+            cfg2               = [];
+            cfg2.method        = 'ang';
+            cfg2.foi           = 'all';
+            this_ang = ft_spiketriggeredspectrum_stat(cfg2, this_sts);
+            trial_ppc.ang = this_ang.ang';
             if trial_clean_spk_count ~= 0
                 this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
                 trial_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
                 trial_clean_ppc.vals = this_ppc.ppc0';
+                this_ang  = ft_spiketriggeredspectrum_stat(cfg2, clean_sts);
+                trial_clean_ppc.ang = this_ang.ang';
             else
-                trial_clean_sts = [];
+                trial_clean_ppc = [];
             end
         else
             trial_sta = [];
@@ -657,12 +678,19 @@ function doStuff
                 this_ppc          = ft_spiketriggeredspectrum_stat(cfg,this_sts);
                 post_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
                 post_ppc.vals = this_ppc.ppc0';
+                cfg2               = [];
+                cfg2.method        = 'ang';
+                cfg2.foi           = 'all';
+                this_ang = ft_spiketriggeredspectrum_stat(cfg2, this_sts);
+                post_ppc.ang = this_ang.ang';
                 if post_clean_spk_count ~= 0
                     this_ppc = ft_spiketriggeredspectrum_stat(cfg, clean_sts);
                     post_clean_ppc.hasnan = ~isempty(find(isnan(this_ppc.ppc0),1));
                     post_clean_ppc.vals = this_ppc.ppc0';
+                    this_ang  = ft_spiketriggeredspectrum_stat(cfg2, clean_sts);
+                    post_clean_ppc.ang = this_ang.ang';
                 else
-                    post_clean_sts = [];
+                    post_clean_ppc = [];
                 end
             else
                 post_sta = [];
