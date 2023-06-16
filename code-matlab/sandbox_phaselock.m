@@ -2,7 +2,7 @@
 
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
-for iM  = 1:length(mice)
+for iM  = 3:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess)); 
     for iS = 1:length(sid)
@@ -34,7 +34,7 @@ function doStuff
 
     % Downsample CSC if Sampling Frequency >2.6 kHz for faster computation
     Fs = 1/median(diff(csc.tvec));
-    if  Fs > 30000
+    if  Fs > 3000
         csc.data = decimate(csc.data,12);
         csc.tvec = csc.tvec(1:12:end);
         csc.cfg.hdr{1}.SamplingFrequency = csc.cfg.hdr{1}.SamplingFrequency/12;
@@ -82,18 +82,22 @@ function doStuff
         stim_on = [];
     end
     
-    post_stim_on = evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)} + start_delay;
+    post_stim_on = evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)};
     if ~isempty(post_stim_on) && ~isempty(ExpKeys.post_stim_times)
+        post_stim_on = post_stim_on + start_delay;
         post_stim_on = post_stim_on(post_stim_on >= ExpKeys.post_stim_times(1) & ...
                                     post_stim_on <= ExpKeys.post_stim_times(2));
     else
         post_stim_on = [];
     end
     
-    long_stim_on = evs.t{strcmp(evs.label, ExpKeys.long_stim_on)} + start_delay;
-    if ~isempty(long_stim_on) && ~isempty(ExpKeys.long_stim_times)
-        long_stim_on = long_stim_on(long_stim_on >= ExpKeys.long_stim_times(1) & ...
-                                    long_stim_on <= ExpKeys.long_stim_times(2));
+    if ~isempty(ExpKeys.long_stim_times)
+        long_stim_on = evs.t{strcmp(evs.label, ExpKeys.long_stim_on)};
+        if ~isempty(long_stim_on)
+            long_stim_on = long_stim_on + start_delay;
+            long_stim_on = long_stim_on(long_stim_on >= ExpKeys.long_stim_times(1) & ...
+                                        long_stim_on <= ExpKeys.long_stim_times(2));
+        end
     else
         long_stim_on = [];
     end
@@ -281,7 +285,7 @@ function doStuff
         ylabel('PPC')
         ax.YAxis.Exponent = 0;
     
-      clear all_data all_clean_data temp_tvec % to avoid running out of space
+        clear all_data all_clean_data temp_tvec % to avoid running out of space
 
         % code to separate out pre-stim duration
         % Set pre_start and pre_stop to the largest uninterrupted, unsaturated epoch
@@ -385,17 +389,10 @@ function doStuff
             else
                 pre_clean_ppc = [];
             end
-        else
-            pre_sta = [];
-            pre_clean_sta = [];
-            pre_sts = [];
-            pre_clean_sts = [];
-            pre_ppc =  [];
-            pre_clean_ppc = [];
-        end
-
+        % Plot stuff
         subplot(3,4,1)
         hold off
+
         plot(pre_sta.time, pre_sta.vals)
         if pre_clean_spk_count ~= 0
             hold on
@@ -432,6 +429,14 @@ function doStuff
         xlabel('Freqs')
         ylabel('PPC')
         ax.YAxis.Exponent = 0;
+        else
+            pre_sta = [];
+            pre_clean_sta = [];
+            pre_sts = [];
+            pre_clean_sts = [];
+            pre_ppc =  [];
+            pre_clean_ppc = [];
+        end
 
         clear pre_data pre_clean_data temp_tvec % to avoid running out of space
     
@@ -538,6 +543,46 @@ function doStuff
             else
                 trial_clean_ppc = [];
             end
+        
+            % Plot stuff
+            subplot(3,4,2)
+            hold off
+            plot(trial_sta.time, trial_sta.vals)
+            if trial_clean_spk_count ~= 0
+                hold on
+                plot(trial_sta.time, trial_clean_sta.vals)
+            end
+            xlabel('Time')
+            ylabel('STA')
+            yticks([])
+            title('Trial-stim')
+            
+            subplot(3,4,6)
+            hold off
+            plot(trial_sts.freqs, trial_sts.vals)
+            if trial_clean_spk_count ~= 0
+                hold on
+                plot(trial_sts.freqs, trial_clean_sts.vals)
+            end
+            xlim([0 100])
+            xlabel('Freqs')
+            yticks([])
+            ylabel('STS')
+            
+            ax=subplot(3,4,10);
+            hold off
+            plot(trial_sts.freqs, trial_ppc.vals)
+            if trial_clean_spk_count ~= 0
+                hold on
+                plot(trial_sts.freqs, trial_clean_ppc.vals)
+                legend({sprintf('All: %d', trial_spk_count), sprintf('Clean: %d', trial_clean_spk_count)}, 'FontSize', 12, 'Location','best')
+            else
+                legend({sprintf('All: %d', trial_spk_count)}, 'FontSize', 12, 'Location','best')
+            end
+            xlim([0 100])
+            xlabel('Freqs')
+            ylabel('PPC')
+            ax.YAxis.Exponent = 0;
         else
             trial_sta = [];
             trial_clean_sta = [];
@@ -546,46 +591,7 @@ function doStuff
             trial_ppc =  [];
             trial_clean_ppc = [];
         end
-
-        subplot(3,4,2)
-        hold off
-        plot(trial_sta.time, trial_sta.vals)
-        if trial_clean_spk_count ~= 0
-            hold on
-            plot(trial_sta.time, trial_clean_sta.vals)
-        end
-        xlabel('Time')
-        ylabel('STA')
-        yticks([])
-        title('Trial-stim')
-        
-        subplot(3,4,6)
-        hold off
-        plot(trial_sts.freqs, trial_sts.vals)
-        if trial_clean_spk_count ~= 0
-            hold on
-            plot(trial_sts.freqs, trial_clean_sts.vals)
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        yticks([])
-        ylabel('STS')
-        
-        ax=subplot(3,4,10);
-        hold off
-        plot(trial_sts.freqs, trial_ppc.vals)
-        if trial_clean_spk_count ~= 0
-            hold on
-            plot(trial_sts.freqs, trial_clean_ppc.vals)
-            legend({sprintf('All: %d', trial_spk_count), sprintf('Clean: %d', trial_clean_spk_count)}, 'FontSize', 12, 'Location','best')
-        else
-            legend({sprintf('All: %d', trial_spk_count)}, 'FontSize', 12, 'Location','best')
-        end
-        xlim([0 100])
-        xlabel('Freqs')
-        ylabel('PPC')
-        ax.YAxis.Exponent = 0;
-
+       
         clear trial_data trial_clean_data temp_tvec % to avoid running out of space
         
         if ~isempty(ExpKeys.post_baseline_times)
@@ -692,6 +698,47 @@ function doStuff
                 else
                     post_clean_ppc = [];
                 end
+
+                % Plot stuff
+                subplot(3,4,3)
+                hold off
+                plot(post_sta.time, post_sta.vals)
+                if post_clean_spk_count ~= 0
+                    hold on
+                    plot(post_sta.time, post_clean_sta.vals)
+                end
+                xlabel('Time')
+                ylabel('STA')
+                yticks([])
+                title('Post-stim')
+                
+                subplot(3,4,7)
+                hold off
+                plot(post_sts.freqs, post_sts.vals)
+                if post_clean_spk_count ~= 0
+                    hold on
+                    plot(post_sts.freqs, post_clean_sts.vals)
+                end
+                xlim([0 100])
+                xlabel('Freqs')
+                yticks([])
+                ylabel('STS')
+                
+                ax = subplot(3,4,11);
+                hold off
+                plot(post_sts.freqs, post_ppc.vals)
+                if post_clean_spk_count ~= 0
+                    hold on
+                    plot(post_sts.freqs, post_clean_ppc.vals)
+                    legend({sprintf('All: %d', post_spk_count), sprintf('Clean: %d', post_clean_spk_count)}, 'FontSize', 12, 'Location','best')
+                else
+                    legend({sprintf('All: %d', post_spk_count)}, 'FontSize', 12, 'Location','best')
+                end
+                xlim([0 100])
+                xlabel('Freqs')
+                ylabel('PPC')
+                ax.YAxis.Exponent = 0;
+
             else
                 post_sta = [];
                 post_clean_sta = [];
@@ -700,54 +747,21 @@ function doStuff
                 post_ppc =  [];
                 post_clean_ppc = [];
             end
-    
-            subplot(3,4,3)
-            hold off
-            plot(post_sta.time, post_sta.vals)
-            if post_clean_spk_count ~= 0
-                hold on
-                plot(post_sta.time, post_clean_sta.vals)
-            end
-            xlabel('Time')
-            ylabel('STA')
-            yticks([])
-            title('Post-stim')
-            
-            subplot(3,4,7)
-            hold off
-            plot(post_sts.freqs, post_sts.vals)
-            if post_clean_spk_count ~= 0
-                hold on
-                plot(post_sts.freqs, post_clean_sts.vals)
-            end
-            xlim([0 100])
-            xlabel('Freqs')
-            yticks([])
-            ylabel('STS')
-            
-            ax = subplot(3,4,11);
-            hold off
-            plot(post_sts.freqs, post_ppc.vals)
-            if post_clean_spk_count ~= 0
-                hold on
-                plot(post_sts.freqs, post_clean_ppc.vals)
-                legend({sprintf('All: %d', post_spk_count), sprintf('Clean: %d', post_clean_spk_count)}, 'FontSize', 12, 'Location','best')
-            else
-                legend({sprintf('All: %d', post_spk_count)}, 'FontSize', 12, 'Location','best')
-            end
-            xlim([0 100])
-            xlabel('Freqs')
-            ylabel('PPC')
-            ax.YAxis.Exponent = 0;
-    
             clear post_data post_clean_data temp_tvec % to avoid running out of space
-        end
-        
+        else
+                post_sta = [];
+                post_clean_sta = [];
+                post_sts = [];
+                post_clean_sts = [];
+                post_ppc =  [];
+                post_clean_ppc = [];
+                post_spk_count = 0;
+                post_clean_spk_count = 0;
+        end        
         clear all_data all_clean_data % to avoid running out of space
-
-        sgtitle(S.label{iC}, 'Interpreter', 'None')
-        
+      
         % Save figure
+        sgtitle(S.label{iC}, 'Interpreter', 'None')
         fn_prefix = extractBefore(S.label{iC}, '.t');
         fn_prefix = strrep(fn_prefix, '_', '-');
         print(this_fig, '-dpng', strcat(fn_prefix,'-SpikePhaseLock'));
