@@ -400,9 +400,9 @@ function doStuff
             ax.YAxis.Label.FontSize = big_label_fs;
             ax.YAxis.Label.FontWeight = 'bold';
         end
-        
-        print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
-        print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-CellReport'));
+        savefig(this_fig, strcat(fn_prefix,'-CellReport'));
+%         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
+%         print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-CellReport'));
         close;
     end
 end

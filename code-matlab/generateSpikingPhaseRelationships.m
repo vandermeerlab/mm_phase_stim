@@ -22,7 +22,7 @@ function doStuff
     c_list = {'cyan', 'red','magenta', 'green'};
     nshufs = 100;
     
-    % Load the phases at stim_on various frequency
+    % Load the phases at stim_on in various frequency bands
     load('stim_phases.mat');
 
     for iC = 1:length(ExpKeys.goodCell)
@@ -46,7 +46,7 @@ function doStuff
         out.overall_response = sum(~isnan(all_lat))/length(all_lat);
         out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
         
-        [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal([]);
+        [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(zeros(4,nbins));
         [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...
             out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,4));
 
@@ -70,13 +70,13 @@ function doStuff
             end
             
             % Using (max-min)/(max+min) as the ratio
-            out.lat.bin= this_lat;
+            out.lat.bin(iF,:)= this_lat;
             out.lat.ratio(iF) = (max(this_lat) - min(this_lat))/(max(this_lat) + min(this_lat));
-            out.lat_ws.bin = this_lat_ws;
+            out.lat_ws.bin(iF,:) = this_lat_ws;
             out.lat_ws.ratio(iF) = (max(this_lat_ws) - min(this_lat_ws))/(max(this_lat_ws) + min(this_lat_ws));
-            out.fr.bin = this_fr;
+            out.fr.bin(iF,:) = this_fr;
             out.fr.ratio(iF) = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
-            out.fr_ws.bin = this_fr_ws;
+            out.fr_ws.bin(iF,:) = this_fr_ws;
             out.fr_ws.ratio(iF) = (max(this_fr_ws) - min(this_fr_ws))/(max(this_fr_ws) + min(this_fr_ws));
 
             % Generate shuffles
