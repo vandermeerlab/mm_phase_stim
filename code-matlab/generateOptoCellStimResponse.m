@@ -109,12 +109,15 @@ function doStuff
             latency_wo_stim = nan(size(this_on_events));
             fr = zeros(size(this_on_events));
             fr_wo_stim = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
             for iStim = 1:length(latency_wo_stim)
                 st = restrict(this_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
                 st_wo_stim = restrict(restricted_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
+                baseline = restrict(this_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
                 if ~isempty(st.t{1})
                     latency(iStim) = st.t{1}(1) - this_on_events(iStim);
                     fr(iStim) = length(st.t{1})/max_delay;
+                    bfr(iStim) = length(baseline.t{1})/max_delay;
                 end
                 if ~isempty(st_wo_stim.t{1})
                     latency_wo_stim(iStim) = st_wo_stim.t{1}(1) - this_on_events(iStim);
@@ -127,6 +130,7 @@ function doStuff
             od.pre_stim.latency_wo_stim = latency_wo_stim;
             od.pre_stim.fr = fr;
             od.pre_stim.fr_wo_stim = fr_wo_stim;
+            od.pre_stim.bfr = bfr;
         end
        
         % Trial-stim response
@@ -136,12 +140,15 @@ function doStuff
             latency_wo_stim = nan(size(this_on_events));
             fr = zeros(size(this_on_events));
             fr_wo_stim = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
             for iStim = 1:length(latency_wo_stim)
                 st = restrict(this_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
                 st_wo_stim = restrict(restricted_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
+                baseline = restrict(this_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
                 if ~isempty(st.t{1})
                     latency(iStim) = st.t{1}(1) - this_on_events(iStim);
                     fr(iStim) = length(st.t{1})/max_delay;
+                    bfr(iStim) = length(baseline.t{1})/max_delay;
                 end
                 if ~isempty(st_wo_stim.t{1})
                     latency_wo_stim(iStim) = st_wo_stim.t{1}(1) - this_on_events(iStim);
@@ -154,6 +161,7 @@ function doStuff
             od.trial_stim.latency_wo_stim = latency_wo_stim;
             od.trial_stim.fr = fr;
             od.trial_stim.fr_wo_stim = fr_wo_stim;
+            od.trial_stim.bfr = bfr;
         end
 
         % Post-stim response
@@ -163,12 +171,15 @@ function doStuff
             latency_wo_stim = nan(size(this_on_events));
             fr = zeros(size(this_on_events));
             fr_wo_stim = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
             for iStim = 1:length(latency_wo_stim)
                 st = restrict(this_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
                 st_wo_stim = restrict(restricted_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
+                baseline = restrict(this_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
                 if ~isempty(st.t{1})
                     latency(iStim) = st.t{1}(1) - this_on_events(iStim);
                     fr(iStim) = length(st.t{1})/max_delay;
+                    bfr(iStim) = length(baseline.t{1})/max_delay;
                 end
                 if ~isempty(st_wo_stim.t{1})
                     latency_wo_stim(iStim) = st_wo_stim.t{1}(1) - this_on_events(iStim);
@@ -181,6 +192,7 @@ function doStuff
             od.post_stim.latency_wo_stim = latency_wo_stim;
             od.post_stim.fr = fr;
             od.post_stim.fr_wo_stim = fr_wo_stim;
+            od.post_stim.bfr = bfr;
         end
 
         % Long-stim response
@@ -190,12 +202,15 @@ function doStuff
             latency_wo_stim = nan(size(this_on_events));
             fr = zeros(size(this_on_events));
             fr_wo_stim = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
             for iStim = 1:length(latency_wo_stim)
                 st = restrict(this_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_long_delay));
                 st_wo_stim = restrict(restricted_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_long_delay));
+                baseline = restrict(this_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
                 if ~isempty(st.t{1})
                     latency(iStim) = st.t{1}(1) - this_on_events(iStim);
                     fr(iStim) = length(st.t{1})/max_long_delay;
+                    bfr(iStim) = length(baseline.t{1})/max_delay;
                 end
                 if ~isempty(st_wo_stim.t{1})
                     latency_wo_stim(iStim) = st_wo_stim.t{1}(1) - this_on_events(iStim);
@@ -208,6 +223,7 @@ function doStuff
             od.long_stim.latency_wo_stim = latency_wo_stim;
             od.long_stim.fr = fr;
             od.long_stim.fr_wo_stim = fr_wo_stim;
+            od.long_stim.bfr = bfr;
         end       
       
         % Save variables

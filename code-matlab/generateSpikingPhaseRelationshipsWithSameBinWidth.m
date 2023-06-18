@@ -21,7 +21,7 @@ function doStuff
     fbands = {[2 5], [6 10], [12 30], [30 55]};
     c_list = {'cyan', 'red','magenta', 'green'};
     nshufs = 100;
-    bin_counts = [5, 7, 10, 15, 20];
+    bin_widths = [5, 10, 15, 20]; % in msec
     
     % Load the phases at stim_on in various frequency bands
     load('stim_phases.mat');
@@ -34,22 +34,20 @@ function doStuff
 
         all_lat = od.trial_stim.latency(goodTrials(1):goodTrials(2));
         all_lat_ws = od.trial_stim.latency_wo_stim(goodTrials(1):goodTrials(2));
-        all_fr = od.trial_stim.fr(goodTrials(1):goodTrials(2));
-        all_fr_ws = od.trial_stim.fr_wo_stim(goodTrials(1):goodTrials(2));
+        % Now subtracting baseline firing rate
+        all_fr = od.trial_stim.fr(goodTrials(1):goodTrials(2)) - od.trial_stim.bfr(goodTrials(1):goodTrials(2));
+        all_fr_ws = od.trial_stim.fr_wo_stim(goodTrials(1):goodTrials(2)) - - od.trial_stim.bfr(goodTrials(1):goodTrials(2));
         
         % Repeat for each bin count
-        for iN = 1:length(bin_counts)
-            nbins = bin_counts(iN);
-            phase_bins = -pi:2*pi/nbins:pi;
-            x_ticks = 0.5*(phase_bins(1:end-1)+phase_bins(2:end));
-            
+        for iN = 1:length(bin_widths)
             % Results field to be saved at the end
             [out, out.lat, out.lat_ws, out.fr, out.fr_ws] = deal([]);
+            out.bin_width = bin_widths(iN);
             out.nshufs = nshufs;
             out.overall_response = sum(~isnan(all_lat))/length(all_lat);
             out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
             
-            [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(zeros(4,nbins));
+            [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(cell(4,1));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...
                 out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,4));
     
@@ -61,6 +59,9 @@ function doStuff
     
             this_fig = figure('WindowState', 'maximized'); 
             for iF = 1:length(fbands) 
+                nbins = ceil((1000/mean(fbands{iF}))/bin_widths(iN)); % bin count is different for each frequency band 
+                phase_bins = -pi:2*pi/nbins:pi;
+                x_ticks = 0.5*(phase_bins(1:end-1)+phase_bins(2:end));
                 this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
                 [this_count, ~, this_bin] = histcounts(this_phase, phase_bins);
     
@@ -73,13 +74,13 @@ function doStuff
                 end
                 
                 % Using (max-min)/(max+min) as the ratio
-                out.lat.bin(iF,:)= this_lat;
+                out.lat.bin{iF}= this_lat;
                 out.lat.ratio(iF) = (max(this_lat) - min(this_lat))/(max(this_lat) + min(this_lat));
-                out.lat_ws.bin(iF,:) = this_lat_ws;
+                out.lat_ws.bin{iF} = this_lat_ws;
                 out.lat_ws.ratio(iF) = (max(this_lat_ws) - min(this_lat_ws))/(max(this_lat_ws) + min(this_lat_ws));
-                out.fr.bin(iF,:) = this_fr;
+                out.fr.bin{iF} = this_fr;
                 out.fr.ratio(iF) = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
-                out.fr_ws.bin(iF,:) = this_fr_ws;
+                out.fr_ws.bin{iF} = this_fr_ws;
                 out.fr_ws.ratio(iF) = (max(this_fr_ws) - min(this_fr_ws))/(max(this_fr_ws) + min(this_fr_ws));
     
                 % Generate shuffles
@@ -195,18 +196,10 @@ function doStuff
             
             sgtitle(fn_prefix, 'Interpreter', 'none');
             % Save variables and figure
-            save(strcat(fn_prefix, '_phase_response_',string(nbins),'_bins'), 'out');
-            print(this_fig, '-dpng', strcat(fn_prefix, '_phase_response_hist_', string(nbins),'_bins'));
+            save(strcat(fn_prefix, '_phase_response_',string(bin_widths(iN)),'ms_bins'), 'out');
+            print(this_fig, '-dpng', strcat(fn_prefix, '_phase_response_hist_', string(bin_widths(iN)),'ms_bins'));
 %             savefig(this_fig, strcat(fn_prefix, '_phase_response_hist_', string(nbins),'_bins'));
             close;
         end
     end
 end
-
-
-
-
-
-    
-    
- 
