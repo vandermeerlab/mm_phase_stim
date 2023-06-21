@@ -35,10 +35,11 @@ function doStuff
         all_lat = od.trial_stim.latency(goodTrials(1):goodTrials(2));
         all_lat_ws = od.trial_stim.latency_wo_stim(goodTrials(1):goodTrials(2));
         % Now subtracting baseline firing rate
-        all_fr = od.trial_stim.fr(goodTrials(1):goodTrials(2)) - od.trial_stim.bfr(goodTrials(1):goodTrials(2));
-        all_fr_ws = od.trial_stim.fr_wo_stim(goodTrials(1):goodTrials(2)) - - od.trial_stim.bfr(goodTrials(1):goodTrials(2));
+        all_bfr = od.trial_stim.bfr(goodTrials(1):goodTrials(2));
+        all_fr = od.trial_stim.fr(goodTrials(1):goodTrials(2)) - all_bfr;
+        all_fr_ws = od.trial_stim.fr_wo_stim(goodTrials(1):goodTrials(2)) - all_bfr;
         
-        % Repeat for each bin count
+        % Repeat for each bin width
         for iN = 1:length(bin_widths)
             % Results field to be saved at the end
             [out, out.lat, out.lat_ws, out.fr, out.fr_ws] = deal([]);
@@ -46,6 +47,7 @@ function doStuff
             out.nshufs = nshufs;
             out.overall_response = sum(~isnan(all_lat))/length(all_lat);
             out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
+            out.mean_bfr = mean(all_bfr);
             
             [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(cell(4,1));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...

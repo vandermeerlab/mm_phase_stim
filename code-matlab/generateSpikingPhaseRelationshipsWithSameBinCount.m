@@ -35,10 +35,11 @@ function doStuff
         all_lat = od.trial_stim.latency(goodTrials(1):goodTrials(2));
         all_lat_ws = od.trial_stim.latency_wo_stim(goodTrials(1):goodTrials(2));
         % Now subtracting baseline firing rate
-        all_fr = od.trial_stim.fr(goodTrials(1):goodTrials(2)) - od.trial_stim.bfr(goodTrials(1):goodTrials(2));
-        all_fr_ws = od.trial_stim.fr_wo_stim(goodTrials(1):goodTrials(2)) - - od.trial_stim.bfr(goodTrials(1):goodTrials(2));
+        all_bfr = od.trial_stim.bfr(goodTrials(1):goodTrials(2));
+        all_fr = od.trial_stim.fr(goodTrials(1):goodTrials(2)) - all_bfr;
+        all_fr_ws = od.trial_stim.fr_wo_stim(goodTrials(1):goodTrials(2)) - all_bfr;
         
-        % Repeat for each bin width
+        % Repeat for each bin count
         for iN = 1:length(bin_counts)   
             nbins = bin_counts(iN);
             phase_bins = -pi:2*pi/nbins:pi;
@@ -49,7 +50,8 @@ function doStuff
             out.bin_count = nbins;
             out.overall_response = sum(~isnan(all_lat))/length(all_lat);
             out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
-            
+            out.mean_bfr = mean(all_bfr);
+
             [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(nan(4,nbins));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...
                 out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,4));

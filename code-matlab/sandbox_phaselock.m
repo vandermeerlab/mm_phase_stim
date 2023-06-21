@@ -118,7 +118,7 @@ function doStuff
         end
         % For clean_spikes, use restricted_S
         S.ft_clean_spikes{iC} = S.ft_spikes{iC};
-        S.ft_clean_spikes{iC}.timestamp{1} = restricted_S.t{iC}*1e6; % TODO: Check for EC data too
+        S.ft_clean_spikes{iC}.timestamp{1} = restricted_S.t{iC}*1e6;
 
         % Set all_start and all_stop to the largest uninterrupted, unsaturated epoch
         this_start = ExpKeys.recording_times(1);
