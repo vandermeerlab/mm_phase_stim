@@ -50,7 +50,7 @@ function doStuff
             out.bin_count = nbins;
             out.overall_response = sum(~isnan(all_lat))/length(all_lat);
             out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
-            out.mean_bfr = mean(all_bfr);
+            out.bfr = all_bfr;
 
             [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(nan(4,nbins));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...

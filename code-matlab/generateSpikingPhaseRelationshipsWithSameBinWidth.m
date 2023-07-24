@@ -47,7 +47,7 @@ function doStuff
             out.nshufs = nshufs;
             out.overall_response = sum(~isnan(all_lat))/length(all_lat);
             out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
-            out.mean_bfr = mean(all_bfr);
+            out.bfr = all_bfr;
             
             [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(cell(4,1));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...

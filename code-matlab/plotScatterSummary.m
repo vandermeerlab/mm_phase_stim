@@ -107,6 +107,65 @@ for iF = 1:length(fbands)
     legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
     ylabel('Depth of modulation', 'FontSize', 12) 
     xlabel('Most Excitable Phase', 'FontSize', 12)
+    ylim([-0.1 0.5])
+    xlim([-3.2 3.2])
+    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+end
+sgtitle('Ventral Striatum')
+
+
+%% Plot for Ventral Striatum
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_pl_sig = summary.phaselock_sig(:,iF) == 1;
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+    
+    ax = subplot(2,2,iF);
+    scatter(summary.phaselock_phase(~dStr_mask,iF), summary.excitable_phase(~dStr_mask,iF), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    hold  on; 
+    scatter(summary.phaselock_phase(~dStr_mask & this_pl_sig,iF), summary.excitable_phase(~dStr_mask & this_pl_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'SizeData', 25);
+    scatter(summary.phaselock_phase(~dStr_mask & this_ex_sig,iF), summary.excitable_phase(~dStr_mask & this_ex_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0, 'MarkerEdgeAlpha', 0.5, 'Marker', '+','SizeData', 200);
+    plot([-5 5],[-5 5], 'Color', c_list{iF})
+    legend({'all ', 'Sig. Phase Locked', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+    xlabel('Intrinsic Phase', 'FontSize', 12) 
+    ylabel('Most Excitable Phase', 'FontSize', 12)
+    xlim([-3.2 3.2])
+    ylim([-3.2 3.2])
+    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+end
+sgtitle('Ventral Striatum')
+%% Scatter of most excitable phases for significant results
+% dStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+    
+    ax = subplot(2,2,iF);
+    text(summary.excitable_phase(dStr_mask,iF), summary.fr_r(dStr_mask,iF), summary.labels(dStr_mask));
+    ylabel('Depth of modulation', 'FontSize', 12) 
+    xlabel('Most Excitable Phase', 'FontSize', 12)
+    ylim([-0.2 1.2])
+    xlim([-3.2 3.2])
+    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+end
+sgtitle('Dorsal Striatum')
+%% vStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+    
+    ax = subplot(2,2,iF);
+    scatter(summary.excitable_phase(~dStr_mask,iF), summary.fr_r(~dStr_mask,iF),'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    hold  on; 
+    scatter(summary.excitable_phase(~dStr_mask & this_ex_sig,iF), summary.fr_r(~dStr_mask & this_ex_sig,iF),  'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'SizeData', 25);
+    legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+    ylabel('Depth of modulation', 'FontSize', 12) 
+    xlabel('Most Excitable Phase', 'FontSize', 12)
     ylim([-0.2 1.2])
     xlim([-3.2 3.2])
     ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
@@ -125,8 +184,8 @@ function s_out = doStuff(s_in)
     for iC = 1:length(ExpKeys.goodCell)
         fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
         % Load the phase_response
-        load(strcat(fn_prefix, '_phase_response_10ms_bins.mat')); % Change this to what is decided to be the best binning option
-        s_out.depth = [s_out.depth, ExpKeys.probeDepth];
+        load(strcat(fn_prefix, '_phase_response_5_bins.mat')); % Change this to what is decided to be the best binning option
+        s_out.depth = [s_out.depth; ExpKeys.probeDepth];
         s_out.response_p = [s_out.response_p; out.overall_response];
         s_out.bfr = [s_out.bfr, out.mean_bfr];
         s_out.labels = [s_out.labels; string(fn_prefix)];
@@ -147,7 +206,7 @@ function s_out = doStuff(s_in)
             this_sig(iF) = mean_pct >= p_thresh;
 
             % Change accordingly
-            this_nbins(iF) = length(out.fr.bin{iF}); %5;
+            this_nbins(iF) = 5; %length(out.fr.bin{iF}); %5;
             phase_bins = -pi:2*pi/this_nbins(iF):pi;
            
             % The mean angle at the maximum PPC
@@ -158,7 +217,7 @@ function s_out = doStuff(s_in)
             this_pl_binned(iF) = mean(phase_bins(this_bin:this_bin+1)); % Bin the phase accordingly
 
             % The maximally excitable phase
-            [~, midx] =  max(out.fr.bin{iF});% max(out.fr.bin);
+            [~, midx] =  max(out.fr.bin(iF,:));%max(out.fr.bin{iF});
             this_ex_phase(iF) = mean(phase_bins(midx:midx+1));
         end
         s_out.phaselock_sig = [s_out.phaselock_sig; this_sig];

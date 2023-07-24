@@ -16,21 +16,21 @@ end
 function doStuff
     LoadExpKeys;
     evs = LoadEvents([]);
-    cfg_spk = [];
-    cfg_spk.fc = ExpKeys.goodCell;
-    if isempty(cfg_spk.fc)
+    cfg = [];
+    if isempty(ExpKeys.goodCell)
         return
     end
-    % cfg_spk.min_cluster_quality = 3;
     if ~strcmp(ExpKeys.experimenter, 'EC')
-        cfg_spk.getRatings = 1;
-        cfg_spk.uint = '64';
+        cfg.min_cluster_quality = 3;
+        cfg.getRatings = 1;
+        cfg.uint = '64';
     end
-    S = LoadSpikes(cfg_spk);
+    S = LoadSpikes(cfg);
     
     %% Set variables
     max_delay = 0.01; % sec (window for the first response since stimulus)
     max_long_delay = 0.25; % sec
+    num_sham = 10000; % Number of sham stim used
     
     %% Remove spikes during short stim times
     if contains(ExpKeys.light_source, 'LASER')
@@ -101,6 +101,7 @@ function doStuff
         od.trial_stim = [];
         od.post_stim = [];
         od.long_stim = [];
+        od.sham_stim = [];
         
         % Pre-stim response
         if ~isempty(ExpKeys.pre_stim_times)
@@ -224,8 +225,27 @@ function doStuff
             od.long_stim.fr = fr;
             od.long_stim.fr_wo_stim = fr_wo_stim;
             od.long_stim.bfr = bfr;
-        end       
-      
+        end
+
+        % Sham-stim response to confirm opto cell
+        if ~isempty(ExpKeys.stim_times)
+            this_time = ExpKeys.stim_times(1):1/32000:ExpKeys.stim_times(2);
+            this_on_events = sort(randsample(this_time, num_sham));
+            clear this_time;
+            fr = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
+            for iStim = 1:length(this_on_events)
+                st = restrict(this_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
+                baseline = restrict(this_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
+                if ~isempty(st.t{1})
+                    fr(iStim) = length(st.t{1})/max_delay;
+                    bfr(iStim) = length(baseline.t{1})/max_delay;
+                end
+            end
+            od.sham_stim.fr = fr;
+            od.sham_stim.bfr = bfr;
+        end
+  
         % Save variables
         fn_prefix = extractBefore(restricted_S.label{iC}, '.t');
         save(strcat(fn_prefix, '_stim_response'), 'od');
