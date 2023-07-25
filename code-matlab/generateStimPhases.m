@@ -66,6 +66,18 @@ function doStuff
             this_echt = echt(csc.data(nStarts(iS):nEnds(iS)), fbands{iB}(1), fbands{iB}(2), Fs);
             this_phase = angle(this_echt);
             causal_phase(iB,iS) = this_phase(end); % The last sample's phase
+            % Diagnostic to check how are angles assined (Uncomment to run)
+%             diag_fig = figure;
+%             ax1 = subplot(2,1,1);
+%             plot(abs(this_echt))
+%             ax2 = subplot(2,1,2);
+%             plot(angle(this_echt))
+%             hold on
+%             yline(0, 'red')
+%             yline(pi/2, 'green')
+%             yline(pi, 'black')
+%             linkaxes([ax1,ax2],'x')
+%             close(diag_fig)
         end
     end
     % Assume you are in the correct folder

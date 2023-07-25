@@ -76,6 +76,9 @@ for iT = 1:nT
                 outputG(iT,:) = temp;
             end
         end
+    else % manishm hack, assumes only outputS and outputT are required
+        outputT = [outputT; iT];
+        outputS = [outputS; NaN];
     end
 end
 
