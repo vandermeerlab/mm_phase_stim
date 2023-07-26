@@ -19,7 +19,7 @@ end
 
 %% Look at p_values
 dStr_mask = summary.depth < 3.5;
-ks_mask = summary.h == 1;
+ks_mask = summary.h == 1; % That the sham and opto difference in firing-rate is different
 og_opto_mask = summary.isopto == 1;
 peak_to_trough = zeros(size(summary.depth));
 for i = 1:length(summary.waveforms)
@@ -29,74 +29,12 @@ for i = 1:length(summary.waveforms)
     [~, tidx] = min(norm_wf(i,:));
     peak_to_trough(i) = tidx - pidx;
 end
-
-%% Figure for characterizing waveform
-fig = figure('WindowState','maximized');
-
-% Plot dStr stuff
-subplot(2,2,1)
-hold on
-sel = find(dStr_mask & ks_mask);
-for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'cyan');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
-    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))})
-title(sprintf('dStr Opto Responsive: %d', length(sel)))
-
-subplot(2,2,2)
-hold on
-sel = find(dStr_mask & ~ks_mask);
-for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'magenta');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
-    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))})
-title(sprintf('dStr Opto non-responsive: %d', length(sel)))
-
-% Plot vStr stuff
-subplot(2,2,3)
-hold on
-sel = find(~dStr_mask & ks_mask);
-for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'cyan');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
-    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))})
-title(sprintf('vStr Opto Responsive: %d', length(sel)))
-
-subplot(2,2,4)
-hold on
-sel = find(~dStr_mask & ~ks_mask);
-for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'magenta');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
-    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))})
-title(sprintf('vStr Opto non-responsive: %d', length(sel)))
-
-
 %% Figure for showing Sham deltaFR vs Opto deltaFR
+% Plot vStr stuff
 fig = figure('WindowState','maximized');
 
 % Plot dStr stuff
-subplot(1,2,1)
+subplot(2,4,[1 5])
 hold on
 sel = find(dStr_mask & ks_mask);
 for i = 1:length(sel)
@@ -109,13 +47,46 @@ for i = 1:length(sel)
 end
 xticks([1 2])
 xticklabels({'Sham stim', 'Opto stim'})
-ylabel('\Delta Firing rate')
+ylabel('\Delta Firing rate (Hz)')
 xlim([0.85 2.15])
 ylim([-50 350])
 title(sprintf('dStr : %d', sum(dStr_mask)))
 
+subplot(2,4,2)
+hold on
+sel1 = find(dStr_mask & ks_mask & summary.sham_delta < summary.opto_delta);
+sel2 = find(dStr_mask & ks_mask & summary.sham_delta >= summary.opto_delta);
+for i = 1:length(sel1)
+    h = plot((0:1:31)/32, norm_wf(sel1(i),:), 'cyan');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+for i = 1:length(sel2)
+    h = plot((0:1:31)/32, norm_wf(sel2(i),:), '--cyan');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+plot((0:1:31)/32,mean(norm_wf(sel1,:)), 'black', 'LineWidth', 3);
+xlabel('Time (ms)')
+ylabel('Normalized Amplitude')
+legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
+    mean(peak_to_trough(sel1))/32, std(peak_to_trough(sel1)/32))}, 'FontSize', 12)
+title(sprintf('dStr Opto Responsive: %d', length(sel1)))
+
+subplot(2,4,6)
+hold on
+sel = find(dStr_mask & ~ks_mask);
+for i = 1:length(sel)
+    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'magenta');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
+xlabel('Time (ms)')
+ylabel('Normalized Amplitude')
+legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
+    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
+title(sprintf('dStr Opto non-responsive: %d', length(sel)))
+
 % Plot vStr stuff
-subplot(1,2,2)
+subplot(2,4,[3 7])
 hold on
 sel = find(~dStr_mask & ks_mask);
 for i = 1:length(sel)
@@ -128,10 +99,42 @@ for i = 1:length(sel)
 end
 xticks([1 2])
 xticklabels({'Sham stim', 'Opto stim'})
-ylabel('\Delta Firing rate')
+ylabel('\Delta Firing rate (Hz)')
 xlim([0.85 2.15])
 ylim([-50 350])
 title(sprintf('vStr : %d', sum(~dStr_mask)))
+
+subplot(2,4,4)
+hold on
+sel = find(~dStr_mask & ks_mask);
+for i = 1:length(sel)
+    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'cyan');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
+xlabel('Time (ms)')
+ylabel('Normalized Amplitude')
+legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
+    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
+title(sprintf('vStr Opto Responsive: %d', length(sel)))
+
+subplot(2,4,8)
+hold on
+sel = find(~dStr_mask & ~ks_mask);
+for i = 1:length(sel)
+    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'magenta');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
+xlabel('Time (ms)')
+ylabel('Normalized Amplitude')
+legend({sprintf('Peak to trough mean: %.2f ms, sd: %.2f ms', ...
+    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
+title(sprintf('vStr Opto non-responsive: %d', length(sel)))
+
+%%
+dStr_opto = summary.labels(ks_mask & dStr_mask & summary.opto_delta > summary.sham_delta);
+vStr_opto = summary.labels(ks_mask & ~dStr_mask & summary.opto_delta > summary.sham_delta);
 
 %%
 opto_p = [summary.labels(ks_mask),summary.h(ks_mask),summary.p_val(ks_mask), summary.sham_delta(ks_mask), summary.opto_delta(ks_mask)];
