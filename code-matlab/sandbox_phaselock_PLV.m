@@ -301,9 +301,17 @@ function doStuff
                 post_subsampled_plv = mean(temp_plv, 2);
                 clear temp_mean_phase temp_plv
             else % Save subsampled results as null
+                post_unsampled_plv = [];
+                post_unsampled_mean_phase = [];
                 post_subsampled_plv = [];
                 post_subsampled_mean_phase = [];
             end
+        else
+                post_spk_count = 0;
+                post_unsampled_plv = [];
+                post_unsampled_mean_phase = [];
+                post_subsampled_plv = [];
+                post_subsampled_mean_phase = [];
         end
         % Save variables
         fn_prefix = extractBefore(this_cell.label{1}, '.t');
