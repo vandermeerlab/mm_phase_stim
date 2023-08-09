@@ -325,10 +325,10 @@ function doStuff
 end
 
 %% Helper functions 
-% Borrowed fromPLV
+% Borrowed from FieldTrip
 function [resLen] = resultantlength(angles)
 
 n = sum(~isnan(angles));
-resLen = abs(nansum(angles))./n; %calculate the circular variance
+resLen = abs(nansum(angles))./n;
 
 end

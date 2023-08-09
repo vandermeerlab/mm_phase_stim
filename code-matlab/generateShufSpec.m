@@ -1,6 +1,6 @@
-%% Script to generate the relationships between spiking and LFP Phase
-% Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-rng(2023); % Setting the seed for reproducibility
+%% Script to generate fake spike-phase locking data for significance testing (PLV version)
+% Assumes that surrogate_sts.mat exists in each session's folder
+rng(491994); % Setting the seed for reproducibility
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
@@ -26,7 +26,7 @@ function doStuff
     for iC = 1:length(ExpKeys.goodCell)
         fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
         fn_prefix = strrep(fn_prefix, '_', '-');
-        % Load the stim_responses
+        % Load the spike_phaselock
         load(strcat(fn_prefix, '_spike_phaselock.mat'));
         [shuf_sts, shuf_ppc] = deal(zeros(nshufs, length(pool_sts.freq)));
         for iShuf = 1:nshufs

@@ -1,4 +1,4 @@
-%% Script to generate spike-LFP phase locking
+%% Script to generate fake spike-phase locking data for significance testing (PLV version)
 
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
@@ -13,7 +13,11 @@ for iM  = 1:length(mice)
 end
 
 function doStuff
+    % Declare parameters and variables
+    fbands = {[2 5], [6 10], [12 30], [30 55]};
+    stim_win = 0.25; % seconds around stim to ignore spikes
     spk_dt = 0.0125; % interspike interval for fake spikes to be generated for this session
+ 
     LoadExpKeys;
     evs = LoadEvents([]);
     if isempty(ExpKeys.goodCell)
@@ -69,15 +73,20 @@ function doStuff
                     max_len, this_stop-this_start);
     this_start = this_bounds(midx);
     this_stop = this_bounds(midx+1);
-    this_csc = restrict(csc, iv([this_start, this_stop]));
-    
-    % Convert this_csc into fieldtrip format
-    ft_csc = convert_tsd_to_ft(this_csc);
-    ft_csc.time{1} = ft_csc.time{1}*1e6;
-    ft_csc.hdr.FirstTimeStamp = ft_csc.hdr.FirstTimeStamp*1e6;
-    ft_csc.hdr.LastTimeStamp = ft_csc.hdr.LastTimeStamp*1e6;
-    ft_csc.hdr.TimeStampPerSample = ft_csc.hdr.TimeStampPerSample*1e6;
+    csc = restrict(csc, iv([this_start, this_stop]));
 
+    % Filter the CSCs in each of the bands, and obtain the hilbert
+    % transform phases in each band
+    filt_phase = cell(length(fbands),1);
+    for iB = 1:length(fbands)
+        cfg_filt.type = 'fdesign'; 
+        cfg_filt.f  = fbands{iB};
+        filt_lfp = FilterLFP(cfg_filt, csc);
+        filt_phase{iB} = hilbert(filt_lfp.data);
+        % Normalizing for operations in complex plane
+        filt_phase{iB} = filt_phase{iB}./abs(filt_phase{iB});
+    end
+    
     %  Generate fake spikes
     cfg = []; cfg.fc = ExpKeys.goodCell(1);
     if ~strcmp(ExpKeys.experimenter, 'EC')
@@ -86,7 +95,7 @@ function doStuff
     end
     S = LoadSpikes(cfg);
     % Make fake spikes
-    S.t{1} = this_csc.tvec(1):spk_dt:this_csc.tvec(end);
+    S.t{1} = csc.tvec(1):spk_dt:csc.tvec(end);
     
     % Get rid of spikes around the stim_times
     if contains(ExpKeys.light_source, 'LASER')
@@ -105,31 +114,14 @@ function doStuff
         stim_on = [];
     end
  
-    all_stim = [stim_on-0.5,stim_on+0.5];
+    all_stim = [stim_on-stim_win,stim_on+stim_win];
     clean_iv = MergeIV([], iv(all_stim));
     clean_iv = InvertIV(clean_iv, ExpKeys.recording_times(1), ExpKeys.recording_times(2));
     S = restrict(S, clean_iv);
-    if ~strcmp(ExpKeys.experimenter, 'EC')
-        S.ft_spikes =  ft_read_spike(S.label{1}, 'encoding', 64);
-    else
-        S.ft_spikes =  ft_read_spike(S.label{1}, 'encoding', 32);
-    end
-        
-    S.ft_spikes.timestamp{1} = S.t{1}*1e6;
-    fake_data = ft_appendspike([],ft_csc, S.ft_spikes);
-    cfg=[];
-    cfg.begsample = ft_csc.sampleinfo(1);
-    cfg.endsample = ft_csc.sampleinfo(2);
-    fake_data = ft_redefinetrial(cfg, fake_data);
-    fprintf("Number of fake spikes is %d\n", sum(fake_data.trial{1}(2,:)));
+    spk_idx = nearest_idx3(S.t{1}, csc.tvec);
+    all_spk_count = length(spk_idx);
+    fprintf("Total number of fake spikes is %d\n", all_spk_count);
+    fake_spk_phase = cellfun(@(x) x(spk_idx), filt_phase, 'UniformOutput', false);
 
-    cfg = [];
-    cfg.method = 'mtmconvol';
-    cfg.foi = 1:1:100;
-    cfg.t_ftimwin = 5./cfg.foi;
-    cfg.taper = 'hanning';
-    cfg.spikechannel =  S.ft_spikes.label{1};
-    cfg.channel = fake_data.label{1};
-    pool_sts = ft_spiketriggeredspectrum(cfg, fake_data);  
-    save('surrogate_sts','pool_sts');
+    save('surrogate_plv','fake_spk_phase');
 end
