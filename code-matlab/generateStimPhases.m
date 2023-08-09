@@ -59,7 +59,7 @@ function doStuff
     causal_phase = nan(length(fbands), length(stim_on));
     nEnds = nearest_idx3(stim_on, csc.tvec);
 
-    for iB = 1:length(fbands)
+    for iB = 2%1:length(fbands)
         win_length  = 0.5; % we are using this window length because we don't see much of a difference in phase estimation % TODO : Find a way to communicate this to the readers
         nStarts = nearest_idx3(stim_on - win_length, csc.tvec);
         for iS = 1:length(stim_on)
@@ -67,17 +67,17 @@ function doStuff
             this_phase = angle(this_echt);
             causal_phase(iB,iS) = this_phase(end); % The last sample's phase
             % Diagnostic to check how are angles assined (Uncomment to run)
-%             diag_fig = figure;
-%             ax1 = subplot(2,1,1);
-%             plot(abs(this_echt))
-%             ax2 = subplot(2,1,2);
-%             plot(angle(this_echt))
-%             hold on
-%             yline(0, 'red')
-%             yline(pi/2, 'green')
-%             yline(pi, 'black')
-%             linkaxes([ax1,ax2],'x')
-%             close(diag_fig)
+            diag_fig = figure;
+            ax1 = subplot(2,1,1);
+            plot(abs(this_echt))
+            ax2 = subplot(2,1,2);
+            plot(angle(this_echt))
+            hold on
+            yline(0, 'red')
+            yline(pi/2, 'green')
+            yline(pi, 'black')
+            linkaxes([ax1,ax2],'x')
+            close(diag_fig)
         end
     end
     % Assume you are in the correct folder

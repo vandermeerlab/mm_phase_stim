@@ -8,7 +8,7 @@ for iM  = 1:length(mice)
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-        this_label = 'M019-2019-04-14-TT05_1.t';
+        this_label = 'M235-2021-07-16-TT04_1.t';
         doStuff(this_label)
     end
 
@@ -182,7 +182,7 @@ function doStuff(label)
             ax.TickDir = 'out';
             ax.YLabel.String = '{\Delta} FR';
             ax.XLabel.String = 'Phase Bins';
-            ax.YLim = [0 60];
+            ax.YLim = [0 280]; % Need to change this in a case by case basis
             dummy = 1;
         end
 

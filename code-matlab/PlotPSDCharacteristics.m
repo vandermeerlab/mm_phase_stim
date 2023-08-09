@@ -87,12 +87,52 @@ for iF = 1:length(fband)
     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
 end
 title('vStr IRASA')
+
+%% Plot IRASA  
+
+% Plot dStr stuff
+subplot(2,1,1)
+imagesc(norm_irasa(dStr_mask,:))
+hold on
+for iF = 1:length(fband)
+    F1 = fband{iF}(1);
+    F2 = fband{iF}(2);
+    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+end
+title('dStr IRASA');
+xticks([2 5 6 10 12 30 55, 60, 100])
+ylabel('Sessions')
+yticks([])
+
+% Plot vStr stuff
+subplot(2,1,2)
+imagesc(norm_irasa(~dStr_mask,:))
+hold on
+for iF = 1:length(fband)
+    F1 = fband{iF}(1);
+    F2 = fband{iF}(2);
+    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+end
+title('vStr IRASA');
+xticks([2 5 6 10 12 30 55, 60, 100])
+ylabel('Sessions')
+yticks([])
+
+
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;
     
     LoadExpKeys;
     if isempty(ExpKeys.goodCell)
+        return
+    end
+
+    % Go ahead only if this exists in a list of opto_cells
+    
+    % Load the list of final opto cells
+    load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
+    if (sum(contains(ExpKeys.goodCell, dStr_opto)) == 0) & (sum(contains(ExpKeys.goodCell, vStr_opto)) == 0)
         return
     end
 

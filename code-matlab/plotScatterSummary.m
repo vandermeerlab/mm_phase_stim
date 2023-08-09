@@ -1,4 +1,4 @@
-%% Script to generate the relationships between spiking and LFP Phase
+%% Script to generate various scatter summary plots
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
@@ -6,7 +6,8 @@ mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
-[summary.labels, summary.response_p, summary.bfr, summary.depth,...
+[summary.bfr] = deal({});
+[summary.labels, summary.response_p, summary.depth,...
     summary.fr_r, summary.fr_z,  summary.phaselock_binned, summary.phaselock_phase, ...
     summary.excitable_phase, summary.phaselock_sig, summary.nbins] = deal([]);
 for iM  = 1:length(mice)
@@ -20,10 +21,97 @@ for iM  = 1:length(mice)
 end
 fbands = {[2 5], [6 10], [12 30], [30 55]};
 c_list = {'red', 'blue','magenta', 'green'};
-dStr_mask = (summary.depth < 3.5)';
+% Load the list of final opto cells
+load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
+dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
+vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 
 %% Sort by recording depth and fr_modulation_depth
 [~, depth_sorted] = sort(summary.depth);
+
+%% Scatter plot of depth of modulation vs Zscore
+
+% dStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+   
+    scatter(summary.fr_r(dStr_mask,iF), repmat(iF, sum(dStr_mask),1) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    hold  on;
+    scatter(summary.fr_r(dStr_mask & this_ex_sig,iF), repmat(iF, sum(dStr_mask & this_ex_sig),1) ,  'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 50);
+    legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+end
+
+yticklabels({'Delta', 'Theta', 'Beta', 'Gamma'}) 
+xlabel('Depth of Modulation', 'FontSize', 12)
+ylim([0 5])
+xlim([0 0.3])
+ax = gca;
+ax.TickDir = 'out';
+sgtitle('Dorsal Striatum')
+%
+% vStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+   
+    scatter(summary.fr_r(vStr_mask,iF), repmat(iF, sum(vStr_mask),1) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    hold  on;
+    scatter(summary.fr_r(dStr_mask & this_ex_sig,iF), repmat(iF, sum(dStr_mask & this_ex_sig),1) ,  'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 50);
+    legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+end
+
+yticklabels({'Delta', 'Theta', 'Beta', 'Gamma'}) 
+xlabel('Depth of Modulation', 'FontSize', 12)
+ylim([0 5])
+xlim([0 0.3])
+ax = gca;
+ax.TickDir = 'out';
+sgtitle('Dorsal Striatum')
+%% Scatter plot of baseline firing rate vs depth of modulation
+% dStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+    
+    ax = subplot(2,2,iF);
+    scatter(cellfun(@mean, summary.bfr(dStr_mask)), summary.fr_r(dStr_mask,iF), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    hold  on; 
+    scatter(cellfun(@mean, summary.bfr(dStr_mask  & this_ex_sig)), summary.fr_r(dStr_mask & this_ex_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 50);
+    legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+    xlabel('Baseline Firing Rate', 'FontSize', 12) 
+    ylabel('Depth of Modulation', 'FontSize', 12)
+    xlim([-5 35])
+    ylim([-0.1 0.5])
+    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+    sgtitle('Dorsal Striatum')
+end
+
+% vStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+    
+    ax = subplot(2,2,iF);
+    scatter(cellfun(@mean, summary.bfr(vStr_mask)), summary.fr_r(vStr_mask,iF), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    hold  on; 
+    scatter(cellfun(@mean, summary.bfr(vStr_mask  & this_ex_sig)), summary.fr_r(vStr_mask & this_ex_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 50);
+    legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+    xlabel('Baseline Firing Rate', 'FontSize', 12) 
+    ylabel('Depth of Modulation', 'FontSize', 12)
+    xlim([-5 35])
+    ylim([-0.1 0.5])
+    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+    sgtitle('Ventral Striatum')
+end
 
 %% Scatter plot of exciatable phase vs intrinsic phase
 %Plot for Dorsal Striatum
@@ -57,12 +145,12 @@ for iF = 1:length(fbands)
     this_ex_sig = summary.fr_z(:,iF) > 2;
     
     ax = subplot(2,2,iF);
-    scatter(summary.phaselock_phase(~dStr_mask,iF), summary.excitable_phase(~dStr_mask,iF), 'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.phaselock_phase(vStr_mask,iF), summary.excitable_phase(vStr_mask,iF), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
     hold  on; 
-    scatter(summary.phaselock_phase(~dStr_mask & this_pl_sig,iF), summary.excitable_phase(~dStr_mask & this_pl_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.phaselock_phase(vStr_mask & this_pl_sig,iF), summary.excitable_phase(vStr_mask & this_pl_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'SizeData', 25);
-    scatter(summary.phaselock_phase(~dStr_mask & this_ex_sig,iF), summary.excitable_phase(~dStr_mask & this_ex_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.phaselock_phase(vStr_mask & this_ex_sig,iF), summary.excitable_phase(vStr_mask & this_ex_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0, 'MarkerEdgeAlpha', 0.5, 'Marker', '+','SizeData', 200);
     plot([-5 5],[-5 5], 'Color', c_list{iF})
     legend({'all ', 'Sig. Phase Locked', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
@@ -73,7 +161,7 @@ for iF = 1:length(fbands)
     ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
 end
 sgtitle('Ventral Striatum')
-%% Scatter of most excitable phases for significant results
+%% Scatter of most excitable phases  vs depth of modulationfor significant results
 % dStr
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
@@ -88,27 +176,84 @@ for iF = 1:length(fbands)
     legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
     ylabel('Depth of modulation', 'FontSize', 12) 
     xlabel('Most Excitable Phase', 'FontSize', 12)
-    ylim([-0.2 1.2])
+    ylim([-0.1 0.5])
     xlim([-3.2 3.2])
     ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
 end
 sgtitle('Dorsal Striatum')
+
 %% vStr
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
     this_ex_sig = summary.fr_z(:,iF) > 2;
     
     ax = subplot(2,2,iF);
-    scatter(summary.excitable_phase(~dStr_mask,iF), summary.fr_r(~dStr_mask,iF),'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.excitable_phase(vStr_mask,iF), summary.fr_r(vStr_mask,iF),'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
     hold  on; 
-    scatter(summary.excitable_phase(~dStr_mask & this_ex_sig,iF), summary.fr_r(~dStr_mask & this_ex_sig,iF),  'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.excitable_phase(vStr_mask & this_ex_sig,iF), summary.fr_r(vStr_mask & this_ex_sig,iF),  'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 25);
     legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
     ylabel('Depth of modulation', 'FontSize', 12) 
     xlabel('Most Excitable Phase', 'FontSize', 12)
     ylim([-0.1 0.5])
     xlim([-3.2 3.2])
+    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+end
+sgtitle('Ventral Striatum')
+
+%% Look at why high depth of modulation is not necessarily significant
+
+% dStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+    ax = subplot(2,2,iF);
+    sel1 = find(~this_ex_sig & dStr_mask);
+    sel2 = find(this_ex_sig & dStr_mask);
+    for iS = 1:length(sel1)
+%         text(summary.excitable_phase(sel1(iS),iF), summary.fr_r(sel1(iS),iF), ...
+%             string(summary.response_p(sel1(iS))));
+        text(3*summary.excitable_phase(sel1(iS),iF), 5*summary.fr_r(sel1(iS),iF), ...
+            summary.labels(sel1(iS)), 'Interpreter', 'none');
+    end
+    for iS = 1:length(sel2)
+%         text(summary.excitable_phase(sel2(iS),iF), summary.fr_r(sel2(iS),iF), ...
+%             string(summary.response_p(sel1(iS))), 'FontWeight', 'bold');
+        text(3*summary.excitable_phase(sel2(iS),iF), 5*summary.fr_r(sel2(iS),iF), ...
+            summary.labels(sel1(iS)), 'FontWeight', 'bold', 'Interpreter', 'none');
+    end
+    ylabel('Depth of modulation', 'FontSize', 12) 
+    xlabel('Most Excitable Phase', 'FontSize', 12)
+    ylim([-0.1 2.5])
+    xlim([-9.6 9.6])
+    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+end
+sgtitle('Dorsal Striatum')
+
+% vStr
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2;
+    ax = subplot(2,2,iF);
+    sel1 = find(~this_ex_sig & vStr_mask);
+    sel2 = find(this_ex_sig & vStr_mask);
+    for iS = 1:length(sel1)
+%         text(summary.excitable_phase(sel1(iS),iF), summary.fr_r(sel1(iS),iF), ...
+%             string(summary.response_p(sel1(iS))));
+        text(3*summary.excitable_phase(sel1(iS),iF), 5*summary.fr_r(sel1(iS),iF), ...
+            summary.labels(sel1(iS)), 'Interpreter', 'none');
+    end
+    for iS = 1:length(sel2)
+%         text(summary.excitable_phase(sel2(iS),iF), summary.fr_r(sel2(iS),iF), ...
+%             string(summary.response_p(sel1(iS))), 'FontWeight', 'bold');
+        text(3*summary.excitable_phase(sel2(iS),iF), 5*summary.fr_r(sel2(iS),iF), ...
+            summary.labels(sel1(iS)), 'FontWeight', 'bold', 'Interpreter', 'none');
+    end
+    ylabel('Depth of modulation', 'FontSize', 12) 
+    xlabel('Most Excitable Phase', 'FontSize', 12)
+    ylim([-0.1 2.5])
+    xlim([-9.6 9.6])
     ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
 end
 sgtitle('Ventral Striatum')
@@ -121,12 +266,12 @@ for iF = 1:length(fbands)
     this_ex_sig = summary.fr_z(:,iF) > 2;
     
     ax = subplot(2,2,iF);
-    scatter(summary.phaselock_phase(~dStr_mask,iF), summary.excitable_phase(~dStr_mask,iF), 'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.phaselock_phase(vStr_mask,iF), summary.excitable_phase(vStr_mask,iF), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
     hold  on; 
-    scatter(summary.phaselock_phase(~dStr_mask & this_pl_sig,iF), summary.excitable_phase(~dStr_mask & this_pl_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.phaselock_phase(vStr_mask & this_pl_sig,iF), summary.excitable_phase(vStr_mask & this_pl_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'SizeData', 25);
-    scatter(summary.phaselock_phase(~dStr_mask & this_ex_sig,iF), summary.excitable_phase(~dStr_mask & this_ex_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+    scatter(summary.phaselock_phase(vStr_mask & this_ex_sig,iF), summary.excitable_phase(vStr_mask & this_ex_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0, 'MarkerEdgeAlpha', 0.5, 'Marker', '+','SizeData', 200);
     plot([-5 5],[-5 5], 'Color', c_list{iF})
     legend({'all ', 'Sig. Phase Locked', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
@@ -134,40 +279,6 @@ for iF = 1:length(fbands)
     ylabel('Most Excitable Phase', 'FontSize', 12)
     xlim([-3.2 3.2])
     ylim([-3.2 3.2])
-    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
-end
-sgtitle('Ventral Striatum')
-%% Scatter of most excitable phases for significant results
-% dStr
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    this_ex_sig = summary.fr_z(:,iF) > 2;
-    
-    ax = subplot(2,2,iF);
-    text(summary.excitable_phase(dStr_mask,iF), summary.fr_r(dStr_mask,iF), summary.labels(dStr_mask));
-    ylabel('Depth of modulation', 'FontSize', 12) 
-    xlabel('Most Excitable Phase', 'FontSize', 12)
-    ylim([-0.2 1.2])
-    xlim([-3.2 3.2])
-    ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
-end
-sgtitle('Dorsal Striatum')
-%% vStr
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    this_ex_sig = summary.fr_z(:,iF) > 2;
-    
-    ax = subplot(2,2,iF);
-    scatter(summary.excitable_phase(~dStr_mask,iF), summary.fr_r(~dStr_mask,iF),'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
-    hold  on; 
-    scatter(summary.excitable_phase(~dStr_mask & this_ex_sig,iF), summary.fr_r(~dStr_mask & this_ex_sig,iF),  'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5, 'SizeData', 25);
-    legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
-    ylabel('Depth of modulation', 'FontSize', 12) 
-    xlabel('Most Excitable Phase', 'FontSize', 12)
-    ylim([-0.2 1.2])
-    xlim([-3.2 3.2])
     ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
 end
 sgtitle('Ventral Striatum')
@@ -187,7 +298,7 @@ function s_out = doStuff(s_in)
         load(strcat(fn_prefix, '_phase_response_5_bins.mat')); % Change this to what is decided to be the best binning option
         s_out.depth = [s_out.depth; ExpKeys.probeDepth];
         s_out.response_p = [s_out.response_p; out.overall_response];
-        s_out.bfr = [s_out.bfr, out.mean_bfr];
+        s_out.bfr{length(s_out.bfr)+1} = out.bfr;
         s_out.labels = [s_out.labels; string(fn_prefix)];
         s_out.fr_z = [s_out.fr_z; out.fr.zscore];
         s_out.fr_r = [s_out.fr_r; out.fr.ratio];
