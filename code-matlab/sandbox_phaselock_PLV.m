@@ -167,7 +167,9 @@ function doStuff
             all_subsampled_mean_phase = circ_mean(temp_mean_phase, [], 2); 
             all_subsampled_plv = mean(temp_plv, 2);
             clear temp_mean_phase temp_plv
+
         else % Save all results as null
+            all_spk_phase = [];
             all_unsampled_mean_phase = [];
             all_unsampled_plv = [];
             all_subsampled_plv = [];
@@ -213,6 +215,7 @@ function doStuff
             pre_subsampled_plv = mean(temp_plv, 2);
             clear temp_mean_phase temp_plv
         else % Save subsampled results as null
+            pre_spk_phase = [];
             pre_unsampled_plv = [];
             pre_unsampled_mean_phase = [];
             pre_subsampled_plv = [];
@@ -257,6 +260,7 @@ function doStuff
             trial_subsampled_plv = mean(temp_plv, 2);
             clear temp_mean_phase temp_plv
         else % Save subsampled results as null
+            trial_spk_phase = [];
             trial_unsampled_plv = [];
             trial_unsampled_mean_phase = [];
             trial_subsampled_plv = [];
@@ -301,6 +305,7 @@ function doStuff
                 post_subsampled_plv = mean(temp_plv, 2);
                 clear temp_mean_phase temp_plv
             else % Save subsampled results as null
+                post_spk_phase = [];
                 post_unsampled_plv = [];
                 post_unsampled_mean_phase = [];
                 post_subsampled_plv = [];
@@ -308,6 +313,7 @@ function doStuff
             end
         else
                 post_spk_count = 0;
+                post_spk_phase = [];
                 post_unsampled_plv = [];
                 post_unsampled_mean_phase = [];
                 post_subsampled_plv = [];
@@ -320,7 +326,8 @@ function doStuff
             'all_spk_count', 'all_unsampled_plv', 'all_unsampled_mean_phase', 'all_subsampled_plv', 'all_subsampled_mean_phase', ...
             'pre_spk_count', 'pre_unsampled_plv', 'pre_unsampled_mean_phase', 'pre_subsampled_plv', 'pre_subsampled_mean_phase', ...
             'trial_spk_count', 'trial_unsampled_plv', 'trial_unsampled_mean_phase', 'trial_subsampled_plv', 'trial_subsampled_mean_phase', ...
-            'post_spk_count', 'post_unsampled_plv', 'post_unsampled_mean_phase', 'post_subsampled_plv', 'post_subsampled_mean_phase');
+            'post_spk_count', 'post_unsampled_plv', 'post_unsampled_mean_phase', 'post_subsampled_plv', 'post_subsampled_mean_phase', ...
+            'all_spk_phase', 'pre_spk_phase', 'trial_spk_phase', 'post_spk_phase');
     end
 end
 
