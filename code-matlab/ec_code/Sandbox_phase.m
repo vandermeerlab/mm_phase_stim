@@ -2,7 +2,7 @@ hold on
 n_phases = 5;
 c_ord = linspecer(5);
 x = -pi:pi/(50*n_phases):pi;
-wave_phase = sin(x);
+wave_phase = cos(x);
 for iPhase = 1:n_phases
     
     plot(-99+(100*iPhase):(100*iPhase), wave_phase(-99+(100*iPhase):(100*iPhase)), 'color', c_ord(iPhase,:), 'linewidth', 5)

@@ -9,7 +9,7 @@ summary = [];
 [summary.bfr] = deal({});
 [summary.labels, summary.response_p, summary.depth,...
     summary.fr_r, summary.fr_z,  summary.phaselock_binned, summary.phaselock_phase, ...
-    summary.excitable_phase, summary.phaselock_sig, summary.nbins] = deal([]);
+    summary.excitable_phase, summary.phaselock_sig, summary.ntrials, summary.trialbin_dif, summary.nbins] = deal([]);
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -19,15 +19,95 @@ for iM  = 1:length(mice)
         summary = doStuff(summary);
     end
 end
-fbands = {[2 5], [6 10], [12 30], [30 55]};
-c_list = {'red', 'blue','magenta', 'green'};
+% fbands = {[2 5], [6 10], [12 30], [30 55]};
+fbands = {[2 5], [6 10], [30 55]};
+% c_list = {'red', 'blue','magenta', 'green'};
+c_list = {'red', 'blue', 'green'};
 % Load the list of final opto cells
 load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
 dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
 vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 
+% Another exclusion criterion is if the difference between the 2 trial counts for a given phase binning is greater than 5% of the trials
+max_dif = 0.05; % Subject to change
+dif_mask = summary.trialbin_dif <= max_dif;
+
+% Significance mask
+z_thresh = 2;
+sig_mask = (summary.fr_z > z_thresh);
+%%  Create CSV for UPSET Plot
+delta_bool = [0;1;0;0;1;1;0;1];
+theta_bool = [0;0;1;0;1;0;1;1];
+gamma_bool = [0;0;0;1;0;1;1;1];
+delta_bool = delta_bool == 1;
+theta_bool = theta_bool == 1;
+gamma_bool = gamma_bool == 1;
+
+keep = sig_mask & dif_mask;
+[dStr_sig, vStr_sig] = deal(zeros(size(delta_bool)));
+
+
+dStr_sig(1) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,4));
+dStr_sig(2) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,4));
+dStr_sig(3) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,4));
+dStr_sig(4) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,4));
+dStr_sig(5) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,4));
+dStr_sig(6) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,4));
+dStr_sig(7) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,4));
+dStr_sig(8) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,4));
+
+vStr_sig(1) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,4));
+vStr_sig(2) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,4));
+vStr_sig(3) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,4));
+vStr_sig(4) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,4));
+vStr_sig(5) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,4));
+vStr_sig(6) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,4));
+vStr_sig(7) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,4));
+vStr_sig(8) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,4));
+
+dStr_table = table(delta_bool, theta_bool, gamma_bool, dStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
+vStr_table = table(delta_bool, theta_bool, gamma_bool, vStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
+writetable(dStr_table, 'C:\Users\mvdmlab\Desktop\dStr_sig.csv');
+writetable(vStr_table, 'C:\Users\mvdmlab\Desktop\vStr_sig.csv');
+
 %% Sort by recording depth and fr_modulation_depth
 [~, depth_sorted] = sort(summary.depth);
+
+%% Plot depth of modulation vs Z-score
+fig = figure('WindowState', 'maximized');
+ax1 = subplot(2,1,1);
+hold on;
+ax2 = subplot(2,1,2);
+hold on;
+for iF = 1:length(fbands)
+    scatter(ax1, summary.fr_r(dStr_mask & dif_mask(:,iF),iF), summary.fr_z(dStr_mask & dif_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    scatter(ax2, summary.fr_r(vStr_mask & dif_mask(:,iF),iF), summary.fr_z(vStr_mask & dif_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+%     legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+end
+yline(ax1, 2, '--black');
+yline(ax2, 2, '--black');
+legend(ax1, {sprintf('%d / %d', sum(dStr_mask & dif_mask(:,1) & (summary.fr_z(:,1)> 2)), sum(dStr_mask & dif_mask(:,1))), ...
+    sprintf('%d / %d', sum(dStr_mask & dif_mask(:,2) & (summary.fr_z(:,2)> 2)), sum(dStr_mask & dif_mask(:,2))), ...
+    sprintf('%d / %d', sum(dStr_mask & dif_mask(:,3) & (summary.fr_z(:,3)> 2)), sum(dStr_mask & dif_mask(:,3)))}, 'Location', 'southeast');
+legend(ax2, {sprintf('%d / %d', sum(vStr_mask & dif_mask(:,1) & (summary.fr_z(:,1)> 2)), sum(vStr_mask & dif_mask(:,1))), ...
+    sprintf('%d / %d', sum(vStr_mask & dif_mask(:,2) & (summary.fr_z(:,2)> 2)), sum(vStr_mask & dif_mask(:,2))), ...
+    sprintf('%d / %d', sum(vStr_mask & dif_mask(:,3) & (summary.fr_z(:,3)> 2)), sum(vStr_mask & dif_mask(:,3)))}, 'Location', 'southeast');
+ax1.Title.String = 'dStr';
+ax1.XLim = [0 0.5];
+ax1.YLim = [-3 12];
+ax1.YLabel.String = 'Z-score';
+ax1.XLabel.String = 'Depth of Modulation';
+ax1.TickDir = 'out';
+ax1.YTick = [-2:2:12];
+ax2.Title.String = 'vStr';
+ax2.XLim = [0 0.5];
+ax2.YLim = [-3 12];
+ax2.YLabel.String = 'Z-score';
+ax2.XLabel.String = 'Depth of Modulation';
+ax2.TickDir = 'out';
+ax2.YTick = [-2:2:12];
 
 %% Scatter plot of depth of modulation vs Zscore
 
@@ -113,7 +193,7 @@ for iF = 1:length(fbands)
     sgtitle('Ventral Striatum')
 end
 
-%% Scatter plot of exciatable phase vs intrinsic phase
+%% Scatter plot of excitable phase vs intrinsic phase
 %Plot for Dorsal Striatum
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
@@ -206,8 +286,8 @@ sgtitle('Ventral Striatum')
 
 % dStr
 fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    this_ex_sig = summary.fr_z(:,iF) > 2;
+for iF = 1%1:length(fbands)
+    this_ex_sig = summary.fr_z(:,iF) > 2; 
     ax = subplot(2,2,iF);
     sel1 = find(~this_ex_sig & dStr_mask);
     sel2 = find(this_ex_sig & dStr_mask);
@@ -221,7 +301,7 @@ for iF = 1:length(fbands)
 %         text(summary.excitable_phase(sel2(iS),iF), summary.fr_r(sel2(iS),iF), ...
 %             string(summary.response_p(sel1(iS))), 'FontWeight', 'bold');
         text(3*summary.excitable_phase(sel2(iS),iF), 5*summary.fr_r(sel2(iS),iF), ...
-            summary.labels(sel1(iS)), 'FontWeight', 'bold', 'Interpreter', 'none');
+            summary.labels(sel2(iS)), 'FontWeight', 'bold', 'Interpreter', 'none');
     end
     ylabel('Depth of modulation', 'FontSize', 12) 
     xlabel('Most Excitable Phase', 'FontSize', 12)
@@ -231,9 +311,9 @@ for iF = 1:length(fbands)
 end
 sgtitle('Dorsal Striatum')
 
-% vStr
+%% vStr
 fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
+for iF = 4%1:length(fbands)
     this_ex_sig = summary.fr_z(:,iF) > 2;
     ax = subplot(2,2,iF);
     sel1 = find(~this_ex_sig & vStr_mask);
@@ -248,7 +328,7 @@ for iF = 1:length(fbands)
 %         text(summary.excitable_phase(sel2(iS),iF), summary.fr_r(sel2(iS),iF), ...
 %             string(summary.response_p(sel1(iS))), 'FontWeight', 'bold');
         text(3*summary.excitable_phase(sel2(iS),iF), 5*summary.fr_r(sel2(iS),iF), ...
-            summary.labels(sel1(iS)), 'FontWeight', 'bold', 'Interpreter', 'none');
+            summary.labels(sel2(iS)), 'FontWeight', 'bold', 'Interpreter', 'none');
     end
     ylabel('Depth of modulation', 'FontSize', 12) 
     xlabel('Most Excitable Phase', 'FontSize', 12)
@@ -302,6 +382,12 @@ function s_out = doStuff(s_in)
         s_out.labels = [s_out.labels; string(fn_prefix)];
         s_out.fr_z = [s_out.fr_z; out.fr.zscore];
         s_out.fr_r = [s_out.fr_r; out.fr.ratio];
+
+        % Load the stim_responses
+        load('stim_phases.mat');
+        goodTrials = ExpKeys.goodTrials(iC,:);
+
+        s_out.ntrials = [s_out.ntrials; goodTrials(2) + 1 - goodTrials(1)];
         
         % Load phase_lock and shuf_spec
         fn_prefix = strrep(fn_prefix, '_', '-');
@@ -309,7 +395,7 @@ function s_out = doStuff(s_in)
         load(strcat(fn_prefix, '_shuf_spec.mat'));
            
         pct_ppc = sum(shuf_ppc < trial_ppc.vals', 1)/size(shuf_ppc,1); % Calculating p_val of PPC for each frequency
-        [this_sig, this_pl_phase, this_pl_binned, this_nbins, this_ex_phase] = deal(zeros(1,length(fbands)));
+        [this_sig, this_pl_phase, this_pl_binned, this_nbins, this_ex_phase, this_trialbin_dif] = deal(zeros(1,length(fbands)));
         for iF = 1:length(fbands)
             f_idx = find(round(trial_sts.freqs) >= fbands{iF}(1) & ...
                 round(trial_sts.freqs) <= fbands{iF}(2));
@@ -319,7 +405,11 @@ function s_out = doStuff(s_in)
             % Change accordingly
             this_nbins(iF) = 5; %length(out.fr.bin{iF}); %5;
             phase_bins = -pi:2*pi/this_nbins(iF):pi;
-           
+
+            this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
+            [this_count, ~, ~] = histcounts(this_phase, phase_bins);
+            this_trialbin_dif(iF) = (max(this_count) - min(this_count))/(goodTrials(2) + 1 - goodTrials(1));
+
             % The mean angle at the maximum PPC
             [~, midx] = max(trial_ppc.vals(f_idx));
             this_ang = trial_ppc.ang(f_idx);
@@ -336,5 +426,6 @@ function s_out = doStuff(s_in)
         s_out.phaselock_binned = [s_out.phaselock_binned, this_pl_binned];
         s_out.excitable_phase = [s_out.excitable_phase; this_ex_phase];
         s_out.nbins = [s_out.nbins; this_nbins];
+        s_out.trialbin_dif = [s_out.trialbin_dif; this_trialbin_dif];
     end
 end
