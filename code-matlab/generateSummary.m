@@ -8,8 +8,10 @@ mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
 summary = [];
 [summary.bfr] = deal({});
 [summary.labels, summary.response_p, summary.depth,...
-    summary.fr_r, summary.fr_z,  summary.phaselock_binned, summary.phaselock_phase, ...
-    summary.excitable_phase, summary.phaselock_sig, summary.ntrials, summary.trialbin_dif, summary.nbins] = deal([]);
+    summary.fr_r, summary.fr_z,  summary.phaselock_plv, ...
+    summary.phaselock_mean_phase, summary.phaselock_pct, ...
+    summary.phaselock_max_shufplv, summary.excitable_phase, ...
+    summary.ntrials, summary.trialbin_dif, summary.nbins] = deal([]);
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -108,6 +110,12 @@ ax2.YLabel.String = 'Z-score';
 ax2.XLabel.String = 'Depth of Modulation';
 ax2.TickDir = 'out';
 ax2.YTick = [-2:2:12];
+
+%% Look at proportions of phase-locking and phase-modulation
+pl_thresh = 0.95;
+pl_mask = summary.phaselock_pct >= pl_thresh;
+all_clean_mask = (pl_mask & sig_mask & dif_mask);
+
 
 %% Scatter plot of depth of modulation vs Zscore
 
@@ -391,39 +399,36 @@ function s_out = doStuff(s_in)
         
         % Load phase_lock and shuf_spec
         fn_prefix = strrep(fn_prefix, '_', '-');
-        load(strcat(fn_prefix, '_spike_phaselock.mat'));
-        load(strcat(fn_prefix, '_shuf_spec.mat'));
-           
-        pct_ppc = sum(shuf_ppc < trial_ppc.vals', 1)/size(shuf_ppc,1); % Calculating p_val of PPC for each frequency
-        [this_sig, this_pl_phase, this_pl_binned, this_nbins, this_ex_phase, this_trialbin_dif] = deal(zeros(1,length(fbands)));
+        load(strcat(fn_prefix, '_spike_phaselock_plv.mat'));
+        load(strcat(fn_prefix, '_shuf_spec_plv.mat'));  
+        [this_pct, this_ex_phase, this_trialbin_dif] = deal(zeros(1,length(fbands)));
         for iF = 1:length(fbands)
-            f_idx = find(round(trial_sts.freqs) >= fbands{iF}(1) & ...
-                round(trial_sts.freqs) <= fbands{iF}(2));
-            mean_pct = mean(pct_ppc(f_idx));
-            this_sig(iF) = mean_pct >= p_thresh;
-
+            if isempty(trial_subsampled_plv)
+                this_pct(iF) = nan;
+            else
+                this_pct(iF) = sum(trial_subsampled_plv(iF) > shuf_plv(:,iF))/length(shuf_plv);
+            end
             % Change accordingly
-            this_nbins(iF) = 5; %length(out.fr.bin{iF}); %5;
-            phase_bins = -pi:2*pi/this_nbins(iF):pi;
-
+            this_nbins = 5; %length(out.fr.bin{iF}); %5;
+            phase_bins = -pi:2*pi/this_nbins:pi;
             this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
             [this_count, ~, ~] = histcounts(this_phase, phase_bins);
             this_trialbin_dif(iF) = (max(this_count) - min(this_count))/(goodTrials(2) + 1 - goodTrials(1));
-
-            % The mean angle at the maximum PPC
-            [~, midx] = max(trial_ppc.vals(f_idx));
-            this_ang = trial_ppc.ang(f_idx);
-            this_pl_phase(iF) = this_ang(midx);
-            [~, ~, this_bin] = histcounts(this_pl_phase(iF), phase_bins);
-            this_pl_binned(iF) = mean(phase_bins(this_bin:this_bin+1)); % Bin the phase accordingly
-
             % The maximally excitable phase
             [~, midx] =  max(out.fr.bin(iF,:));%max(out.fr.bin{iF});
             this_ex_phase(iF) = mean(phase_bins(midx:midx+1));
         end
-        s_out.phaselock_sig = [s_out.phaselock_sig; this_sig];
-        s_out.phaselock_phase = [s_out.phaselock_phase; this_pl_phase];
-        s_out.phaselock_binned = [s_out.phaselock_binned, this_pl_binned];
+        if isempty(trial_subsampled_plv)
+            s_out.phaselock_pct = [s_out.phaselock_pct; this_pct];
+            s_out.phaselock_plv = [s_out.phaselock_plv; this_pct];
+            s_out.phaselock_max_shufplv = [s_out.phaselock_max_shufplv; this_pct];
+            s_out.phaselock_mean_phase = [s_out.phaselock_mean_phase; this_pct];
+        else
+            s_out.phaselock_pct = [s_out.phaselock_pct; this_pct];
+            s_out.phaselock_plv = [s_out.phaselock_plv; trial_subsampled_plv'];
+            s_out.phaselock_max_shufplv = [s_out.phaselock_max_shufplv; max(shuf_plv, [], 1)];
+            s_out.phaselock_mean_phase = [s_out.phaselock_mean_phase; trial_subsampled_mean_phase'];
+        end
         s_out.excitable_phase = [s_out.excitable_phase; this_ex_phase];
         s_out.nbins = [s_out.nbins; this_nbins];
         s_out.trialbin_dif = [s_out.trialbin_dif; this_trialbin_dif];

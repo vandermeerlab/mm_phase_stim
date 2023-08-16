@@ -91,9 +91,7 @@ function doStuff
     
     %% Set variables and parameters
     % snippet for autocorrelation
-    for iC = 1:length(restricted_S.label)
-        fn_prefix = extractBefore(restricted_S.label{iC}, '.t');
-        fn_prefix = strrep(fn_prefix, '_', '-');    
+    for iC = 1:length(restricted_S.label) 
         this_cell = SelectTS([], S, iC);
         restricted_cell = SelectTS([], restricted_S, iC);
         od = [];
@@ -102,6 +100,8 @@ function doStuff
         od.post_stim = [];
         od.long_stim = [];
         od.sham_stim = [];
+        od.stim_pre10 = [];
+        od.stim_pre250 = [];
         
         % Pre-stim response
         if ~isempty(ExpKeys.pre_stim_times)
@@ -163,6 +163,38 @@ function doStuff
             od.trial_stim.fr = fr;
             od.trial_stim.fr_wo_stim = fr_wo_stim;
             od.trial_stim.bfr = bfr;
+        end
+
+        % Control-stim response
+        if ~isempty(ExpKeys.stim_times)
+            this_on_events1 = stim_on - 0.01;
+            this_on_events2 = stim_on - 0.25;
+            [latency1, latency2] = deal(nan(size(this_on_events1)));
+            [fr1, fr2] = deal(zeros(size(this_on_events1)));
+            [bfr1, bfr2] = deal(zeros(size(this_on_events1)));
+            for iStim = 1:length(this_on_events1)
+                st1 = restrict(this_cell, iv(this_on_events1(iStim), this_on_events1(iStim)+max_delay));
+                baseline1 = restrict(this_cell, iv(this_on_events1(iStim)-max_delay, this_on_events1(iStim)));
+                st2 = restrict(this_cell, iv(this_on_events2(iStim), this_on_events2(iStim)+max_delay));
+                baseline2 = restrict(this_cell, iv(this_on_events2(iStim)-max_delay, this_on_events2(iStim)));
+                if ~isempty(st1.t{1})
+                    latency1(iStim) = st1.t{1}(1) - this_on_events1(iStim);
+                    fr1(iStim) = length(st1.t{1})/max_delay;
+                    bfr1(iStim) = length(baseline1.t{1})/max_delay;
+                end
+                if ~isempty(st2.t{1})
+                    latency2(iStim) = st2.t{1}(1) - this_on_events2(iStim);
+                    fr2(iStim) = length(st2.t{1})/max_delay;
+                    bfr2(iStim) = length(baseline2.t{1})/max_delay;
+                end
+
+            end
+            od.stim_pre10.latency = latency1;
+            od.stim_pre10.fr = fr1;
+            od.stim_pre10.bfr = bfr1;
+            od.stim_pre250.latency = latency2;
+            od.stim_pre250.fr = fr2;
+            od.stim_pre250.bfr = bfr2;
         end
 
         % Post-stim response
