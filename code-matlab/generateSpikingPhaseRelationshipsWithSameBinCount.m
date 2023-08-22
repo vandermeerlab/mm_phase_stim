@@ -52,7 +52,7 @@ function doStuff
             out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
             out.bfr = all_bfr;
 
-            [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin] = deal(nan(4,nbins));
+            [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin, out.fr.sd, out.fr_ws.sd] = deal(nan(4,nbins));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...
                 out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,4));
     
@@ -67,12 +67,14 @@ function doStuff
                 this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
                 [this_count, ~, this_bin] = histcounts(this_phase, phase_bins);
     
-                [this_lat, this_lat_ws, this_fr, this_fr_ws] = deal(zeros(size(this_count)));
+                [this_lat, this_lat_ws, this_fr, this_fr_ws, this_fr_sd, this_fr_ws_sd] = deal(zeros(size(this_count)));
                 for iB = 1:nbins
-                   this_lat(iB) = sum(~isnan(all_lat(this_bin==iB)))/this_count(iB);
+                   this_lat(iB) = sum(~isnan(all_lat(this_bin==iB)))/this_count(iB);                   
                    this_lat_ws(iB) = sum(~isnan(all_lat_ws(this_bin==iB)))/this_count(iB);
-                   this_fr(iB) = sum(all_fr(this_bin==iB))/this_count(iB);
-                   this_fr_ws(iB) = sum(all_fr_ws(this_bin==iB))/this_count(iB);
+                   this_fr(iB) = mean(all_fr(this_bin==iB));
+                   this_fr_sd(iB) = std(all_fr(this_bin==iB));
+                   this_fr_ws(iB) = mean(all_fr_ws(this_bin==iB));
+                   this_fr_ws_sd(iB) = std(all_fr_ws(this_bin==iB));
                 end
                 
                 % Using (max-min)/(max+min) as the ratio
@@ -84,7 +86,8 @@ function doStuff
                 out.fr.ratio(iF) = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
                 out.fr_ws.bin(iF,:) = this_fr_ws;
                 out.fr_ws.ratio(iF) = (max(this_fr_ws) - min(this_fr_ws))/(max(this_fr_ws) + min(this_fr_ws));
-    
+                out.fr.sd(iF,:) = this_fr_sd;
+                out.fr_ws.sd(iF,:) = this_fr_ws_sd;
                 % Generate shuffles
                 [shuf_lat_ratio, shuf_lat_ws_ratio, shuf_fr_ratio, shuf_fr_ws_ratio] = deal(zeros(nshufs, 1));
                 for iShuf = 1:nshufs

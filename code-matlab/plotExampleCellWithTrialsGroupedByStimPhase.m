@@ -1,5 +1,4 @@
 %% Assumes that spike-sorting has been done
-
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
@@ -8,7 +7,7 @@ for iM  = 1:length(mice)
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-        this_label = 'M018-2019-04-12-TT04_2.t';
+        this_label = 'M019-2019-04-14-TT05_1.t';
         doStuff(this_label)
     end
 
@@ -34,8 +33,9 @@ function doStuff(label)
     S = LoadSpikes(cfg_spk);
     
     % Set variables
-    marker_sz = 4;
-    max_delay = 0.01; % sec (window for the first response since stimulus)
+    marker_sz = 1;
+    axisLabelFS = 30;
+    tickLabelFS = 20;
     nbins = 5;
 %     fbands = {[2 5], [6 10], [12 30], [30 55]};
     fbands = {[2 5], [6 10], [30 55]};
@@ -107,20 +107,33 @@ function doStuff(label)
             if ~isempty(ExpKeys.goodTrials) % Only keep the good trials
                 this_on_events = this_on_events(ExpKeys.goodTrials(iC,1):ExpKeys.goodTrials(iC,2));
             end
-            [outputS, outputT, ~, ~, ~] = SpikePETHvdm([], ...
-                this_cell, this_on_events, '', 0.5);
+            % Use MultiRaster to do this, because why not
+            fake_S = this_cell;
+            for iT = 1:length(this_on_events)
+                temp_S = restrict(S, iv(this_on_events(iT) - 0.01, this_on_events(iT) + 0.01));
+                fake_S.t{iT} = 1000*(temp_S.t{1} - this_on_events(iT));
+                fake_S.label{iT} = temp_S.label{1};
+            end
+            cfg = [];
+            cfg.SpikeHeight = 0.48;
+            cfg.openNewFig = 0;
+            MultiRaster(cfg,fake_S);
             hold on
-            plot(outputS, outputT+0.5, 'k.', 'Marker', '|', 'MarkerSize', marker_sz);
-            plot([0 0], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
-            plot([ExpKeys.short_stim_pulse_width+stop_delay ExpKeys.short_stim_pulse_width+stop_delay], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
+            xline(0, 'cyan', 'LineWidth', 1);
+            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, 'cyan', 'LineWidth', 1)
             ylabel('Trial #');
-            ylim([1 length(this_on_events)])
-            xlim([-0.01 0.01]);
-            xlabel("Time (sec)")
+            yticks([0 length(this_on_events)])
+            ylim([0 length(this_on_events)])
+            xlim([-10 10]);
+            xlabel("Time (ms)")
+            ax.Box = 'off';
             ax.XAxis.TickDirection = 'out';
             ax.YAxis.TickDirection = 'out';
-            ax.XAxis.FontSize = 14;
-            ax.YAxis.FontSize = 14;
+            ax.TickLength = [0.03 0.02];
+            ax.XAxis.FontSize = tickLabelFS;
+            ax.YAxis.FontSize = tickLabelFS;
+            ax.XLabel.FontSize = axisLabelFS;
+            ax.YLabel.FontSize = axisLabelFS;
         end
 
         % Plot PSD on the bottom left
@@ -130,8 +143,10 @@ function doStuff(label)
         plot(psd.freq, 10*log10(psd.original), 'black', 'LineWidth', 1.5);
         for iF = 1:length(fbands)
             f_idx = find(round(psd.freq) >= fbands{iF}(1) & round(psd.freq) <= fbands{iF}(2));
-            area(psd.freq(f_idx), 10*log10(psd.original(f_idx)), 'FaceColor', c_list{iF}, ...
-                'FaceAlpha', 0.5, 'BaseValue', min(10*log10(psd.original)))                    
+%             area(psd.freq(f_idx), 10*log10(psd.original(f_idx)), 'FaceColor', c_list{iF}, ...
+%                 'FaceAlpha', 0.5, 'BaseValue', min(10*log10(psd.original)))
+            area(psd.freq(f_idx), 10*log10(psd.original(f_idx)), 'FaceColor', [0.7 0.7 0.7], ...
+                'FaceAlpha', 0.5, 'BaseValue', min(10*log10(psd.original)))
         end
         plot(psd.freq, 10*log10(psd.irasa), '--black', 'LineWidth', 1.5);
         xlim([0 100])
@@ -139,82 +154,99 @@ function doStuff(label)
         yticks([])
         ylabel('PSD')
         xlabel('Frequency (Hz)')
+        ax.Box = 'off';
         ax.XAxis.TickDirection = 'out';
         ax.YAxis.TickDirection = 'out';
-        ax.XAxis.FontSize = 14;
-        ax.YAxis.FontSize = 14;
+        ax.TickLength = [0.03 0.02];
+        ax.XAxis.FontSize = tickLabelFS;
+        ax.YAxis.FontSize = tickLabelFS;
+        ax.XLabel.FontSize = axisLabelFS;
+        ax.YLabel.FontSize = axisLabelFS;
 
         % outputT has the trial numbers, and outputS has the spiketiming within
         % that given trial. If a trial has no spikes, it doesn't exist in outputT
         % For each frequency band, divide the trials into phase bins and group them
         % by that
         phase_bins = -pi:2*pi/nbins:pi;
-        x_ticks = 0.5*(phase_bins(1:end-1)+phase_bins(2:end));
         for iF = 1:length(fbands)
             ax = subplot(4,4,[iF+1,iF+5,iF+9]);
-            if iF == 1
-                ax.YLabel.String = 'Trials grouped by LFP phase-bin';
-            end
             hold on
             this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
             [this_count, ~, this_bin] = histcounts(this_phase, phase_bins);
-            outputB = this_bin(outputT); % This works because outputT has trial numbers as the members
-            group_end = zeros(1,nbins);
+            % Group the trials according to the bin assigned in this_bin
+            fake_S2 = fake_S;
+            tc = 0;
             for iBin = 1:nbins
-                sel = (outputB == iBin);
-                bin_trials = outputT(sel);
-                groupS = outputS(sel);
-                groupT = zeros(size(groupS));
-                groupT(1) = 1;
-                for iT = 2:length(bin_trials)
-                    if bin_trials(iT) == bin_trials(iT-1)
-                        groupT(iT) = groupT(iT-1);
-                    else
-                       groupT(iT) = groupT(iT-1)+1;
-                    end
+                bin_trials = find(this_bin == iBin);
+                for iT = 1:this_count(iBin)
+                    tc = tc+1;
+                    fake_S2.t{tc} = fake_S.t{bin_trials(iT)};
                 end
                 if iBin == 1
-                   group_end(iBin) =  groupT(end);
-                   fill([-0.1,-0.1,0.1,0.1],[0,group_end(iBin),group_end(iBin),0], ...
+                   fill([-10,-10,10,10],[0,sum(this_count(1:iBin)),sum(this_count(1:iBin)),0], ...
                        c_list{iBin}, 'FaceAlpha', 0.25, 'LineStyle', 'none')
                 else
-                    group_end(iBin) = group_end(iBin-1) + groupT(end);
-                    groupT = groupT + group_end(iBin-1); 
-                    fill([-0.1,-0.1,0.1,0.1],[group_end(iBin-1),group_end(iBin),group_end(iBin),group_end(iBin-1)], ...
+                    fill([-10,-10,10,10],[sum(this_count(1:iBin-1)),sum(this_count(1:iBin)), ...
+                        sum(this_count(1:iBin)),sum(this_count(1:iBin-1))], ...
                        c_list{iBin}, 'FaceAlpha', 0.25, 'LineStyle', 'none')
                 end
-                plot(groupS, groupT+0.5, 'k.', 'Marker', '|', 'MarkerSize', marker_sz);
             end
-            plot([0 0], [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
-            plot([ExpKeys.short_stim_pulse_width+stop_delay ExpKeys.short_stim_pulse_width+stop_delay], ...
-                [0 length(this_on_events)], 'color', 'red', 'linewidth', 1);
-            ax.XLim = [-0.01 0.01];
+            assert(tc == goodTrials(2) - goodTrials(1) + 1, "All trials are not regrouped");
+            cfg = [];
+            cfg.SpikeHeight = 0.48;
+            cfg.openNewFig = 0;
+            MultiRaster(cfg,fake_S2);
+            xline(0, '--red', 'LineWidth', 1);
+            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--red', 'LineWidth',1)
+            hold on
+            xlabel("Time (ms)")
+            yticks([])
+            ax.XLim = [-10 10];
             ax.YLim = goodTrials;
-            ax.YTick = 0.5*([0,group_end(1:end-1)]+group_end(1:end));
-%             ax.YTickLabel = {'1', '2', '3', '4', '5'};
             ax.YTickLabel = {};
+            if iF == 1
+                ax.YLabel.String = 'Trials grouped by LFP phase-bin';
+            else
+                ax.YLabel.String = {};
+            end
             ax.TickDir = 'out';
-            ax.Title.String = sprintf('%d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
-            ax.XAxis.FontSize = 14;
-            ax.YAxis.FontSize = 14;
+            ax.Title.String = sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2));
+            ax.Box = 'off';
+            ax.XAxis.TickDirection = 'out';
+            ax.YAxis.TickDirection = 'out';
+            ax.TickLength = [0.03 0.02];
+            ax.XAxis.FontSize = tickLabelFS;
+            ax.YAxis.FontSize = tickLabelFS;
+            ax.XLabel.FontSize = axisLabelFS;
+            ax.YLabel.FontSize = axisLabelFS;
 
             ax = subplot(4,4,iF+13);
-            b = bar(delta_fr(iF,:),1);
+            hold on
+            b = bar(delta_fr(iF,:),1, 'EdgeColor', 'none');
             b.FaceColor = 'flat';
             b.FaceAlpha = 0.25;
             for iBin = 1:nbins
                 b.CData(iBin,:) = c_rgb{iBin};
             end
+            errorbar(1:5, delta_fr(iF,:), out.fr.sd(iF,:), 'black', 'LineStyle', 'none');
+            xticklabels([]);
             ax.TickDir = 'out';
             ax.YLabel.String = '{\Delta} FR';
-            ax.XLabel.String = 'Phase Bins';
-            ax.XAxis.FontSize = 14;
-            ax.YAxis.FontSize = 14;
-            ax.YLim = [0 70]; % Need to change this in a case by case basis
+            ax.XLabel.String = 'Phase Bin';
+            ax.YLim = [-40 140]; % Need to change this in a case by case basis
+            ax.Box = 'off';
+            ax.XAxis.TickDirection = 'out';
+            ax.YAxis.TickDirection = 'out';
+            ax.TickLength = [0.03 0.02];
+            ax.XAxis.FontSize = tickLabelFS;
+            ax.YAxis.FontSize = tickLabelFS;
+            ax.XLabel.FontSize = axisLabelFS;
+            ax.YLabel.FontSize = axisLabelFS;
         end
 
-
-
+        fontname(this_fig, 'Helvetica');
+        this_fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+        exportgraphics(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
         savefig(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase'));
 %         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
 %         print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-CellReport'));
