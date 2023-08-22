@@ -33,7 +33,6 @@ function doStuff(label)
     S = LoadSpikes(cfg_spk);
     
     % Set variables
-    marker_sz = 1;
     axisLabelFS = 30;
     tickLabelFS = 20;
     nbins = 5;
@@ -87,6 +86,7 @@ function doStuff(label)
     restricted_S = restrict(S, clean_iv);
 
     this_fig = figure('WindowState','maximized');
+    axs = [];
     % Load phase at stim
     load('stim_phases.mat');
     
@@ -127,18 +127,19 @@ function doStuff(label)
             xlim([-10 10]);
             xlabel("Time (ms)")
             ax.Box = 'off';
-            ax.XAxis.TickDirection = 'out';
-            ax.YAxis.TickDirection = 'out';
+            ax.TickDir = 'out';
             ax.TickLength = [0.03 0.02];
             ax.XAxis.FontSize = tickLabelFS;
             ax.YAxis.FontSize = tickLabelFS;
             ax.XLabel.FontSize = axisLabelFS;
             ax.YLabel.FontSize = axisLabelFS;
+            axs = [axs, ax];
         end
 
         % Plot PSD on the bottom left
         load('trial_psd.mat');
         ax = subplot(4,4,13);
+%         ax.PositionConstraint = "innerposition";
         hold on;
         plot(psd.freq, 10*log10(psd.original), 'black', 'LineWidth', 1.5);
         for iF = 1:length(fbands)
@@ -150,18 +151,18 @@ function doStuff(label)
         end
         plot(psd.freq, 10*log10(psd.irasa), '--black', 'LineWidth', 1.5);
         xlim([0 100])
-        yticklabels([])
-        yticks([])
+%         yticklabels([])
+%         yticks([])
         ylabel('PSD')
         xlabel('Frequency (Hz)')
         ax.Box = 'off';
-        ax.XAxis.TickDirection = 'out';
-        ax.YAxis.TickDirection = 'out';
-        ax.TickLength = [0.03 0.02];
+        ax.TickDir = 'out';
+        ax.TickLength = [0.06 0.02];
         ax.XAxis.FontSize = tickLabelFS;
         ax.YAxis.FontSize = tickLabelFS;
         ax.XLabel.FontSize = axisLabelFS;
         ax.YLabel.FontSize = axisLabelFS;
+        axs = [axs, ax];
 
         % outputT has the trial numbers, and outputS has the spiketiming within
         % that given trial. If a trial has no spikes, it doesn't exist in outputT
@@ -200,10 +201,9 @@ function doStuff(label)
             xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--red', 'LineWidth',1)
             hold on
             xlabel("Time (ms)")
-            yticks([])
+%             yticklabels([])
             ax.XLim = [-10 10];
             ax.YLim = goodTrials;
-            ax.YTickLabel = {};
             if iF == 1
                 ax.YLabel.String = 'Trials grouped by LFP phase-bin';
             else
@@ -212,15 +212,15 @@ function doStuff(label)
             ax.TickDir = 'out';
             ax.Title.String = sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2));
             ax.Box = 'off';
-            ax.XAxis.TickDirection = 'out';
-            ax.YAxis.TickDirection = 'out';
             ax.TickLength = [0.03 0.02];
             ax.XAxis.FontSize = tickLabelFS;
             ax.YAxis.FontSize = tickLabelFS;
             ax.XLabel.FontSize = axisLabelFS;
             ax.YLabel.FontSize = axisLabelFS;
+            axs = [axs, ax];
 
             ax = subplot(4,4,iF+13);
+%             ax.PositionConstraint = "outerposition";
             hold on
             b = bar(delta_fr(iF,:),1, 'EdgeColor', 'none');
             b.FaceColor = 'flat';
@@ -229,23 +229,60 @@ function doStuff(label)
                 b.CData(iBin,:) = c_rgb{iBin};
             end
             errorbar(1:5, delta_fr(iF,:), out.fr.sd(iF,:), 'black', 'LineStyle', 'none');
-            xticklabels([]);
+%             xticklabels([]);
+            xticks(1:5)
+            ax.XLim = [0.5 5.5];
             ax.TickDir = 'out';
-            ax.YLabel.String = '{\Delta} FR';
+            if iF == 1
+                ax.YLabel.String = '{\Delta} FR';
+            else
+                ax.YLabel.String = {};
+            end
             ax.XLabel.String = 'Phase Bin';
             ax.YLim = [-40 140]; % Need to change this in a case by case basis
             ax.Box = 'off';
-            ax.XAxis.TickDirection = 'out';
-            ax.YAxis.TickDirection = 'out';
-            ax.TickLength = [0.03 0.02];
+            ax.TickLength = [0.06 0.02];
             ax.XAxis.FontSize = tickLabelFS;
             ax.YAxis.FontSize = tickLabelFS;
             ax.XLabel.FontSize = axisLabelFS;
             ax.YLabel.FontSize = axisLabelFS;
+            axs = [axs, ax];
         end
 
         fontname(this_fig, 'Helvetica');
         this_fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+  
+        % Need to pause here for this to work
+        pause(5)
+        % Manual plot manipulation to make the final figure looks pretty
+        % Make a copy of original positions
+        daxs_in = [];
+        daxs_out = [];
+        for i = 1:length(axs)
+            daxs_in = [daxs_in; axs(i).Position];
+            daxs_out = [daxs_out; axs(i).OuterPosition];
+        end
+
+        axs(2).OuterPosition(1) = axs(1).OuterPosition(1);
+        axs(1).OuterPosition(2) = axs(1).OuterPosition(2)+0.05;
+        axs(2).Position(1) = axs(1).Position(1);
+        axs(2).Position(3) = axs(1).Position(3);
+
+        axs(3).OuterPosition(1) = axs(1).OuterPosition(1) + axs(1).OuterPosition(3);
+        axs(3).OuterPosition(2) = axs(3).OuterPosition(2)+0.05;
+        axs(4).Position(1) = axs(3).Position(1);
+        axs(4).Position(3) = axs(3).Position(3);
+
+        axs(5).OuterPosition(1) = axs(3).OuterPosition(1) + axs(3).OuterPosition(3);
+        axs(5).OuterPosition(2) = axs(5).OuterPosition(2)+0.05;
+        axs(6).Position(1) = axs(5).Position(1);
+        axs(6).Position(3) = axs(5).Position(3);
+
+        axs(7).OuterPosition(1) = axs(5).OuterPosition(1) + axs(5).OuterPosition(3);
+        axs(7).OuterPosition(2) = axs(7).OuterPosition(2)+0.05;
+        axs(8).Position(1) = axs(7).Position(1);
+        axs(8).Position(3) = axs(7).Position(3);
+
         exportgraphics(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
         savefig(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase'));
 %         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
