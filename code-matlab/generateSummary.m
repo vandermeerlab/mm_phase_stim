@@ -75,19 +75,48 @@ writetable(vStr_table, 'C:\Users\mvdmlab\Desktop\vStr_sig.csv');
 %% Sort by recording depth and fr_modulation_depth
 [~, depth_sorted] = sort(summary.depth);
 
-%% Plot depth of modulation vs Z-score
+
+
+%% Plot depth of modulation and Z-Score side-by side
 fig = figure('WindowState', 'maximized');
-ax1 = subplot(2,1,1);
-hold on;
-ax2 = subplot(2,1,2);
-hold on;
 for iF = 1:length(fbands)
-    scatter(ax1, summary.fr_r(dStr_mask & dif_mask(:,iF),iF), summary.fr_z(dStr_mask & dif_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
-    scatter(ax2, summary.fr_r(vStr_mask & dif_mask(:,iF),iF), summary.fr_z(vStr_mask & dif_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
-%     legend({'all ', 'Sig. Phase Modulated'}, 'Location', 'best', 'FontSize', 12);
+    ax = subplot(2,3,iF);
+    hold on
+    scatter(summary.depth(dStr_mask), summary.fr_r(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(dStr_mask & sig_mask(:,iF)), summary.fr_r(dStr_mask & sig_mask(:, iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
+    scatter(summary.depth(vStr_mask), summary.fr_r(vStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    scatter(summary.depth(vStr_mask & sig_mask(:,iF)), summary.fr_r(vStr_mask & sig_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
+    ylim([-0.05 0.5])
+    xlim([2 5])
+    xlabel('Recording depth (mm)')
+    ylabel('Modulation strength')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+
+    ax = subplot(2,3,iF+3);
+    hold on
+    scatter(summary.depth(dStr_mask), summary.fr_z(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(vStr_mask), summary.fr_z(vStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    ylim([-3 12])
+    xlim([2 5])
+    xlabel('Recording depth (mm)')
+    ylabel('z-score')
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
 end
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+%%
 yline(ax1, 2, '--black');
 yline(ax2, 2, '--black');
 legend(ax1, {sprintf('%d / %d', sum(dStr_mask & dif_mask(:,1) & (summary.fr_z(:,1)> 2)), sum(dStr_mask & dif_mask(:,1))), ...
