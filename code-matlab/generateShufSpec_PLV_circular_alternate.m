@@ -1,5 +1,5 @@
 %% Script to generate circularly shifted shuffles for signifcance testing of spike-phase locking (PLV version)
-% Assumes that spike_phaselock_plv.mat exists in each session's folder
+% Circularly shifting but not subsampling
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
@@ -13,13 +13,12 @@ for iM  = 1:length(mice)
 end
 %%
 function doStuff
-    rng(491994); % Setting the seed for reproducibility (needs to be set for each session at the start)
+    rng(491994); % Setting the seed for reproducibility (needs to be set for session at the start)
     LoadExpKeys;
     if isempty(ExpKeys.goodCell)
         return
     end
-    nshufs = 100;
-    num_subsamples = 1000;
+    nshufs = 1000; % This has to be less than min_spikes in this case
     min_spikes = 200;
 
     for iC = 1:length(ExpKeys.goodCell)
@@ -27,24 +26,19 @@ function doStuff
         fn_prefix = strrep(fn_prefix, '_', '-');
         % Load the spike_phaselock data
         load(strcat(fn_prefix, '_spike_phaselock_plv.mat'));
-        shuf_circ_plv = nan(nshufs, (size(trial_spk_phase,1)));
+        shuf_circ2_plv = nan(nshufs, (size(trial_spk_phase,1)));
+        to_shift = randperm(trial_spk_count);
         if trial_spk_count >  min_spikes
-            to_shift = randperm(trial_spk_count);
             for iShuf = 1:nshufs
                 % circularly shift spikes
                 this_spk_phase = cellfun(@(x) circshift(x, to_shift(iShuf)), trial_spk_phase, 'UniformOutput', false);
-                % Subsample PLV to de-bias
-                temp_plv = nan(size(this_spk_phase,1),num_subsamples);
-                for iSub = 1:num_subsamples
-                    this_idx = randperm(trial_spk_count);
-                    temp_plv(:,iSub) = cellfun(@(x) resultantlength(x(this_idx(1:min_spikes))), this_spk_phase);
-                end
-                shuf_circ_plv(iShuf,:) = (mean(temp_plv,2))';
+                shuf_circ2_plv(iShuf,:) = cellfun(@(x) resultantlength(x), this_spk_phase);
             end
         end
-        save(strcat(fn_prefix, '_shuf_spec_circ_plv'), 'shuf_circ_plv');
+        save(strcat(fn_prefix, '_shuf_spec_circ2_plv'), 'shuf_circ2_plv');
     end
 end
+
 
 %% Helper functions 
 % Borrowed from FieldTrip

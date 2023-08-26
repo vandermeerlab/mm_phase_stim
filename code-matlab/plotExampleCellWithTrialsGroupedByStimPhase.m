@@ -7,7 +7,7 @@ for iM  = 1:length(mice)
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-        this_label = 'M019-2019-04-14-TT05_1.t';
+        this_label = 'M295-2022-01-06-TT06_5.t';
         doStuff(this_label)
     end
 
