@@ -20,9 +20,12 @@ for i = 1:length(summary.depth)
     norm_fooof(i,:) = (summary.fooof(i,:) - min(summary.fooof(i,:)))/(max(summary.fooof(i,:)) - min(summary.fooof(i,:)));
     norm_irasa(i,:) = (summary.irasa(i,:) - min(summary.irasa(i,:)))/(max(summary.irasa(i,:)) - min(summary.irasa(i,:)));
 end
+
+
 %%
 dStr_mask = summary.depth < 3.5;
-fband = {[2 5], [6 10], [12 30], [30, 55]};
+% fband = {[2 5], [6 10], [12 30], [30, 55]};
+fband = {[2 5], [6 10], [30, 55]};
 
 % Plot dStr
 sel =  find(dStr_mask);
@@ -89,6 +92,9 @@ end
 title('vStr IRASA')
 
 %% Plot IRASA  
+% grey out frequencies around 60 Hz 
+norm_irasa(:,59:61) = nan;
+fig = figure('WindowState', 'maximized');
 
 % Plot dStr stuff
 subplot(2,1,1)
@@ -103,6 +109,9 @@ title('dStr IRASA');
 xticks([2 5 6 10 12 30 55, 60, 100])
 ylabel('Sessions')
 yticks([])
+ax = gca;
+box off;
+ax.TickDir = 'out';
 
 % Plot vStr stuff
 subplot(2,1,2)
@@ -117,7 +126,11 @@ title('vStr IRASA');
 xticks([2 5 6 10 12 30 55, 60, 100])
 ylabel('Sessions')
 yticks([])
-
+ax = gca;
+box off;
+ax.TickDir = 'out';
+fontname(fig, 'Helvetica');
+fig.Renderer = 'painters';
 
 %%
 function s_out = doStuff(s_in)

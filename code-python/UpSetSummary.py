@@ -1,23 +1,44 @@
 import upsetplot as up
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+
+# This is to ensure that the text in the figure exported by matplotlib is editable in Adobe Illustrator
+mpl.rcParams['pdf.fonttype'] = 42 
+
+# Change the font to Arial 
+mpl.rcParams['font.family'] = 'Arial'
+
+# Change the font size to 20
+mpl.rcParams['font.size'] = 25
+
 
 filepath1 = os.path.join('C:','Users','mvdmlab','Desktop','dStr_sig.csv')
 filepath2 = os.path.join('C:','Users','mvdmlab','Desktop','vStr_sig.csv')
 
 dStr_data = pd.read_csv(filepath1, index_col=[0,1,2])
 vStr_data = pd.read_csv(filepath2, index_col=[0,1,2])
-fig = plt.figure(figsize=(30, 10))
-ax = up.plot(dStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input')
-ax['totals'].set_visible(False)
-ax['intersections'].set_ylabel('Count')
-plt.suptitle('dStr')
-plt.savefig(os.path.join('C:','Users','mvdmlab','Desktop','dStr_summary.svg'))
 
-fig = plt.figure(figsize=(30, 10))
-ax = up.plot(vStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input')
-ax['totals'].set_visible(False)
+
+fig = plt.figure(figsize=(18, 15))
+ax = up.plot(dStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input', show_percentages=True, orientation = 'vertical', element_size=None)
+ax['totals'].set_yticks([0,8,15])
+ax['totals'].set_ylabel('Totals')
 ax['intersections'].set_ylabel('Count')
+ax['totals'].tick_params('both', length=20, which='major')
+ax['intersections'].tick_params('both', length=20, which='major')
+plt.suptitle('dStr')
+# Save figure
+plt.savefig(os.path.join('C:','Users','mvdmlab','Desktop','dStr_summary.pdf'))
+
+fig = plt.figure(figsize=(18, 15))
+ax = up.plot(vStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input', show_percentages=True, orientation = 'vertical', element_size=None)
+ax['totals'].set_yticks([0,20,40])
+ax['totals'].set_ylabel('Totals')
+ax['intersections'].set_ylabel('Count')
+ax['totals'].tick_params('both', length=20, which='major')
+ax['intersections'].tick_params('both', length=20, which='major')
 plt.suptitle('vStr')
-plt.savefig(os.path.join('C:','Users','mvdmlab','Desktop','vStr_summary.svg'))
+# Save figure
+plt.savefig(os.path.join('C:','Users','mvdmlab','Desktop','vStr_summary.pdf'))

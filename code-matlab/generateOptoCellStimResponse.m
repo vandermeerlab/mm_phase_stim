@@ -6,6 +6,7 @@ for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
     for iS = 1:length(sid)
+        rng(491994) % Random seed set for each session
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
         doStuff
@@ -91,7 +92,7 @@ function doStuff
     
     %% Set variables and parameters
     % snippet for autocorrelation
-    for iC = 1:length(restricted_S.label) 
+    for iC = 1:length(restricted_S.label)
         this_cell = SelectTS([], S, iC);
         restricted_cell = SelectTS([], restricted_S, iC);
         od = [];
@@ -163,6 +164,9 @@ function doStuff
             od.trial_stim.fr = fr;
             od.trial_stim.fr_wo_stim = fr_wo_stim;
             od.trial_stim.bfr = bfr;
+            % Saving mean firing rate to generate poisson spikes later
+            temp = restrict(this_cell, iv(ExpKeys.stim_times(1), ExpKeys.stim_times(2)));
+            od.trial_stim.mfr = length(temp.t{1})/diff(ExpKeys.stim_times);
         end
 
         % Control-stim response
@@ -276,6 +280,54 @@ function doStuff
             end
             od.sham_stim.fr = fr;
             od.sham_stim.bfr = bfr;
+        end
+
+        % Reverse spike times during trial stim duration to see if the
+        % current positive bias of the sham_stim remains
+        if ~isempty(ExpKeys.stim_times)
+            % reverse the spike train such that the total duration and
+            % subsequent inter spike time different stays the same
+            this_rev_cell = this_cell;
+            this_rev_cell.t{1} = this_cell.t{1}(end) - this_cell.t{1} +  ...
+                this_cell.t{1}(1);
+            this_rev_cell.t{1} = this_rev_cell.t{1}(end:-1:1);
+            this_time = ExpKeys.stim_times(1):1/32000:ExpKeys.stim_times(2);
+            this_on_events = sort(randsample(this_time, num_sham));
+            clear this_time;
+            fr = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
+            for iStim = 1:length(this_on_events)
+                st = restrict(this_rev_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
+                baseline = restrict(this_rev_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
+                if ~isempty(st.t{1})
+                    fr(iStim) = length(st.t{1})/max_delay;
+                    bfr(iStim) = length(baseline.t{1})/max_delay;
+                end
+            end
+            od.rev_stim.fr = fr;
+            od.rev_stim.bfr = bfr;
+        end
+
+        % Sham stim during the baseline period (with no stim)
+        if ~isempty(ExpKeys.pre_baseline_times)
+            this_time = ExpKeys.pre_baseline_times(1):1/32000:ExpKeys.pre_baseline_times(2);
+            this_on_events = sort(randsample(this_time, num_sham/10)); % Because this period is 10 times less
+            clear this_time;
+            fr = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
+            for iStim = 1:length(this_on_events)
+                st = restrict(this_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
+                baseline = restrict(this_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
+                if ~isempty(st.t{1})
+                    fr(iStim) = length(st.t{1})/max_delay;
+                    bfr(iStim) = length(baseline.t{1})/max_delay;
+                end
+            end
+            od.no_stim.fr = fr;
+            od.no_stim.bfr = bfr;
+            % Saving mean firing rate to generate poisson spikes later
+            temp = restrict(this_cell, iv(ExpKeys.pre_baseline_times(1), ExpKeys.pre_baseline_times(2)));
+            od.no_stim.mfr = length(temp.t{1})/diff(ExpKeys.pre_baseline_times);
         end
   
         % Save variables
