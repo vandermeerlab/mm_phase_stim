@@ -1,12 +1,12 @@
 %% Script to generate the relationships between spiking and LFP Phase
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-rng(2023); % Setting the seed for reproducibility
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
     for iS = 1:length(sid)
+        rng(491994); % Setting the seed for reproducibility
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
         doStuff;
@@ -55,6 +55,8 @@ function doStuff
             [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin, out.fr.sd, out.fr_ws.sd] = deal(nan(4,nbins));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...
                 out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,4));
+                        % Saving all the shufs for later
+            [out.lat.shufs, out.lat_ws.shufs, out.fr.shufs, out.fr_ws.shufs] = deal(nan(4,nshufs,nbins)); 
     
             % Generate indices for shuffling
             shuf_idx = zeros(nshufs, length(all_lat));
@@ -104,8 +106,13 @@ function doStuff
                     shuf_lat_ws_ratio(iShuf) = (max(shuf_lat_ws) - min(shuf_lat_ws))/(max(shuf_lat_ws) + min(shuf_lat_ws));
                     shuf_fr_ratio(iShuf) = (max(shuf_fr) - min(shuf_fr))/(max(shuf_fr) + min(shuf_fr));
                     shuf_fr_ws_ratio(iShuf) = (max(shuf_fr_ws) - min(shuf_fr_ws))/(max(shuf_fr_ws) + min(shuf_fr_ws));
+                    % Also save shufs for significance calculation and description in figures later
+                    out.lat.shufs(iF,iShuf,:) = shuf_lat'; 
+                    out.lat_ws.shufs(iF,iShuf,:) = shuf_lat_ws';
+                    out.fr.shufs(iF,iShuf,:) = shuf_fr';
+                    out.fr_ws.shufs(iF,iShuf,:) = shuf_fr_ws';
                 end
-                 
+
                 % Saving Z-scored values
                 out.lat.zscore(iF) = (out.lat.ratio(iF) - mean(shuf_lat_ratio))/std(shuf_lat_ratio);
                 out.lat_ws.zscore(iF) = (out.lat_ws.ratio(iF) - mean(shuf_lat_ws_ratio))/std(shuf_lat_ws_ratio);

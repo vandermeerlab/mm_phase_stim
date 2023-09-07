@@ -101,8 +101,7 @@ function doStuff
         od.post_stim = [];
         od.long_stim = [];
         od.sham_stim = [];
-        od.stim_pre10 = [];
-        od.stim_pre250 = [];
+        od.trial_nonstim = [];
         
         % Pre-stim response
         if ~isempty(ExpKeys.pre_stim_times)
@@ -137,7 +136,6 @@ function doStuff
             od.pre_stim.fr = fr;
             od.pre_stim.fr_wo_stim = fr_wo_stim;
             od.pre_stim.bfr = bfr;
-            clear fr bfr fr_wo_stim latency latency_wo_stim
         end
        
         % Trial-stim response
@@ -175,41 +173,31 @@ function doStuff
             % Saving mean firing rate to generate poisson spikes later
             temp = restrict(this_cell, iv(ExpKeys.stim_times(1), ExpKeys.stim_times(2)));
             od.trial_stim.mfr = length(temp.t{1})/diff(ExpKeys.stim_times);
-            clear fr bfr fr_wo_stim latency latency_wo_stim
         end
 
-        % Control-stim response (Choose a random time from stim_onset - 10
-        % ms to whatever
+        % Non-stim evoked response (Choose a random time from stim_onset -
+        % 450 ms to stim -10 ms    
         if ~isempty(ExpKeys.stim_times)
-            this_on_events1 = stim_on - 0.01;
-            this_on_events2 = stim_on - 0.25;
-            [latency1, latency2] = deal(nan(size(this_on_events1)));
-            [fr1, fr2] = deal(zeros(size(this_on_events1)));
-            [bfr1, bfr2] = deal(zeros(size(this_on_events1)));
-            for iStim = 1:length(this_on_events1)
-                st1 = restrict(this_cell, iv(this_on_events1(iStim), this_on_events1(iStim)+max_delay));
-                baseline1 = restrict(this_cell, iv(this_on_events1(iStim)-max_delay, this_on_events1(iStim)));
-                st2 = restrict(this_cell, iv(this_on_events2(iStim), this_on_events2(iStim)+max_delay));
-                baseline2 = restrict(this_cell, iv(this_on_events2(iStim)-max_delay, this_on_events2(iStim)));
-                if ~isempty(st1.t{1})
-                    latency1(iStim) = st1.t{1}(1) - this_on_events1(iStim);
-                    fr1(iStim) = length(st1.t{1})/max_delay;
-                    bfr1(iStim) = length(baseline1.t{1})/max_delay;
+            this_offset = (rand(size(stim_on))*0.44) + 0.01;
+            assert((max(this_offset)<=0.45) & (min(this_offset) >= 0.01), "Scaling of offsets is incorrect\n")
+            this_on_events = stim_on - this_offset;
+            latency = nan(size(this_on_events));
+            fr = zeros(size(this_on_events));
+            bfr = zeros(size(this_on_events));
+            for iStim = 1:length(this_on_events)
+                st.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)) & ...
+                    (this_cell.t{1} < this_on_events(iStim)+max_delay));
+                baseline.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
+                    (this_cell.t{1} < this_on_events(iStim)));
+                if ~isempty(st.t{1})
+                    latency(iStim) = st.t{1}(1) - this_on_events(iStim);
                 end
-                if ~isempty(st2.t{1})
-                    latency2(iStim) = st2.t{1}(1) - this_on_events2(iStim);
-                    fr2(iStim) = length(st2.t{1})/max_delay;
-                    bfr2(iStim) = length(baseline2.t{1})/max_delay;
-                end
-
+                fr(iStim) = length(st.t{1})/max_delay;
+                bfr(iStim) = length(baseline.t{1})/max_delay;
             end
-            od.stim_pre10.latency = latency1;
-            od.stim_pre10.fr = fr1;
-            od.stim_pre10.bfr = bfr1;
-            od.stim_pre250.latency = latency2;
-            od.stim_pre250.fr = fr2;
-            od.stim_pre250.bfr = bfr2;
-            clear latency1 latency2 fr1 fr2 bfr1 bfr2
+            od.trial_nonstim.latency = latency;
+            od.trial_nonstim.fr = fr;
+            od.trial_nonstim.bfr = bfr;
         end
 
         % Post-stim response
@@ -244,7 +232,6 @@ function doStuff
             od.post_stim.fr = fr;
             od.post_stim.fr_wo_stim = fr_wo_stim;
             od.post_stim.bfr = bfr;
-            clear fr bfr fr_wo_stim latency latency_wo_stim
         end
 
         % Long-stim response
@@ -279,7 +266,6 @@ function doStuff
             od.long_stim.fr = fr;
             od.long_stim.fr_wo_stim = fr_wo_stim;
             od.long_stim.bfr = bfr;
-            clear fr bfr fr_wo_stim latency latency_wo_stim
         end
 
         % Sham-stim from real data as well as poisson train, response to confirm opto cell
@@ -320,7 +306,6 @@ function doStuff
             od.sham_stim.bfr = bfr;
             od.sham_stim.p_fr = p_fr;
             od.sham_stim.p_bfr = p_bfr;
-            clear fr bfr p_fr p_bfr 
         end
 
 %         % Reverse spike times during trial stim duration to see if the

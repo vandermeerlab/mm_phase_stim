@@ -4,13 +4,8 @@ top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.labels, summary.nostim_delta, summary.opto_delta, ...
-    summary.sham_delta, summary.rev_delta, summary.shuf_delta, ...
-    summary.poisson_delta, summary.nostim_delta_sd, summary.opto_delta_sd, ...
-    summary.sham_delta_sd, summary.rev_delta_sd, summary.shuf_delta_sd, ...
-    summary.poisson_delta_sd, summary.sham_delta_m, summary.rev_delta_m, ...
-    summary.shuf_delta_m, summary.poisson_delta_m, ...
-    summary.sham_delta_m_sd, summary.rev_delta_m_sd, ...
-    summary.shuf_delta_m_sd, summary.poisson_delta_m_sd, ...
+    summary.sham_delta, summary.poisson_delta, summary.nostim_delta_sd, summary.opto_delta_sd, ...
+    summary.sham_delta_sd, summary.poisson_delta_sd, ...
     summary.p_val, summary.h, summary.isopto, summary.depth, ...
     summary.waveforms, summary.depth] = deal([]);
 for iM  = 1:length(mice)
@@ -45,12 +40,12 @@ ax = subplot(2,4,[1 5]);
 hold on
 sel = find(dStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta_m(sel(i)), summary.opto_delta(sel(i))], 'cyan');
+    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'blue');
 end
 
 sel = find(dStr_mask & ~ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta_m(sel(i)), summary.opto_delta(sel(i))], 'magenta');
+    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'magenta');
 end
 xticks([1 2])
 yticks([-50 0 150 350])
@@ -68,11 +63,11 @@ hold on
 sel1 = find(dStr_mask & ks_mask & summary.sham_delta < summary.opto_delta);
 sel2 = find(dStr_mask & ks_mask & summary.sham_delta >= summary.opto_delta);
 for i = 1:length(sel1)
-    h = plot((0:1:31)/32, norm_wf(sel1(i),:), 'cyan');
+    h = plot((0:1:31)/32, norm_wf(sel1(i),:), 'blue');
     h.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 for i = 1:length(sel2)
-    h = plot((0:1:31)/32, norm_wf(sel2(i),:), '--cyan');
+    h = plot((0:1:31)/32, norm_wf(sel2(i),:), '--blue');
     h.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 plot((0:1:31)/32,mean(norm_wf(sel1,:)), 'black', 'LineWidth', 3);
@@ -111,12 +106,12 @@ ax = subplot(2,4,[3 7]);
 hold on
 sel = find(vStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta_m(sel(i)), summary.opto_delta(sel(i))], 'cyan');
+    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'blue');
 end
 
 sel = find(vStr_mask & ~ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta_m(sel(i)), summary.opto_delta(sel(i))], 'magenta');
+    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'magenta');
 end
 xticks([1 2])
 xticklabels({'Sham stim', 'Opto stim'})
@@ -133,7 +128,7 @@ ax = subplot(2,4,4);
 hold on
 sel = find(vStr_mask & ks_mask);
 for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'cyan');
+    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'blue');
     h.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
@@ -186,7 +181,7 @@ subplot(2,2,1)
 hold on
 sel = find(dStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.poisson_delta(sel(i)), summary.poisson_delta_m(sel(i))], 'cyan');
+    plot([1,2],[summary.poisson_delta(sel(i)), summary.poisson_delta_m(sel(i))], 'blue');
 end
 sel = find(dStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -207,7 +202,7 @@ for i = 1:length(sel)
     errorbar([summary.depth(sel(i))-2.5, summary.depth(sel(i))+2.5], ...
         [summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], ...
         [summary.sham_delta_sd(sel(i)), summary.opto_delta_sd(sel(i))], ...
-        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'cyan')
+        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'blue')
 end
 sel = find(dStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -227,7 +222,7 @@ subplot(2,2,3)
 hold on
 sel = find(dStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.nostim_delta(sel(i)), summary.sham_delta(sel(i))], 'cyan');
+    plot([1,2],[summary.nostim_delta(sel(i)), summary.sham_delta(sel(i))], 'blue');
 end
 sel = find(dStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -244,7 +239,7 @@ subplot(2,2,4)
 hold on
 sel = find(dStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.rev_delta(sel(i)), summary.sham_delta(sel(i))], 'cyan');
+    plot([1,2],[summary.rev_delta(sel(i)), summary.sham_delta(sel(i))], 'blue');
 end
 sel = find(dStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -264,7 +259,7 @@ subplot(2,2,1)
 hold on
 sel = find(vStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'cyan');
+    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'blue');
 end
 sel = find(vStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -285,7 +280,7 @@ for i = 1:length(sel)
     errorbar([summary.depth(sel(i))-3.5, summary.depth(sel(i))+3.5], ...
         [summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], ...
         [summary.sham_delta_sd(sel(i)), summary.opto_delta_sd(sel(i))], ...
-        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'cyan')
+        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'blue')
 end
 sel = find(vStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -305,7 +300,7 @@ subplot(2,2,3)
 hold on
 sel = find(vStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.nostim_delta(sel(i)), summary.sham_delta(sel(i))], 'cyan');
+    plot([1,2],[summary.nostim_delta(sel(i)), summary.sham_delta(sel(i))], 'blue');
 end
 sel = find(vStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -322,7 +317,7 @@ subplot(2,2,4)
 hold on
 sel = find(vStr_mask & ks_mask);
 for i = 1:length(sel)
-    plot([1,2],[summary.rev_delta(sel(i)), summary.sham_delta(sel(i))], 'cyan');
+    plot([1,2],[summary.rev_delta(sel(i)), summary.sham_delta(sel(i))], 'blue');
 end
 sel = find(vStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -345,14 +340,14 @@ for i = 1:length(sel)
     errorbar([summary.depth(sel(i))-2.5, summary.depth(sel(i))+2.5], ...
         [summary.poisson_delta(sel(i)), summary.poisson_delta_m(sel(i))], ...
         [summary.poisson_delta_sd(sel(i)), summary.sham_delta_m_sd(sel(i))], ...
-        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'cyan')
+        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'blue')
 end
 sel = find(dStr_mask & ~ks_mask);
 for i = 1:length(sel)
     errorbar([summary.depth(sel(i))-2.5, summary.depth(sel(i))+2.5], ...
         [summary.poisson_delta(sel(i)), summary.poisson_delta_m(sel(i))], ...
         [summary.poisson_delta_sd(sel(i)), summary.sham_delta_m_sd(sel(i))], ...
-        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'cyan')
+        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'blue')
 end
 xticks([0.5 5.5])
 xticklabels({'Poisson Train', 'Sham stim on Real Data'})
@@ -368,7 +363,7 @@ for i = 1:length(sel)
     errorbar([summary.depth(sel(i))-2.5, summary.depth(sel(i))+2.5], ...
         [summary.nostim_poisson(sel(i)), summary.sham_delta(sel(i))], ...
         [summary.nostim_poisson_sd(sel(i)), summary.sham_delta_sd(sel(i))], ...
-        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'cyan')
+        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'blue')
 end
 sel = find(dStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -392,7 +387,7 @@ for i = 1:length(sel)
     errorbar([summary.depth(sel(i))-3.5, summary.depth(sel(i))+3.5], ...
         [summary.stim_poisson(sel(i)), summary.sham_delta(sel(i))], ...
         [summary.stim_poisson_sd(sel(i)), summary.sham_delta_sd(sel(i))], ...
-        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'cyan')
+        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'blue')
 end
 sel = find(vStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -415,7 +410,7 @@ for i = 1:length(sel)
     errorbar([summary.depth(sel(i))-3.5, summary.depth(sel(i))+3.5], ...
         [summary.nostim_poisson(sel(i)), summary.sham_delta(sel(i))], ...
         [summary.nostim_poisson_sd(sel(i)), summary.sham_delta_sd(sel(i))], ...
-        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'cyan')
+        'MarkerFaceColor','black', 'Marker', 'o', 'Color', 'blue')
 end
 sel = find(vStr_mask & ~ks_mask);
 for i = 1:length(sel)
@@ -484,30 +479,11 @@ function s_out = doStuff(s_in)
         % Load the stim_response
         load(strcat(fn_prefix,'_stim_response.mat'));
 
-        nostim_dfr = od.no_stim.fr' - od.no_stim.bfr';
+        nostim_dfr = od.trial_nonstim.fr' - od.trial_nonstim.bfr';
         sham_dfr = od.sham_stim.fr' - od.sham_stim.bfr';
         poisson_dfr = od.sham_stim.p_fr' - od.sham_stim.p_bfr';
-        rev_dfr = od.rev_stim.fr' - od.rev_stim.bfr';
-        shuf_dfr = od.shuf_stim.fr' - od.shuf_stim.bfr';
-
-        sham_dfr_m = od.sham_stim.fr_m' - od.sham_stim.bfr_m';
-        poisson_dfr_m = od.sham_stim.p_fr_m' - od.sham_stim.p_bfr_m';
-        rev_dfr_m = od.rev_stim.fr_m' - od.rev_stim.bfr_m';
-        shuf_dfr_m = od.shuf_stim.fr_m' - od.shuf_stim.bfr_m';
-
         opto_idx = find(strcmp(S.label{iC},ExpKeys.goodCell));
 
-%         if sum(nostim_dfr < 0) > 0
-%             disp('About time baseline makes some sense\n');
-%         end
-% 
-%         if sum(rev_dfr < 0) > 0
-%             disp('About time Reverse makes some sense\n');
-%         end
-% 
-%         if sum(sham_dfr < 0) > 0
-%             disp('About time sham makes some sense\n');
-%         end
         if isempty(opto_idx) % Non opto_cell
             opto_dfr = od.trial_stim.fr(min(min(ExpKeys.goodTrials)):max(max(ExpKeys.goodTrials))) - ...
                 od.trial_stim.bfr(min(min(ExpKeys.goodTrials)):max(max(ExpKeys.goodTrials)));
@@ -528,19 +504,6 @@ function s_out = doStuff(s_in)
         s_out.sham_delta_sd = [s_out.sham_delta_sd; std(sham_dfr)];
         s_out.poisson_delta = [s_out.poisson_delta, mean(poisson_dfr)];
         s_out.poisson_delta_sd = [s_out.poisson_delta, std(poisson_dfr)];
-        s_out.rev_delta = [s_out.rev_delta; mean(rev_dfr)];
-        s_out.rev_delta_sd = [s_out.rev_delta_sd; std(rev_dfr)];
-        s_out.shuf_delta = [s_out.shuf_delta; mean(shuf_dfr)];
-        s_out.shuf_delta_sd = [s_out.shuf_delta_sd; std(shuf_dfr)];
-
-        s_out.sham_delta_m = [s_out.sham_delta_m; mean(sham_dfr_m)];
-        s_out.sham_delta_m_sd = [s_out.sham_delta_m_sd; std(sham_dfr_m)];
-        s_out.poisson_delta_m = [s_out.poisson_delta_m, mean(poisson_dfr_m)];
-        s_out.poisson_delta_m_sd = [s_out.poisson_delta_m_sd, std(poisson_dfr_m)];
-        s_out.rev_delta_m = [s_out.rev_delta_m; mean(rev_dfr_m)];
-        s_out.rev_delta_m_sd = [s_out.rev_delta_m_sd; std(rev_dfr_m)];
-        s_out.shuf_delta_m = [s_out.shuf_delta_m; mean(shuf_dfr_m)];
-        s_out.shuf_delta_m_sd = [s_out.shuf_delta_m_sd; std(shuf_dfr_m)];
 
         s_out.labels = [s_out.labels; string(fn_prefix)];
         s_out.depth = [s_out.depth; ExpKeys.probeDepth];
