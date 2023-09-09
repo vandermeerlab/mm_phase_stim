@@ -7,7 +7,9 @@ for iM  = 1:length(mice)
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-        this_label = 'M295-2022-01-06-TT06_5.t';
+        this_label = 'M017-2019-02-16-TT04_2.t'; %dStr example, high mod strength but not sig
+%         this_label = 'M019-2019-04-14-TT08_1.t'; %dStr example, high mod strength but not sig
+%         this_label = 'M019-2019-04-14-TT05_1.t';
         doStuff(this_label)
     end
 
@@ -228,10 +230,25 @@ function doStuff(label)
             for iBin = 1:nbins
                 b.CData(iBin,:) = c_rgb{iBin};
             end
-            errorbar(1:5, delta_fr(iF,:), out.fr.sd(iF,:), 'black', 'LineStyle', 'none');
+%             errorbar(1:5, delta_fr(iF,:), out.fr.sd(iF,:), 'black', 'LineStyle', 'none');
 %             xticklabels([]);
+            q0 = squeeze(out.fr.shufs(iF,:,:));
+            q1 = max(q0,[],2);
+            q2 =  min(q0,[],2);
+            q3 = (q1 - q2)./(q2 + q1);
+            qz2 = 2*std(q3)+ mean(q3);
+            [qmin, min_idx] = min(out.fr.bin(iF,:));
+            [qmax, max_idx] = max(out.fr.bin(iF,:));
+            qoff = qmin + qmin*(qz2 + 1)/(1 - qz2);
+            plot([min_idx, 5.8], [qmin, qmin], '--black')
+            plot([max_idx, 5.8], [qmax, qmax], '--black')
+            errorbar(6, 0.5*(qmax+qmin), 0.5*(qmax-qmin), 'black', 'LineStyle', 'none');
+            errorbar(6.25, 0.5*(qoff+qmin), 0.5*(qoff-qmin), 'red', 'LineStyle', 'none');
+%             plot([6, 6], [qmin, qmax], '--black', 'LineWidth', 1)
+%             plot([6.25,6.25], [qmin, qmin+qoff], '--red', 'LineWidth', 1)
+            clear q0 q1 q2 q3 qz2 qoff qmin qmax min_idx max_idx
             xticks(1:5)
-            ax.XLim = [0.5 5.5];
+            ax.XLim = [0.5 6.5];
             ax.TickDir = 'out';
             if iF == 1
                 ax.YLabel.String = '{\Delta} FR';
@@ -239,7 +256,7 @@ function doStuff(label)
                 ax.YLabel.String = {};
             end
             ax.XLabel.String = 'Phase Bin';
-            ax.YLim = [-40 140]; % Need to change this in a case by case basis
+            ax.YLim = [0 140]; % Need to change this in a case by case basis
             ax.Box = 'off';
             ax.TickLength = [0.06 0.02];
             ax.XAxis.FontSize = tickLabelFS;
@@ -251,7 +268,28 @@ function doStuff(label)
 
         fontname(this_fig, 'Helvetica');
         this_fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
-  
+%   
+%         % Uncomment this only for debugging
+%         fig2 = figure('WindowState', 'maximized');
+%         clist2 = {'red', 'blue', 'green'};
+%         for iF2 = 1:3
+%             subplot(1,3,iF2)
+%             hold on
+%             q0 = squeeze(out.fr.shufs(iF2,:,:));
+%             q1 = max(q0,[],2);
+%             q2 =  min(q0,[],2);
+%             q3 = (q1 - q2)./(q2 + q1);
+%             qz2 = 2*std(q3)+ mean(q3);
+%             histogram(q3, 'FaceColor',clist2{iF2});
+%             xline(out.fr.ratio((iF2)), '--black', 'LineWidth', 2);
+%             xline(qz2, '--red', 'LineWidth', 2);
+%             xlabel('Modulation Stength')
+%             title(sprintf('%d - %d Hz', fbands{iF2}(1), fbands{iF2}(2)));
+%         end
+%         sgtitle('Shuffle Histograms')
+%         clear q0 q1 q2 q3 clist2 iF2
+%         close(fig2)
+
         % Need to pause here for this to work
         pause(5)
         % Manual plot manipulation to make the final figure looks pretty

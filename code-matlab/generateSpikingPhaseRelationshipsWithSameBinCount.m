@@ -18,13 +18,16 @@ function doStuff
     if isempty(ExpKeys.goodCell)
         return
     end
-    fbands = {[2 5], [6 10], [12 30], [30 55]};
-    c_list = {'cyan', 'red','magenta', 'green'};
+%     fbands = {[2 5], [6 10], [12 30], [30 55]};
+    fbands = {[2 5], [6 10], [30 55]};
+    c_list = {'red', 'blue','green'};
     nshufs = 100;
-    bin_counts = [5, 7, 10, 15, 20]; % in msec
+    bin_counts = 5; % [5, 7, 10, 15, 20];
     
     % Load the phases at stim_on in various frequency bands
     load('stim_phases.mat');
+    % Get rid of all the 3rd band stuff IF there are 4 bands
+    if size(causal_phase, 1) == 4 causal_phase(3,:) = []; end
 
     for iC = 1:length(ExpKeys.goodCell)
         fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
@@ -52,11 +55,11 @@ function doStuff
             out.overall_response_ws = sum(~isnan(all_lat_ws))/length(all_lat_ws);
             out.bfr = all_bfr;
 
-            [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin, out.fr.sd, out.fr_ws.sd] = deal(nan(4,nbins));
+            [out.lat.bin, out.lat_ws.bin, out.fr.bin, out.fr_ws.bin, out.fr.sd, out.fr_ws.sd] = deal(nan(length(fbands),nbins));
             [out.lat.ratio, out.lat.zscore, out.lat_ws.ratio, out.lat_ws.zscore, ...
-                out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,4));
-                        % Saving all the shufs for later
-            [out.lat.shufs, out.lat_ws.shufs, out.fr.shufs, out.fr_ws.shufs] = deal(nan(4,nshufs,nbins)); 
+                out.fr.ratio, out.fr.zscore, out.fr_ws.ratio, out.fr_ws.zscore] = deal(nan(1,length(fbands)));
+            % Saving all the shufs for later
+            [out.lat.shufs, out.lat_ws.shufs, out.fr.shufs, out.fr_ws.shufs] = deal(nan(length(fbands),nshufs,nbins)); 
     
             % Generate indices for shuffling
             shuf_idx = zeros(nshufs, length(all_lat));
@@ -119,46 +122,47 @@ function doStuff
                 out.fr.zscore(iF) = (out.fr.ratio(iF) - mean(shuf_fr_ratio))/std(shuf_fr_ratio);
                 out.fr_ws.zscore(iF) = (out.fr_ws.ratio(iF) - mean(shuf_fr_ws_ratio))/std(shuf_fr_ws_ratio);
     
-                ax = subplot(5,5,(iF-1)*5+1);
+                ax = subplot(4,5,(iF-1)*5+1);
                 bar(ax,x_ticks,this_count/sum(this_count),1,c_list{iF});
-                ax.Title.String = sprintf('Stim Phase distribution for %d Hz - %d Hz', fbands{iF}(1), fbands{iF}(2));
+                ax.Title.String = sprintf('Stim Phase distribution');
                 ax.Title.FontSize = 12;
                 ax.XLim = [-3.25 3.25];
+                ax.YLabel.String = sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2));
     
-                ax = subplot(5,5,(iF-1)*5+2);
+                ax = subplot(4,5,(iF-1)*5+2);
                 bar(ax,x_ticks,this_lat,1,c_list{iF});
                 ax.Title.String = sprintf('Response prob.');
                 ax.Title.FontSize = 12;
                 ax.XLim = [-3.25 3.25];
     
-                ax = subplot(5,5,(iF-1)*5+3);
+                ax = subplot(4,5,(iF-1)*5+3);
                 bar(ax,x_ticks,this_lat_ws,1,c_list{iF});
                 ax.Title.String = sprintf('Response prob. w/o stim');
                 ax.Title.FontSize = 12;
                 ax.XLim = [-3.25 3.25];
     
-                ax = subplot(5,5,(iF-1)*5+4);
+                ax = subplot(4,5,(iF-1)*5+4);
                 bar(ax,x_ticks,this_fr,1,c_list{iF});
                 ax.Title.String = sprintf('Firing rate');
                 ax.Title.FontSize = 12;
                 ax.XLim = [-3.25 3.25];
     
-                ax = subplot(5,5,(iF-1)*5+5);
+                ax = subplot(4,5,(iF-1)*5+5);
                 bar(ax,x_ticks,this_fr_ws,1,c_list{iF});
                 ax.Title.String = sprintf('Firing rate w/o stim');
                 ax.Title.FontSize = 12;
                 ax.XLim = [-3.25 3.25];       
             end
             
-            ax = subplot(5,5,21);
-            ax.FontSize = 11;
+            ax = subplot(4,5,16);
+            ax.FontSize = 25;
             hold off
             text(0, 0.75, sprintf('Overall response ratio: % .2f', out.overall_response))
             text(0, 0.25, sprintf('Overall response w/o stim ratio: % .2f', out.overall_response_ws));
             ax.Box = 'off';
             ax.Visible = 'off';
     
-            ax = subplot(5,5,22);
+            ax = subplot(4,5,17);
             ax.FontSize = 12;
             hold on
             for iF = 1:length(fbands)
@@ -170,7 +174,7 @@ function doStuff
             ax.XAxis.Label.String = 'Freq (Hz)';
             ax.YAxis.Label.String = 'Z-score';
     
-            ax = subplot(5,5,23);
+            ax = subplot(4,5,18);
             ax.FontSize = 12;
             hold on
             for iF = 1:length(fbands)
@@ -182,7 +186,7 @@ function doStuff
             ax.XAxis.Label.String = 'Freq (Hz)';
             ax.YAxis.Label.String = 'Z-score';
             
-            ax = subplot(5,5,24);
+            ax = subplot(4,5,19);
             ax.FontSize = 12;
             hold on
             for iF = 1:length(fbands)
@@ -194,7 +198,7 @@ function doStuff
             ax.XAxis.Label.String = 'Freq (Hz)';
             ax.YAxis.Label.String = 'Z-score';
     
-            ax = subplot(5,5,25);
+            ax = subplot(4,5,20);
             ax.FontSize = 12;
             hold on
             for iF = 1:length(fbands)

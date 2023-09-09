@@ -10,11 +10,10 @@ summary = [];
 [summary.labels, summary.stim_mode, summary.short_stim, ...
     summary.long_stim, summary.response_p, summary.depth,...
     summary.fr_r, summary.fr_z,  summary.phaselock_plv, ...
-    summary.fr_r10, summary.fr_z10, summary.fr_r250, summary.fr_z250, ...
     summary.phaselock_mean_phase, summary.phaselock_pct, summary.phaselock_z, ...
     summary.phaselock_max_shufplv, summary.phaselock_circ_pct, summary.phaselock_circ_z, ...
     summary.phaselock_max_circ_shufplv, summary.excitable_phase, summary.ntrials, ...
-    summary.excitable_phase10, summary.excitable_phase250, summary.trialbin_dif, summary.nbins] = deal([]);
+    summary.trialbin_dif, summary.nbins] = deal([]);
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -25,22 +24,8 @@ for iM  = 1:length(mice)
     end
 end
 
-% fbands = {[2 5], [6 10], [12 30], [30 55]};
 fbands = {[2 5], [6 10], [30 55]};
-% c_list = {'red', 'blue','magenta', 'green'};
 c_list = {'red', 'blue', 'green'};
-
-% This step is important because originally there were 4 frequency bands, but now we
-% are skipping the 3rd
-fn = fieldnames(summary);
-for i = 1:numel(fn)
-   if size(summary.(fn{i}),2) == 4
-        temp = summary.(fn{i});
-        temp(:,3) = temp(:,4);
-        summary.(fn{i}) = temp(:,1:3);
-   end
-end
-
 
 
 % Load the list of final opto cells
@@ -91,6 +76,66 @@ writetable(dStr_table, 'C:\Users\mvdmlab\Desktop\dStr_sig.csv');
 writetable(vStr_table, 'C:\Users\mvdmlab\Desktop\vStr_sig.csv');
 
 
+%% Diagnostic Plot
+low = summary.response_p < 0.3;
+hi = summary.response_p > 0.7;
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(2,3,iF);
+    hold on
+    scatter(summary.depth(dStr_mask), summary.fr_r(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(dStr_mask & sig_mask(:,iF)), summary.fr_r(dStr_mask & sig_mask(:, iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
+    scatter(summary.depth(vStr_mask), summary.fr_r(vStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    scatter(summary.depth(vStr_mask & sig_mask(:,iF)), summary.fr_r(vStr_mask & sig_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
+
+    scatter(summary.depth(dStr_mask&low), summary.fr_r(dStr_mask&low,iF) , 'Marker', '_','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(dStr_mask&hi), summary.fr_r(dStr_mask&hi,iF) , 'Marker', '+','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(vStr_mask&low), summary.fr_r(vStr_mask&low,iF) , 'Marker', '_','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(vStr_mask&hi), summary.fr_r(vStr_mask&hi,iF) , 'Marker', '+','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    
+    ylim([-0.05 0.6])
+    xlim([2 5])
+    xlabel('Recording depth (mm)')
+    ylabel('Modulation strength')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+
+    ax = subplot(2,3,iF+3);
+    hold on
+    scatter(summary.depth(dStr_mask), summary.fr_z(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(vStr_mask), summary.fr_z(vStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+
+    scatter(summary.depth(dStr_mask&low), summary.fr_z(dStr_mask&low,iF) , 'Marker', '_','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(dStr_mask&hi), summary.fr_z(dStr_mask&hi,iF) , 'Marker', '+','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(vStr_mask&low), summary.fr_z(vStr_mask&low,iF) , 'Marker', '_','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(vStr_mask&hi), summary.fr_z(vStr_mask&hi,iF) , 'Marker', '+','MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+
+    ylim([-3 12])
+    xlim([2 5])
+    xlabel('Recording depth (mm)')
+    ylabel('z-score')
+    yline(2, '--black')
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+end
+fontname(fig, 'Helvetica')
 
 %% Figure3: Plot depth of modulation and Z-Score side-by side
 fig = figure('WindowState', 'maximized');
@@ -361,7 +406,7 @@ sgtitle('Ventral Striatum')
 
 % dStr
 fig = figure('WindowState', 'maximized');
-for iF = 1%1:length(fbands)
+for iF = 1:length(fbands)
     this_ex_sig = summary.fr_z(:,iF) > 2; 
     ax = subplot(2,2,iF);
     sel1 = find(~this_ex_sig & dStr_mask);
@@ -388,7 +433,7 @@ sgtitle('Dorsal Striatum')
 
 % vStr
 fig = figure('WindowState', 'maximized');
-for iF = 4%1:length(fbands)
+for iF = 1:length(fbands)
     this_ex_sig = summary.fr_z(:,iF) > 2;
     ax = subplot(2,2,iF);
     sel1 = find(~this_ex_sig & vStr_mask);
@@ -421,7 +466,8 @@ function s_out = doStuff(s_in)
     if isempty(ExpKeys.goodCell)
         return
     end
-    fbands = {[2 5], [6 10], [12 30], [30 55]};
+%     fbands = {[2 5], [6 10], [12 30], [30 55]};
+    fbands = {[2 5], [6 10], [30 55]};
     for iC = 1:length(ExpKeys.goodCell)
         fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
 
@@ -438,14 +484,14 @@ function s_out = doStuff(s_in)
         s_out.long_stim = [s_out.long_stim; ExpKeys.long_stim_pulse_width];
         
 
-        % Load the control phase_response
-        load(strcat(fn_prefix, '_control_phase_response_5_bins.mat'));
-        s_out.bfr10{length(s_out.bfr10)+1} = out10.bfr;
-        s_out.fr_z10 = [s_out.fr_z10; out10.fr.zscore];
-        s_out.fr_r10 = [s_out.fr_r10; out10.fr.ratio];
-        s_out.bfr250{length(s_out.bfr250)+1} = out250.bfr;
-        s_out.fr_z250 = [s_out.fr_z250; out250.fr.zscore];
-        s_out.fr_r250 = [s_out.fr_r250; out250.fr.ratio];
+%         % Load the non-stim phase_response
+%         load(strcat(fn_prefix, '_control_phase_response_5_bins.mat'));
+%         s_out.bfr10{length(s_out.bfr10)+1} = out10.bfr;
+%         s_out.fr_z10 = [s_out.fr_z10; out10.fr.zscore];
+%         s_out.fr_r10 = [s_out.fr_r10; out10.fr.ratio];
+%         s_out.bfr250{length(s_out.bfr250)+1} = out250.bfr;
+%         s_out.fr_z250 = [s_out.fr_z250; out250.fr.zscore];
+%         s_out.fr_r250 = [s_out.fr_r250; out250.fr.ratio];
         
         % Load the stim_responses
         load('stim_phases.mat');
@@ -453,12 +499,37 @@ function s_out = doStuff(s_in)
 
         s_out.ntrials = [s_out.ntrials; goodTrials(2) + 1 - goodTrials(1)];
         
-        % Load phase_lock and shuf_spec
         fn_prefix = strrep(fn_prefix, '_', '-');
         load(strcat(fn_prefix, '_spike_phaselock_plv.mat'));
         load(strcat(fn_prefix, '_shuf_spec_circ_plv.mat')); % First circularly shifted and then subsampled
 %         load(strcat(fn_prefix, '_shuf_spec_circ2_plv.mat')); % Uniform
         load(strcat(fn_prefix, '_shuf_spec_plv.mat'));  % Uniformly distributed fake spikes
+
+        % Get rid of all the 3rd band stuff IF there are 4 bands
+        if size(causal_phase, 1) == 4 causal_phase(3,:) = []; end
+        if size(shuf_circ_plv, 2) == 4 shuf_circ_plv(:,3) = []; end
+        if size(shuf_plv, 2) == 4 shuf_plv(:,3) = []; end     
+        if length(all_spk_phase) == 4 all_spk_phase(3) = []; end
+        if length(all_subsampled_mean_phase) == 4 all_subsampled_mean_phase(3) = []; end
+        if length(all_unsampled_mean_phase) == 4 all_unsampled_mean_phase(3) = []; end
+        if length(all_subsampled_plv) == 4 all_subsampled_plv(3) = []; end
+        if length(all_unsampled_plv) == 4 all_unsampled_plv(3) = []; end
+        if length(trial_spk_phase) == 4 trial_spk_phase(3) = []; end
+        if length(trial_subsampled_mean_phase) == 4 trial_subsampled_mean_phase(3) = []; end
+        if length(trial_unsampled_mean_phase) == 4 trial_unsampled_mean_phase(3) = []; end
+        if length(trial_subsampled_plv) == 4 trial_subsampled_plv(3) = []; end
+        if length(trial_unsampled_plv) == 4 trial_unsampled_plv(3) = []; end
+        if length(pre_spk_phase) == 4 pre_spk_phase(3) = []; end
+        if length(pre_subsampled_mean_phase) == 4 pre_subsampled_mean_phase(3) = []; end
+        if length(pre_unsampled_mean_phase) == 4 pre_unsampled_mean_phase(3) = []; end
+        if length(pre_subsampled_plv) == 4 pre_subsampled_plv(3) = []; end
+        if length(pre_unsampled_plv) == 4 pre_unsampled_plv(3) = []; end
+        if length(post_spk_phase) == 4 post_spk_phase(3) = []; end
+        if length(post_subsampled_mean_phase) == 4 post_subsampled_mean_phase(3) = []; end
+        if length(post_unsampled_mean_phase) == 4 post_unsampled_mean_phase(3) = []; end
+        if length(post_subsampled_plv) == 4 post_subsampled_plv(3) = []; end
+        if length(post_unsampled_plv) == 4 post_unsampled_plv(3) = []; end
+
         [this_pct, this_circ_pct, this_circ2_pct, this_ex_phase, this_trialbin_dif, ...
             this_z, this_circ_z, this_circ2_z, this_ex_phase10, this_ex_phase250] = deal(zeros(1,length(fbands)));
         for iF = 1:length(fbands)
@@ -482,16 +553,16 @@ function s_out = doStuff(s_in)
             phase_bins = -pi:2*pi/this_nbins:pi;
             this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
             [this_count, ~, ~] = histcounts(this_phase, phase_bins);
-            this_trialbin_dif(iF) = (max(this_count) - min(this_count))/(goodTrials(2) + 1 - goodTrials(1));
+%             this_trialbin_dif(iF) = (max(this_count) - min(this_count))/(goodTrials(2) + 1 - goodTrials(1));
             % The maximally excitable phase
             [~, midx] =  max(out.fr.bin(iF,:));%max(out.fr.bin{iF});
             this_ex_phase(iF) = midx;
 
             % The maximally excitable phase in the control conditions
-            [~, midx] =  max(out10.fr.bin(iF,:));%max(out.fr.bin{iF});
-            this_ex_phase10(iF) = midx;
-            [~, midx] =  max(out250.fr.bin(iF,:));%max(out.fr.bin{iF});
-            this_ex_phase250(iF) = midx;
+%             [~, midx] =  max(out10.fr.bin(iF,:));%max(out.fr.bin{iF});
+%             this_ex_phase10(iF) = midx;
+%             [~, midx] =  max(out250.fr.bin(iF,:));%max(out.fr.bin{iF});
+%             this_ex_phase250(iF) = midx;
             
         end
         if isempty(trial_subsampled_plv) %this_pct is all nans in this case
@@ -526,11 +597,11 @@ function s_out = doStuff(s_in)
             s_out.phaselock_mean_phase = [s_out.phaselock_mean_phase; trial_subsampled_mean_phase'];
         end
         s_out.excitable_phase = [s_out.excitable_phase; this_ex_phase];
-        s_out.excitable_phase10 = [s_out.excitable_phase10; this_ex_phase10];
-        s_out.excitable_phase250 = [s_out.excitable_phase250; this_ex_phase250];
+%         s_out.excitable_phase10 = [s_out.excitable_phase10; this_ex_phase10];
+%         s_out.excitable_phase250 = [s_out.excitable_phase250; this_ex_phase250];
 
         s_out.nbins = [s_out.nbins; this_nbins];
-        s_out.trialbin_dif = [s_out.trialbin_dif; this_trialbin_dif];
+%         s_out.trialbin_dif = [s_out.trialbin_dif; this_trialbin_dif];
     end
 end
 

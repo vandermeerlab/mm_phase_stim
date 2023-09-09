@@ -165,7 +165,7 @@ ax.TickDir = 'out';
 fontname(fig, 'Helvetica');
 fig.Renderer = 'painters';
 
-%%
+%% Use this to write list of Final Opto Cells
 dStr_opto = summary.labels(ks_mask & dStr_mask & summary.opto_delta > summary.sham_delta);
 vStr_opto = summary.labels(ks_mask & vStr_mask & summary.opto_delta > summary.sham_delta);
 

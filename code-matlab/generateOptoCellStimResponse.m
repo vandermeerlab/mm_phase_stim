@@ -32,6 +32,7 @@ function doStuff
     max_delay = 0.01; % sec (window for the first response since stimulus)
     max_long_delay = 0.4; % sec
     num_sham = 10000; % Number of sham stim used
+    num_nonstim = 5000; % Number of spoints to be selected for non_stim
     
     %% Remove spikes during short stim times
     if contains(ExpKeys.light_source, 'LASER')
@@ -175,12 +176,21 @@ function doStuff
             od.trial_stim.mfr = length(temp.t{1})/diff(ExpKeys.stim_times);
         end
 
-        % Non-stim evoked response (Choose a random time from stim_onset -
-        % 450 ms to stim -10 ms    
+        % Non-stim evoked response (Choose 5000 points in time that are at
+        % least 0.6 seconds away from a stim_onset in any direction to
+        % avoid potential artifact contamination during phase estimation
         if ~isempty(ExpKeys.stim_times)
-            this_offset = (rand(size(stim_on))*0.44) + 0.01;
-            assert((max(this_offset)<=0.45) & (min(this_offset) >= 0.01), "Scaling of offsets is incorrect\n")
-            this_on_events = stim_on - this_offset;
+            dt = 0.001; % in seconds
+            tvec = []; % Pre stim 1 time is funky in some recordings;
+            for iStim = 1:length(stim_on)-1
+                if stim_on(iStim)+0.55 <= stim_on(iStim+1)-0.01
+                    tvec = [tvec, stim_on(iStim)+0.55:dt:stim_on(iStim+1)-0.01];
+                end
+            end
+            assert(~any(diff(tvec) == 0), 'tvec is not unique!');
+            this_on_events = randperm(length(tvec));
+            this_on_events = tvec(sort(this_on_events(1:num_nonstim)));
+            clear tvec;
             latency = nan(size(this_on_events));
             fr = zeros(size(this_on_events));
             bfr = zeros(size(this_on_events));
@@ -198,6 +208,7 @@ function doStuff
             od.trial_nonstim.latency = latency;
             od.trial_nonstim.fr = fr;
             od.trial_nonstim.bfr = bfr;
+            od.trial_nonstim.on_events = this_on_events;
         end
 
         % Post-stim response
