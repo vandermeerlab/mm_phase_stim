@@ -101,29 +101,44 @@ function doStuff
                 load(strcat(fn_prefix, '_phase_response_', string(nbins), '_bins.mat'));
 
                 % Load stim Response for side by side plotting
-                ax = subplot(4,3,(iF-1)*3+1);
+                ax = subplot(4,4,(iF-1)*4+1);
                 bar(ax,x_ticks,this_count/sum(this_count),1,c_list{iF});
                 ax.Title.String = 'NonStim Phase distribution';
                 ax.YLabel.String = sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2));
                 ax.Title.FontSize = 20;
                 ax.XLim = [-3.25 3.25];
-    
-                ax = subplot(4,3,(iF-1)*3+2);
-                bar(ax,x_ticks,this_fr,1,c_list{iF});
-                ax.Title.String = sprintf('FR nonStim');
-                ax.Title.FontSize = 20;
-                ax.XLim = [-3.25 3.25];
-                ax.YLim = [0 10];
 
-                ax = subplot(4,3,(iF-1)*3+3);
-                bar(ax,x_ticks,out.fr.bin(iF,:),1,c_list{iF});
-                ax.Title.String = sprintf('FR OptoStim');
+                % Load PLV and bin those_phases
+                ax = subplot(4,4,(iF-1)*4+2);
+                fn2 = fn_prefix;
+                fn2(end-1) = '-';
+                load(strcat(fn2, '_spike_phaselock_plv.mat'));
+                if ~isempty(trial_spk_phase)
+                    if size(trial_spk_phase,1) == 4 trial_spk_phase(3)=[]; end    
+                    this_phase = angle(trial_spk_phase{iF});
+                    [this_count, ~, ~] = histcounts(this_phase,phase_bins);
+                    bar(ax,x_ticks,this_count/sum(this_count),1,c_list{iF});
+                    ax.Title.String = sprintf('PLV phase distribution: %d', length(this_phase));
+                    ax.Title.FontSize = 20;
+                    ax.XLim = [-3.25 3.25];
+                end
+    
+                ax = subplot(4,4,(iF-1)*4+3);
+                bar(ax,x_ticks,this_fr,1,c_list{iF});
+                ax.Title.String = '{\Delta} FR nonStim';
                 ax.Title.FontSize = 20;
                 ax.XLim = [-3.25 3.25];
-                ax.YLim = [0 100];
+%                 ax.YLim = [-10 10];
+
+                ax = subplot(4,4,(iF-1)*4+4);
+                bar(ax,x_ticks,out.fr.bin(iF,:),1,c_list{iF});
+                ax.Title.String = '{\Delta} FR OptoStim';
+                ax.Title.FontSize = 20;
+                ax.XLim = [-3.25 3.25];
+%                 ax.YLim = [0 100];
             end
                      
-            ax = subplot(4,3,11);
+            ax = subplot(4,4,15);
             ax.FontSize = 12;
             hold on
             for iF = 1:length(fbands)
@@ -135,7 +150,7 @@ function doStuff
             ax.XAxis.Label.String = 'Freq (Hz)';
             ax.YAxis.Label.String = 'Z-score';
     
-            ax = subplot(4,3,12);
+            ax = subplot(4,4,16);
             ax.FontSize = 12;
             hold on
             for iF = 1:length(fbands)

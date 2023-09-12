@@ -103,6 +103,7 @@ function doStuff
         od.long_stim = [];
         od.sham_stim = [];
         od.trial_nonstim = [];
+        od.matched_nonstim = [];
         
         % Pre-stim response
         if ~isempty(ExpKeys.pre_stim_times)
@@ -176,21 +177,53 @@ function doStuff
             od.trial_stim.mfr = length(temp.t{1})/diff(ExpKeys.stim_times);
         end
 
-        % Non-stim evoked response (Choose 5000 points in time that are at
-        % least 0.6 seconds away from a stim_onset in any direction to
-        % avoid potential artifact contamination during phase estimation
+%         % Non-stim evoked response (Choose 5000 points in time that are at
+%         % least 0.6 seconds away from a stim_onset in any direction to
+%         % avoid potential artifact contamination during phase estimation
+%         if ~isempty(ExpKeys.stim_times)
+%             dt = 0.001; % in seconds
+%             tvec = []; % Pre stim 1 time is funky in some recordings;
+%             for iStim = 1:length(stim_on)-1
+%                 if stim_on(iStim)+0.55 <= stim_on(iStim+1)-0.01
+%                     tvec = [tvec, stim_on(iStim)+0.55:dt:stim_on(iStim+1)-0.01];
+%                 end
+%             end
+%             assert(~any(diff(tvec) == 0), 'tvec is not unique!');
+%             this_on_events = randperm(length(tvec));
+%             this_on_events = tvec(sort(this_on_events(1:num_nonstim)));
+%             clear tvec;
+%             latency = nan(size(this_on_events));
+%             fr = zeros(size(this_on_events));
+%             bfr = zeros(size(this_on_events));
+%             for iStim = 1:length(this_on_events)
+%                 st.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)) & ...
+%                     (this_cell.t{1} < this_on_events(iStim)+max_delay));
+%                 baseline.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
+%                     (this_cell.t{1} < this_on_events(iStim)));
+%                 if ~isempty(st.t{1})
+%                     latency(iStim) = st.t{1}(1) - this_on_events(iStim);
+%                 end
+%                 fr(iStim) = length(st.t{1})/max_delay;
+%                 bfr(iStim) = length(baseline.t{1})/max_delay;
+%             end
+%             od.trial_nonstim.latency = latency;
+%             od.trial_nonstim.fr = fr;
+%             od.trial_nonstim.bfr = bfr;
+%             od.trial_nonstim.on_events = this_on_events;
+%         end
+
+        % Non-stim evoked response (Choose 1 point each from each ISI to
+        % match the characteristics of the stim evoked response
         if ~isempty(ExpKeys.stim_times)
             dt = 0.001; % in seconds
-            tvec = []; % Pre stim 1 time is funky in some recordings;
+            this_on_events = zeros(size(stim_on));
             for iStim = 1:length(stim_on)-1
-                if stim_on(iStim)+0.55 <= stim_on(iStim+1)-0.01
-                    tvec = [tvec, stim_on(iStim)+0.55:dt:stim_on(iStim+1)-0.01];
-                end
+                tvec = [stim_on(iStim)+0.25:dt:stim_on(iStim+1)-0.01];
+                this_on_events(iStim) = tvec(randi(length(tvec)));           
             end
-            assert(~any(diff(tvec) == 0), 'tvec is not unique!');
-            this_on_events = randperm(length(tvec));
-            this_on_events = tvec(sort(this_on_events(1:num_nonstim)));
-            clear tvec;
+            tvec = stim_on(end)+0.25:dt:stim_on(end)+1;
+            this_on_events(end) = tvec(randi(length(tvec)));
+            clear tvec
             latency = nan(size(this_on_events));
             fr = zeros(size(this_on_events));
             bfr = zeros(size(this_on_events));

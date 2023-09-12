@@ -13,11 +13,11 @@ for iM  = 1:length(mice)
     end
 end
 
-%
+%%
 function doStuff
     % Declaring variables
     % Setting up parameters
-    fbands = {[2 5], [6 10], [12 30], [30 55]};
+    fbands = {[2 5], [6 10],[30 55]};
     c_list = {'cyan', 'red','magenta', 'green'};
 
     LoadExpKeys;
@@ -55,59 +55,59 @@ function doStuff
     
     
     fig = figure('WindowState', 'maximized');
-    ax = subplot(4, 12, [1 2 3 4 13 14 15 16 25 26 27 28]);
-    % Plot PSD of TrialCSC
-    Fs = 1/median(diff(csc.tvec));
-    wsize = pow2(floor(log2(4*Fs)));  % arbitrary decision on Window Size
-    [Pxx, F] = pwelch(csc.data, hanning(wsize), wsize/2, [], Fs);
-    %Restricting Frequency to >0 and <200 Hz for FOOOF to work
-    f_idx = find(F>0 & F<120);
-    Pxx = Pxx(f_idx); F = F(f_idx);
-    P = 10*log10(Pxx); % Converting into decibels
-    plot(F, P, 'black');
-    hold on;
-    xlabel('Frequency (Hz)');
-    
-    % Testing FOOOF
-    F_fooof = F';
-    P_fooof = (Pxx(1:length(F)))';
-    reshaped_P = reshape(P_fooof,1 ,1, length(P_fooof));
-    % All these parameters are borrowed from "process_fooof.m"
-    opt.freq_range = [F(1) F(end)];
-    opt.power_line = '60';
-    opt.peak_width_limits = [0.5,12];
-    opt.max_peaks = 5;
-    opt.min_peak_height = 0.3;
-    opt.aperiodic_mode = 'knee'; %Check with 'fixed' first
-    opt.peak_threshold = 2;
-    opt.return_spectrum = 1;
-    opt.border_threshold = 1;
-    opt.peak_type = 'best'; %There is an error in documenation where it says 'both'
-    opt.proximity_threshold = 2;
-    opt.guess_weight = 'none';
-    opt.thresh_after = 1;
-    opt.sort_type = 'param';
-    opt.sort_param = 'frequency';
-    opt.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '10'}; {'beta'},{'12', '30'}
-                      {'gamma1'}, {'30',' 55'};{'gamma2'}, {'65','90'}};
-    [fs, fg] = process_fooof('FOOOF_matlab', reshaped_P, F_fooof, opt, 1);
-    powspctrm_f = cat(1, fg.ap_fit);
-    for k = 1:size(powspctrm_f,1)
-        aperiodic_P(k,:) = interp1(fs, powspctrm_f(k,:), F, 'linear', nan);
-    end
-    aperiodic_P = 10*log10(aperiodic_P); % Converting to decibels
-    plot(F, aperiodic_P, '--black')
-    for iF = 1:length(fbands)
-        % Fill is tricky, change this later if need be
-        f_idx = find(round(F) >= fbands{iF}(1) & round(F) <= fbands{iF}(2));
-%         curve2 = P(f_idx)';
-%         curve1 = aperiodic_P(f_idx);
-%         x2 = [F(f_idx)', fliplr(F(f_idx)')];
-%         inBetween = [curve1, curve2];
-%         fill(x2, inBetween,c_list{iF})
-        area(F(f_idx), P(f_idx), 'FaceColor', c_list{iF}, 'FaceAlpha', 0.5, 'BaseValue', min(P))                    
-    end
-    xlim([0 120])
+%     ax = subplot(4, 12, [1 2 3 4 13 14 15 16 25 26 27 28]);
+%     % Plot PSD of TrialCSC
+%     Fs = 1/median(diff(csc.tvec));
+%     wsize = pow2(floor(log2(4*Fs)));  % arbitrary decision on Window Size
+%     [Pxx, F] = pwelch(csc.data, hanning(wsize), wsize/2, [], Fs);
+%     %Restricting Frequency to >0 and <200 Hz for FOOOF to work
+%     f_idx = find(F>0 & F<120);
+%     Pxx = Pxx(f_idx); F = F(f_idx);
+%     P = 10*log10(Pxx); % Converting into decibels
+%     plot(F, P, 'black');
+%     hold on;
+%     xlabel('Frequency (Hz)');
+%     
+%     % Testing FOOOF
+%     F_fooof = F';
+%     P_fooof = (Pxx(1:length(F)))';
+%     reshaped_P = reshape(P_fooof,1 ,1, length(P_fooof));
+%     % All these parameters are borrowed from "process_fooof.m"
+%     opt.freq_range = [F(1) F(end)];
+%     opt.power_line = '60';
+%     opt.peak_width_limits = [0.5,12];
+%     opt.max_peaks = 5;
+%     opt.min_peak_height = 0.3;
+%     opt.aperiodic_mode = 'knee'; %Check with 'fixed' first
+%     opt.peak_threshold = 2;
+%     opt.return_spectrum = 1;
+%     opt.border_threshold = 1;
+%     opt.peak_type = 'best'; %There is an error in documenation where it says 'both'
+%     opt.proximity_threshold = 2;
+%     opt.guess_weight = 'none';
+%     opt.thresh_after = 1;
+%     opt.sort_type = 'param';
+%     opt.sort_param = 'frequency';
+%     opt.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '10'}; {'beta'},{'12', '30'}
+%                       {'gamma1'}, {'30',' 55'};{'gamma2'}, {'65','90'}};
+%     [fs, fg] = process_fooof('FOOOF_matlab', reshaped_P, F_fooof, opt, 1);
+%     powspctrm_f = cat(1, fg.ap_fit);
+%     for k = 1:size(powspctrm_f,1)
+%         aperiodic_P(k,:) = interp1(fs, powspctrm_f(k,:), F, 'linear', nan);
+%     end
+%     aperiodic_P = 10*log10(aperiodic_P); % Converting to decibels
+%     plot(F, aperiodic_P, '--black')
+%     for iF = 1:length(fbands)
+%         % Fill is tricky, change this later if need be
+%         f_idx = find(round(F) >= fbands{iF}(1) & round(F) <= fbands{iF}(2));
+% %         curve2 = P(f_idx)';
+% %         curve1 = aperiodic_P(f_idx);
+% %         x2 = [F(f_idx)', fliplr(F(f_idx)')];
+% %         inBetween = [curve1, curve2];
+% %         fill(x2, inBetween,c_list{iF})
+%         area(F(f_idx), P(f_idx), 'FaceColor', c_list{iF}, 'FaceAlpha', 0.5, 'BaseValue', min(P))                    
+%     end
+%     xlim([0 120])
 
 %     if ExpKeys.has60Hz
 %         d = designfilt('bandstopiir','FilterOrder',2, ...
