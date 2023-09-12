@@ -14,7 +14,8 @@ summary = [];
     summary.phaselock_pct, summary.phaselock_z, summary.phaselock_max_shufplv, ...
     summary.phaselock_circ_pct, summary.phaselock_circ_z, ...
     summary.phaselock_max_circ_shufplv, summary.excitable_phase, ...
-    summary.ns_excitable_phase, summary.ntrials] = deal([]);
+    summary.ns_excitable_phase, summary.ntrials, ...
+    summary.corrected_fr_r, summary.corrected_fr_z, summary.corrected_ex_phase] = deal([]);
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -398,11 +399,11 @@ for iF = 1:length(fbands)
     hold on;
     keep = find(both(:,iF));
     for iC = 1:length(keep)
-        plot([1,2], [summary.fr_r(keep(iC)), summary.ns_fr_r(keep(iC))], 'Color', c_list{iF});
+        plot([1,2], [summary.fr_r(keep(iC)), summary.corrected_fr_r(keep(iC))], 'Color', c_list{iF});
     end
     xlim([0.8 2.2]);
     xticks([1 2]);
-    xticklabels({'Stim', 'NonStim'})
+    xticklabels({'OG', 'Corrected'})
     ylabel('Modulation Strength')
     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)));
 
@@ -410,13 +411,73 @@ for iF = 1:length(fbands)
     hold on;
     keep = find(both(:,iF));
     for iC = 1:length(keep)
-        plot([1,2], [summary.fr_z(keep(iC)), summary.ns_fr_z(keep(iC))], 'Color', c_list{iF});
+        plot([1,2], [summary.fr_z(keep(iC)), summary.corrected_fr_z(keep(iC))], 'Color', c_list{iF});
     end
     xlim([0.8 2.2]);
     xticks([1 2]);
-    xticklabels({'Stim', 'NonStim'})
+    xticklabels({'OG', 'Corrected'})
     ylabel('Z-score')
+    yline(2, '--black')
 end
+sgtitle('Both stim and non-stim')
+
+only_ns = sig_ns & ~ sig_mask;
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(2,3,iF);
+    hold on;
+    keep = find(only_ns(:,iF));
+    for iC = 1:length(keep)
+        plot([1,2], [summary.fr_r(keep(iC)), summary.corrected_fr_r(keep(iC))], 'Color', c_list{iF});
+    end
+    xlim([0.8 2.2]);
+    xticks([1 2]);
+    xticklabels({'OG', 'Corrected'})
+    ylabel('Modulation Strength')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)));
+
+    ax = subplot(2,3,iF+3);
+    hold on;
+    keep = find(only_ns(:,iF));
+    for iC = 1:length(keep)
+        plot([1,2], [summary.fr_z(keep(iC)), summary.corrected_fr_z(keep(iC))], 'Color', c_list{iF});
+    end
+    xlim([0.8 2.2]);
+    xticks([1 2]);
+    xticklabels({'OG', 'Corrected'})
+    ylabel('Z-score')
+    yline(2, '--black')
+end
+sgtitle('Only non-stim')
+
+only_sig = ~sig_ns & sig_mask;
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(2,3,iF);
+    hold on;
+    keep = find(only_sig(:,iF));
+    for iC = 1:length(keep)
+        plot([1,2], [summary.fr_r(keep(iC)), summary.corrected_fr_r(keep(iC))], 'Color', c_list{iF});
+    end
+    xlim([0.8 2.2]);
+    xticks([1 2]);
+    xticklabels({'OG', 'Corrected'})
+    ylabel('Modulation Strength')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)));
+
+    ax = subplot(2,3,iF+3);
+    hold on;
+    keep = find(only_sig(:,iF));
+    for iC = 1:length(keep)
+        plot([1,2], [summary.fr_z(keep(iC)), summary.corrected_fr_z(keep(iC))], 'Color', c_list{iF});
+    end
+    xlim([0.8 2.2]);
+    xticks([1 2]);
+    xticklabels({'OG', 'Corrected'})
+    ylabel('Z-score')
+    yline(2, '--black')
+end
+sgtitle('Only stim')
 
 
 %% Diagnostic plot: Look at proportions of neurons
@@ -580,7 +641,25 @@ function s_out = doStuff(s_in)
             [~, midx] =  max(ns_out.fr.bin(iF,:));%max(out.fr.bin{iF});
             this_ns_ex_phase(iF) = midx;
         end
-       
+
+        % Get corrected response
+        corrected_fr_bin = out.fr.bin - ns_out.fr.bin;
+        [corrected_fr_r, corrected_fr_z] = deal(zeros(length(fbands),1));
+        for iF = 1:length(fbands)
+            this_fr = corrected_fr_bin(iF,:);
+            corrected_fr_r(iF) = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
+            q0 = squeeze(out.fr.shufs(iF,:,:)) - ns_out.fr.bin(iF,:); % Should this subtraction be done?
+            q1 = max(q0, [] , 2);
+            q2 = min(q0, [], 2);
+            q3 = (q1 - q2)./(q1 + q2); 
+            corrected_fr_z(iF) = (corrected_fr_r(iF) - mean(q3))/std(q3);
+        end
+        [~, corrected_ex_phase] = max(corrected_fr_bin,[],2);
+
+        s_out.corrected_fr_r = [s_out.corrected_fr_r; corrected_fr_r'];
+        s_out.corrected_fr_z = [s_out.corrected_fr_z; corrected_fr_z'];
+        s_out.corrected_ex_phase = [s_out.corrected_ex_phase; corrected_ex_phase'];
+      
         if isempty(trial_subsampled_plv) %this_pct is all nans in this case
             s_out.phaselock_z = [s_out.phaselock_z; this_pct];
             s_out.phaselock_pct = [s_out.phaselock_pct; this_pct];
