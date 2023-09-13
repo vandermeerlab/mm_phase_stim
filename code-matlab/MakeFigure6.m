@@ -6,16 +6,15 @@ mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
-[summary.bfr, summary.ns_bfr] = deal([]);
+[summary.bfr] = deal([]);
 [summary.labels, summary.stim_mode, summary.short_stim, ...
     summary.long_stim, summary.response_p, summary.depth, ...
-    summary.fr_r, summary.fr_z, summary.ns_fr_r, summary.ns_fr_z, ...
+    summary.fr_r, summary.fr_z, summary.c_fr_r, summary.c_fr_z, summary.c_fr_z_old, ...
     summary.phaselock_plv, summary.phaselock_mean_phase, ...
     summary.phaselock_pct, summary.phaselock_z, summary.phaselock_max_shufplv, ...
     summary.phaselock_circ_pct, summary.phaselock_circ_z, ...
     summary.phaselock_max_circ_shufplv, summary.excitable_phase, ...
-    summary.ns_excitable_phase, summary.ntrials, ...
-    summary.corrected_fr_r, summary.corrected_fr_z, summary.corrected_ex_phase] = deal([]);
+    summary.ntrials, summary.corrected_ex_phase] = deal([]);
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -386,100 +385,67 @@ for iF = 1:length(fbands)
 end
 
 %% Figure 6E: For neurons that are both phase locked and significantly phase modulated, how do they show up in the non_stim test
-z_thresh = 2;
+for iF = 1:3
+    subplot(1,3,iF)
+    scatter(summary.fr_r(:,iF), summary.c_fr_r(:,iF), 'SizeData', 200, ...
+        'MarkerFaceColor', c_list{iF}, 'MarkerFaceAlpha', 0.25, 'MarkerEdgeAlpha', 0)
+    xlabel('Original Mod. Strength')
+    ylabel('Corrected Mod. Strength')
+    xlim([0 0.8])
+    ylim([0 0.8])
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+end
+%% Version 1
+z_thresh= 2;
 pct_thresh = 0.99;
-sig_ns = summary.ns_fr_z >= z_thresh;
-sig_mask = summary.fr_z >= z_thresh;
-pl_mask = summary.phaselock_pct >= pct_thresh;
-both = sig_mask & sig_ns;
+sig_mask = summary.fr_z > z_thresh;
+c_sig = summary.c_fr_z > z_thresh;
+pl_mask = summary.phaselock_pct > pct_thresh;
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(1,3,iF);
+    hold on
+    plot([1 2], [summary.fr_r(dStr_mask,iF), summary.c_fr_r(dStr_mask,iF)], ...
+    c_list{iF}, 'LineStyle', '--')
+    plot([1 2], [summary.fr_r(vStr_mask,iF), summary.c_fr_r(vStr_mask,iF)], c_list{iF})
+    ylim([0 0.6])
+    xlim([0.9 2.1])
+    xticks([1 2])
+    xticklabels({'Original', 'Corrected'})
+    ylabel('Modulation Strength')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)));
+    yticks([0 0.3 0.6])
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+end
+%% Version 2
+
+z_thresh= 2;
+pct_thresh = 0.99;
+sig_mask = summary.fr_z > z_thresh;
+c_sig = summary.c_fr_z > z_thresh;
+pl_mask = summary.phaselock_pct > pct_thresh;
 
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
-    ax = subplot(2,3,iF);
-    hold on;
-    keep = find(both(:,iF));
-    for iC = 1:length(keep)
-        plot([1,2], [summary.fr_r(keep(iC)), summary.corrected_fr_r(keep(iC))], 'Color', c_list{iF});
-    end
-    xlim([0.8 2.2]);
-    xticks([1 2]);
-    xticklabels({'OG', 'Corrected'})
+    pct_change = 
+    ax = subplot(1,3,iF);
+    hold onv 
+    plot([1 2], [summary.fr_r(dStr_mask,iF), summary.c_fr_r(dStr_mask,iF)], ...
+    c_list{iF}, 'LineStyle', '--')
+    plot([1 2], [summary.fr_r(vStr_mask,iF), summary.c_fr_r(vStr_mask,iF)], c_list{iF})
+    ylim([0 0.6])
+    xlim([0.9 2.1])
+    xticks([1 2])
+    xticklabels({'Original', 'Corrected'})
     ylabel('Modulation Strength')
     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)));
-
-    ax = subplot(2,3,iF+3);
-    hold on;
-    keep = find(both(:,iF));
-    for iC = 1:length(keep)
-        plot([1,2], [summary.fr_z(keep(iC)), summary.corrected_fr_z(keep(iC))], 'Color', c_list{iF});
-    end
-    xlim([0.8 2.2]);
-    xticks([1 2]);
-    xticklabels({'OG', 'Corrected'})
-    ylabel('Z-score')
-    yline(2, '--black')
+    yticks([0 0.3 0.6])
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
 end
-sgtitle('Both stim and non-stim')
-
-only_ns = sig_ns & ~ sig_mask;
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    ax = subplot(2,3,iF);
-    hold on;
-    keep = find(only_ns(:,iF));
-    for iC = 1:length(keep)
-        plot([1,2], [summary.fr_r(keep(iC)), summary.corrected_fr_r(keep(iC))], 'Color', c_list{iF});
-    end
-    xlim([0.8 2.2]);
-    xticks([1 2]);
-    xticklabels({'OG', 'Corrected'})
-    ylabel('Modulation Strength')
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)));
-
-    ax = subplot(2,3,iF+3);
-    hold on;
-    keep = find(only_ns(:,iF));
-    for iC = 1:length(keep)
-        plot([1,2], [summary.fr_z(keep(iC)), summary.corrected_fr_z(keep(iC))], 'Color', c_list{iF});
-    end
-    xlim([0.8 2.2]);
-    xticks([1 2]);
-    xticklabels({'OG', 'Corrected'})
-    ylabel('Z-score')
-    yline(2, '--black')
-end
-sgtitle('Only non-stim')
-
-only_sig = ~sig_ns & sig_mask;
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    ax = subplot(2,3,iF);
-    hold on;
-    keep = find(only_sig(:,iF));
-    for iC = 1:length(keep)
-        plot([1,2], [summary.fr_r(keep(iC)), summary.corrected_fr_r(keep(iC))], 'Color', c_list{iF});
-    end
-    xlim([0.8 2.2]);
-    xticks([1 2]);
-    xticklabels({'OG', 'Corrected'})
-    ylabel('Modulation Strength')
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)));
-
-    ax = subplot(2,3,iF+3);
-    hold on;
-    keep = find(only_sig(:,iF));
-    for iC = 1:length(keep)
-        plot([1,2], [summary.fr_z(keep(iC)), summary.corrected_fr_z(keep(iC))], 'Color', c_list{iF});
-    end
-    xlim([0.8 2.2]);
-    xticks([1 2]);
-    xticklabels({'OG', 'Corrected'})
-    ylabel('Z-score')
-    yline(2, '--black')
-end
-sgtitle('Only stim')
-
-
 %% Diagnostic plot: Look at proportions of neurons
 z_thresh = 2;
 pct_thresh = 0.99;
@@ -578,11 +544,13 @@ function s_out = doStuff(s_in)
         s_out.fr_z = [s_out.fr_z; out.fr.zscore];
         s_out.fr_r = [s_out.fr_r; out.fr.ratio];
 
-        % Load the nonstim-phase responses
-        load(strcat(fn_prefix, '_nonstim_phase_response_5_bins.mat'));       
-        s_out.ns_bfr = [s_out.ns_bfr; {ns_out.bfr}];
-        s_out.ns_fr_z = [s_out.ns_fr_z; ns_out.fr.zscore];
-        s_out.ns_fr_r = [s_out.ns_fr_r; ns_out.fr.ratio];
+        % Load the corrected-phase responses
+        load(strcat(fn_prefix, '_corrected_phase_response_5_bins.mat'));       
+        s_out.c_fr_z_old = [s_out.c_fr_z_old; corrected_fr_z_oldshufs'];
+        s_out.c_fr_z = [s_out.c_fr_z; corrected_fr_z'];
+        s_out.c_fr_r = [s_out.c_fr_r; corrected_fr_r'];
+        [~, corrected_ex_phase] = max(corrected_fr_bin);
+        s_out.corrected_ex_phase = [s_out.corrected_ex_phase; corrected_ex_phase'];
 
         % Load the phase locking stuff
         fn_prefix = strrep(fn_prefix, '_', '-');
@@ -637,28 +605,7 @@ function s_out = doStuff(s_in)
             % The maximally excitable phase
             [~, midx] =  max(out.fr.bin(iF,:));%max(out.fr.bin{iF});
             this_ex_phase(iF) = midx;
-            % The maximally excitable non-stim phase
-            [~, midx] =  max(ns_out.fr.bin(iF,:));%max(out.fr.bin{iF});
-            this_ns_ex_phase(iF) = midx;
         end
-
-        % Get corrected response
-        corrected_fr_bin = out.fr.bin - ns_out.fr.bin;
-        [corrected_fr_r, corrected_fr_z] = deal(zeros(length(fbands),1));
-        for iF = 1:length(fbands)
-            this_fr = corrected_fr_bin(iF,:);
-            corrected_fr_r(iF) = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
-            q0 = squeeze(out.fr.shufs(iF,:,:)) - ns_out.fr.bin(iF,:); % Should this subtraction be done?
-            q1 = max(q0, [] , 2);
-            q2 = min(q0, [], 2);
-            q3 = (q1 - q2)./(q1 + q2); 
-            corrected_fr_z(iF) = (corrected_fr_r(iF) - mean(q3))/std(q3);
-        end
-        [~, corrected_ex_phase] = max(corrected_fr_bin,[],2);
-
-        s_out.corrected_fr_r = [s_out.corrected_fr_r; corrected_fr_r'];
-        s_out.corrected_fr_z = [s_out.corrected_fr_z; corrected_fr_z'];
-        s_out.corrected_ex_phase = [s_out.corrected_ex_phase; corrected_ex_phase'];
       
         if isempty(trial_subsampled_plv) %this_pct is all nans in this case
             s_out.phaselock_z = [s_out.phaselock_z; this_pct];
@@ -692,7 +639,6 @@ function s_out = doStuff(s_in)
             s_out.phaselock_mean_phase = [s_out.phaselock_mean_phase; trial_subsampled_mean_phase];
         end
         s_out.excitable_phase = [s_out.excitable_phase; this_ex_phase];
-        s_out.ns_excitable_phase = [s_out.ns_excitable_phase; this_ns_ex_phase];
     end
 end
 

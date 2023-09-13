@@ -37,7 +37,7 @@ dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
 vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 
 %%
-figure('WindowState', 'maximized');
+fig = figure('WindowState', 'maximized');
 
 % dStr stuff
 ax = subplot(2,4,1);
@@ -131,6 +131,8 @@ ax.Box = 'off';
 ax.TickDir = 'out';
 ax.TickLength = [0.03 0.02];
 
+fontname(fig, 'Helvetica');
+fig.Renderer = 'painters';
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;

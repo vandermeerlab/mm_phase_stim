@@ -48,11 +48,11 @@ for i = 1:length(sel)
     plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'magenta');
 end
 xticks([1 2])
-yticks([-50 0 150 350])
+yticks([0 150 350])
 xticklabels({'Sham stim', 'Opto stim'})
 ylabel('\Delta Firing rate (Hz)')
 xlim([0.85 2.15])
-ylim([-50 350])
+ylim([-25 350])
 title('dStr');
 box off;
 ax.TickLength(1) = 0.03;
@@ -116,9 +116,9 @@ end
 xticks([1 2])
 xticklabels({'Sham stim', 'Opto stim'})
 ylabel('\Delta Firing rate (Hz)')
-yticks([-50 0 150 350])
+yticks([0 150 350])
 xlim([0.85 2.15])
-ylim([-50 350])
+ylim([-25 350])
 title('vStr')
 box off;
 ax.TickLength(1) = 0.03;
