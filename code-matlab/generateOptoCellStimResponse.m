@@ -26,6 +26,7 @@ function doStuff
         cfg.getRatings = 1;
         cfg.uint = '64';
     end
+    cfg.fc = ExpKeys.goodCell;
     S = LoadSpikes(cfg);
     
     %% Set variables

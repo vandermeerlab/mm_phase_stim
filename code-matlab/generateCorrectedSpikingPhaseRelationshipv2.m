@@ -22,11 +22,11 @@ function doStuff
     fbands = {[2 5], [6 10], [30 55]};
     c_list = {'red', 'blue','green'};
     nshufs = 100;
+    bin_width = 0.01; % seconds
     stim_bins = 5;
-    nonstim_bins = 50;
     phase_bins = -pi:2*pi/stim_bins:pi;
-    fine_bins =  -pi:2*pi/nonstim_bins:pi;
     x_ticks = 0.5*(phase_bins(1:end-1) + phase_bins(2:end));
+    fine_bins = -pi:2*pi/50:pi;
     fine_ticks = 0.5*(fine_bins(1:end-1) + fine_bins(2:end));
 
     % Load the phases at stim_on in various frequency bands
@@ -40,8 +40,10 @@ function doStuff
         load(strcat(fn_prefix, '_stim_response.mat'));
         goodTrials = ExpKeys.goodTrials(iC,:);
 
-        % Load non_stim phases at various frequency bands
-        load(strcat(fn_prefix, '_non_stim_phases.mat'));
+        % Load non_stim spk phases at various frequency bands
+        fn2 = fn_prefix;
+        fn2(end-1) = '-';
+        load(strcat(fn2, '_spike_phaselock_causal_plv.mat'));
         
         % Now subtracting baseline firing rate
         all_bfr = od.trial_stim.bfr(goodTrials(1):goodTrials(2));
@@ -54,34 +56,42 @@ function doStuff
         
         % Load the uncorrected stuff
         load(strcat(fn_prefix, '_phase_response_5_bins.mat'));
-        nonstim_lookup = zeros(length(fbands),nonstim_bins);
         corrected_fr_bin = zeros(length(fbands), stim_bins);
         corrected_fr_shufs = zeros(length(fbands), nshufs, stim_bins);
         [corrected_fr_r, corrected_fr_z, corrected_fr_z_oldshufs] =  ...
             deal(zeros(length(fbands),1));
-        coarse_lookup = zeros(length(fbands), stim_bins);
+
+        if isempty(trial_spk_phase)
+            % Save variables and figure
+            save(strcat(fn_prefix, '_corrected_phase_response_5_bins'), ...
+            'corrected_fr_bin', 'corrected_fr_r', 'corrected_fr_z', 'corrected_fr_shufs', 'corrected_fr_z_oldshufs');
+            continue
+        end
 
         this_fig = figure('WindowState', 'maximized');
         for iF = 1:length(fbands)
-            [~,~,bins] = histcounts(nonstim_causal_phase(iF,:), fine_bins);
-            for iB = 1:nonstim_bins
-                nonstim_lookup(iF,iB) = mean(od.trial_nonstim.fr(bins == iB) - ...
-                    od.trial_nonstim.bfr(bins == iB));
-            end
-            [~,~,bins] = histcounts(nonstim_causal_phase(iF,:), phase_bins);
-            for iB = 1:stim_bins
-                coarse_lookup(iF,iB) = mean(od.trial_nonstim.fr(bins == iB) - ...
-                    od.trial_nonstim.bfr(bins == iB));
-            end
-            clear bins idx
+            nbins = ceil((1/mean(fbands{iF}))/bin_width); % bin count is different for each frequency band 
+            ns_bins =  -pi:2*pi/nbins:pi;
+            ns_ticks = 0.5*(ns_bins(1:end-1) + ns_bins(2:end));
+            ns_lookup = zeros(1,nbins);
+
+            [ns_counts,~,bins] = histcounts(trial_spk_phase(iF,:), ns_bins);
+            % Convert ns_counts to firing rate (Hz) (This is not as
+            % trivial as ns_counts/bin_width; it is how many times does a
+            % phase_bin occur within 10 msec or whatever window size we are
+            % using
+            ns_fr = ns_counts*bin_width/nbins;
+                
+            ns_lookup(1:end-1) = diff(ns_fr);
+            ns_lookup(end) = ns_fr(1) - ns_fr(end); % Since phase is circular;
             
             this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
-            [~,~,this_lookup_bin] = histcounts(this_phase, fine_bins);
+            [~,~,this_lookup_bin] = histcounts(this_phase, ns_bins);
             
             % Apply corrections
-            for iB = 1:nonstim_bins
+            for iB = 1:nbins
                 idx = find(this_lookup_bin == iB);
-                all_fr(idx) = all_fr(idx) - nonstim_lookup(iF,iB);
+                all_fr(idx) = all_fr(idx) - ns_lookup(iB);
             end
             
             [this_count, ~, this_bin] = histcounts(this_phase, phase_bins);
@@ -119,41 +129,50 @@ function doStuff
             corrected_fr_z_oldshufs(iF) = (corrected_fr_r(iF) - mean(q3))/std(q3);
             clear q0 q1 q2 q3 this_bin this_count
 
-            ax = subplot(4,5,(iF-1)*5+1);
-            xlabel('Phase Bin')
-            ylabel('{\Delta} FR')
-            bar(ax,fine_ticks,nonstim_lookup(iF,:),1,c_list{iF});
-            ax.Title.String = sprintf('%d - %d Hz Non Stim Lookup', ...
-                fbands{iF}(1), fbands{iF}(2));
+            ax = subplot(4,5,(iF-1)*5+2);
+            bar(ax,ns_ticks,ns_fr,1,c_list{iF});
+%             ax.Title.String = sprintf('%d - %d Hz 10 msec binning', ...
+%                 fbands{iF}(1), fbands{iF}(2));
+            ax.Title.String = sprintf('Sum: %.2f, Mean: %.2f', sum(ns_fr), mean(ns_fr));
+            if iF == 3
+                xlabel('Phase Bin')
+                ylabel('FR')
+            end
             ax.XLim = [-3.25 3.25];
 
-            ax = subplot(4,5,(iF-1)*5+2);
-            xlabel('Phase Bin')
-            ylabel('{\Delta} FR')
-            bar(ax,x_ticks,coarse_lookup(iF,:),1,c_list{iF});
-            ax.Title.String = 'Coarse nonStim Lookup';
+            ax = subplot(4,5,(iF-1)*5+3);
+            bar(ax,ns_ticks,ns_lookup,1,c_list{iF});
+            ax.Title.String = sprintf('%d - %d Hz Lookup', ...
+                fbands{iF}(1), fbands{iF}(2));
+            if iF == 3
+                xlabel('Phase Bin')
+                ylabel('{\Delta} FR')
+            end
             ax.XLim = [-3.25 3.25];
 
             % Plot the PLV distribution
-            ax = subplot(4,5,(iF-1)*5+3);
-            if ~isempty(trial_spk_phase)
-                [count,~,~] = histcounts(trial_spk_phase(iF,:), fine_bins);
-                bar(ax,fine_ticks,count,1,c_list{iF});
-                ax.Title.String = 'PLV distribution';
-                ax.XLim = [-3.25 3.25];
+            ax = subplot(4,5,(iF-1)*5+1);
+            [count,~,~] = histcounts(trial_spk_phase(iF,:), fine_bins);
+            bar(ax,fine_ticks,count,1,c_list{iF});
+            if iF == 3
+                xlabel('Phase Bin')
+                ylabel('Spike Count')
             end
+%             ax.Title.String = 'PLV distribution';
+            ax.Title.String = sprintf('Sum: %.2f, Mean: %.2f', sum(count), mean(count));
+            ax.XLim = [-3.25 3.25];
             
             ax = subplot(4,5,(iF-1)*5+4);
+            bar(ax,x_ticks,out.fr.bin(iF,:),1,c_list{iF});
             xlabel('Phase Bin')
             ylabel('{\Delta} FR')
-            bar(ax,x_ticks,out.fr.bin(iF,:),1,c_list{iF});
             ax.Title.String = 'Original {\Delta FR}';
             ax.XLim = [-3.25 3.25];
 
             ax = subplot(4,5,(iF-1)*5+5);
+            bar(ax,x_ticks,corrected_fr_bin(iF,:),1,c_list{iF});
             xlabel('Phase Bin')
             ylabel('{\Delta} FR')
-            bar(ax,x_ticks,corrected_fr_bin(iF,:),1,c_list{iF});
             ax.Title.String = 'Corrected {\Delta FR}';
             ax.XLim = [-3.25 3.25];  
         end
