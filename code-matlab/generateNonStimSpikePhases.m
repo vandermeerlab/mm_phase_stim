@@ -116,47 +116,46 @@ function doStuff
                 end
             end
         end
-    end
-        
+
+        phase_out = [];
+        phase_out.binned_spk_count = squeeze(sum(all_sc_phase,1,'omitnan'));
+        phase_out.binned_fr = squeeze(mean(all_fr_phase,1,'omitnan'));
+        % Saving the lookup
+        phase_out.ns_lookup = phase_out.binned_fr;
+        phase_out.ns_lookup(:,1:end-1) = diff(phase_out.binned_fr,[],2);
+        phase_out.ns_lookup(:,end) = phase_out.binned_fr(:,1) - phase_out.binned_fr(:,end);
     
-    phase_out = [];
-    phase_out.binned_spk_count = squeeze(sum(all_sc_phase,1,'omitnan'));
-    phase_out.binned_fr = squeeze(mean(all_fr_phase,1,'omitnan'));
-    % Saving the lookup
-    phase_out.ns_lookup = phase_out.binned_fr;
-    phase_out.ns_lookup(:,1:end-1) = diff(phase_out.binned_fr,[],2);
-    phase_out.ns_lookup(:,end) = phase_out.binned_fr(:,1) - phase_out.binned_fr(:,end);
-
-    phase_out.real_mfr = sanity_spk/sanity_t;
-    phase_out.spk_count = sanity_spk;
-    phase_out.all_spk_phase = all_spk_phase;
-
-
-%     % Sanity plot: Uncomment to debug
-%     fig = figure('WindowState', 'maximized');
-%     for iF = 1:length(fbands)
-%         subplot(3,3,3*(iF-1)+1)
-%         bar(ns_ticks,phase_out.binned_spk_count(iF,:),1, c_list{iF});
-%         xlabel('Phase Bins')
-%         ylabel('Spike Count')
-%         title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-% 
-%         subplot(3,3,3*(iF-1)+2)
-%         bar(ns_ticks,phase_out.binned_fr(iF,:),1, c_list{iF});
-%         xlabel('Phase Bins')
-%         ylabel('Firing rate (Hz)')
-%         title(sprintf('Mean FR: %.2f Hz', mean(phase_out.binned_fr(iF,:))))
-% 
-%         subplot(3,3,3*(iF-1)+3)
-%         bar(ns_ticks,phase_out.ns_lookup(iF,:),1, c_list{iF});
-%         xlabel('Phase Bins')
-%         ylabel('Spike Count')
-%         title('NS Lookup')
-%     end
-%     sgtitle(sprintf('Real Mean Firing rate: %.2f', phase_out.real_mfr));
-%     close(fig)
-%     
+        phase_out.real_mfr = sanity_spk/sanity_t;
+        phase_out.spk_count = sanity_spk;
+        phase_out.all_spk_phase = all_spk_phase;
+    
+    
+    %     % Sanity plot: Uncomment to debug
+    %     fig = figure('WindowState', 'maximized');
+    %     for iF = 1:length(fbands)
+    %         subplot(3,3,3*(iF-1)+1)
+    %         bar(ns_ticks,phase_out.binned_spk_count(iF,:),1, c_list{iF});
+    %         xlabel('Phase Bins')
+    %         ylabel('Spike Count')
+    %         title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    % 
+    %         subplot(3,3,3*(iF-1)+2)
+    %         bar(ns_ticks,phase_out.binned_fr(iF,:),1, c_list{iF});
+    %         xlabel('Phase Bins')
+    %         ylabel('Firing rate (Hz)')
+    %         title(sprintf('Mean FR: %.2f Hz', mean(phase_out.binned_fr(iF,:))))
+    % 
+    %         subplot(3,3,3*(iF-1)+3)
+    %         bar(ns_ticks,phase_out.ns_lookup(iF,:),1, c_list{iF});
+    %         xlabel('Phase Bins')
+    %         ylabel('{\Delta} FR')
+    %         title('NS Lookup')
+    %     end
+    %     sgtitle(sprintf('Real Mean Firing rate: %.2f', phase_out.real_mfr));
+    %     close(fig)
+    %     
+    
     % Assume you are in the correct folder
     save(strcat(fn_prefix, '_nonstim_spk_phases'),'phase_out'); % should add option to save in specified output dir
-
+    end
 end

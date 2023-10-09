@@ -44,7 +44,7 @@ vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 % Significance mask
 z_thresh = 2;
 sig_mask = (summary.fr_z > z_thresh);
-%% Figure6A: Scatter plot of depth vs PLV
+%% Figure6 (Optional/Extended): Scatter plot of depth vs PLV
 pl_thresh = 0.99;
 pl_mask = summary.phaselock_pct >= pl_thresh;
 
@@ -84,7 +84,7 @@ fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{1}(1), fbands{1}(2), r
 fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
 fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
 
-%% Figure6B: Scatter plot of neurons with significant PLV and mod_strength as well as Z_score (version 1)
+%% Figure6A: Scatter plot of neurons with significant PLV and mod_strength as well as Z_score (version 1)
 pl_thresh = 0.99;
 pl_mask = summary.phaselock_pct >= pl_thresh;
 z_thresh = 2;
@@ -96,17 +96,19 @@ for iF = 1:length(fbands)
     keep = dStr_mask & pl_mask(:,iF);
     keep_sig = dStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
     scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
     scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
     keep = vStr_mask & pl_mask(:,iF);
     keep_sig = vStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
     scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
     scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
     xlim([-0.05 0.6])
     ylim([0 0.8])
+    xticks([0 0.6])
+    yticks([0 0.8])
     ylabel('Phase Locking Value')
     xlabel('Modulation strength')
     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
@@ -119,17 +121,19 @@ for iF = 1:length(fbands)
     keep = dStr_mask & pl_mask(:,iF);
     keep_sig = dStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
     scatter(summary.fr_z(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
 %     scatter(summary.phaselock_plv(keep_sig), summary.fr_z(keep_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
 %         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
     keep = vStr_mask & pl_mask(:,iF);
     keep_sig = vStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
     scatter(summary.fr_z(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
 %     scatter(summary.phaselock_plv(keep_sig), summary.fr_z(keep_sig,iF) , 'MarkerFaceColor', c_list{iF}, ...
 %         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
-    xlim([-3 12])
+    xlim([-2.5 8])
     ylim([0 0.8])
+    xticks([-2 2 8])
+    yticks([0 0.8])
     xline(2, '--black')
     ylabel('Phase Locking Value')
     xlabel('Z-scored modulation strength')
@@ -163,7 +167,7 @@ fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{1}
 fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
 fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
 
-%% Figure6B: Scatter plot of neurons with significant PLV and mod_strength as well as Z_score (version 2)
+%% Figure6A: Scatter plot of neurons with significant PLV and mod_strength (version 2)
 pct_thresh = 0.99;
 pl_mask = summary.phaselock_pct >= pct_thresh;
 z_thresh = 2;
@@ -175,17 +179,19 @@ for iF = 1:length(fbands)
     keep = dStr_mask & pl_mask(:,iF);
     keep_sig = dStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
     scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
     scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 0, 'SizeData', 50);
     keep = vStr_mask & pl_mask(:,iF);
     keep_sig = vStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
     scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
     scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
-    xlim([-0.05 0.6])
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 50);
+    xlim([0 0.6])
     ylim([0 0.8])
+    xticks([0 0.6])
+    yticks([0 0.8])
     ylabel('Phase Locking Value')
     xlabel('Modulation strength')
     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
@@ -208,7 +214,7 @@ fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fban
 fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
 fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
 
-%% Figure 6C: Input to the Venn diagrams to show phase dependent excitability and phase locking
+%% Input to the Venn diagrams to show phase dependent excitability and phase locking
 pct_thresh = 0.99;
 z_thresh = 2;
 sig_mask = summary.fr_z >= z_thresh;
@@ -227,101 +233,7 @@ clc
 [sum(vStr_mask), sum(vStr_mask & sig_mask(:,3)), sum(vStr_mask & pl_mask(:,3)), ...
     sum(vStr_mask & sig_mask(:,3) & pl_mask(:,3))]
 
-
-
-
-%% Figure 6D: Polar Plots (version 1)
-phase_bins = [-pi:2*pi/5:pi];
-bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
-bin_marks = unique(sort(mod(rad2deg(phase_bins +2 * pi),360)));
-
-z_thresh = 2;
-pct_thresh = 0.99;
-sig_mask = summary.fr_z >= z_thresh;
-pl_mask = summary.phaselock_pct >= pct_thresh;
-
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    % Look at the circular description of most excitable phases
-    keep = find(sig_mask(:,iF));
-    this_phase = summary.excitable_phase(keep);
-    this_theta = bin_centers(this_phase);
-    this_rho = summary.fr_r(keep,iF);
-    ax = subplot(2,3,iF);
-    for iC = 1:length(this_theta)
-        polarplot([this_theta(iC) this_theta(iC)], [0 this_rho(iC)], 'Color', 'black', 'Marker', 'o', 'MarkerSize', 10);
-        hold on;
-    end
-    thetaticks(bin_marks);
-    mean_angle = circmean(this_theta); 
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'black', 'LineWidth',2)
-    rlim([0, 0.6])
-    title(sprintf('Opto-stim phase excitability %d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-
-
-    % Look at the circular distribution of phase-locked neurons
-    keep = find(pl_mask(:,iF));
-    this_phase = summary.phaselock_mean_phase(keep,iF);
-    this_rho = summary.phaselock_plv(keep,iF);
-    ax = subplot(2,3,iF+3);
-    for iC = 1:length(this_phase)
-        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', 'black');
-        hold on;
-    end
-    thetaticks(bin_marks);
-    mean_angle = circmean(this_phase); 
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'black', 'LineWidth',2)
-    rlim([0, 0.6])
-    title(sprintf('Phase-Locking %d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-end
-
-%% Figure 6D: Polar Plots (version 2)
-phase_bins = [-pi:2*pi/5:pi];
-bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
-bin_marks = unique(sort(mod(rad2deg(phase_bins +2 * pi),360)));
-
-z_thresh = 2;
-pct_thresh = 0.99;
-sig_mask = summary.fr_z >= z_thresh;
-pl_mask = summary.phaselock_pct >= pct_thresh;
-
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    % Look at the circular description of most excitable phases
-    keep = find(sig_mask(:,iF));
-    this_phase = summary.excitable_phase(keep);
-    this_theta = bin_centers(this_phase);
-    ax = subplot(2,3,iF);
-    for iBin = 1:5
-        count = sum(this_phase == iBin);
-        if count > 0 
-            polarplot([bin_centers(iBin), bin_centers(iBin)], [0 count/length(this_phase)], 'Color', 'red', 'LineWidth', 4);
-            hold on;
-        end
-    end
-    thetaticks(bin_marks);
-    mean_angle = circmean(this_theta); 
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'black', 'LineWidth',2)
-%     rlim([0, 0.6])
-    title(sprintf('Opto-stim phase excitability %d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-
-    % Look at the circular distribution of phase-locked neurons
-    keep = find(pl_mask(:,iF));
-    this_phase = summary.phaselock_mean_phase(keep,iF);
-    this_rho = summary.phaselock_plv(keep,iF);
-    ax = subplot(2,3,iF+3);
-    for iC = 1:length(this_phase)
-        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', 'black');
-        hold on;
-    end
-    thetaticks(bin_marks);
-    mean_angle = circmean(this_phase); 
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'black', 'LineWidth',2)
-    rlim([0, 0.6])
-    title(sprintf('Phase-Locking %d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-end
-
-%% Figure 6D: Polar Plots (version 3)
+%% Figure 6C: Polar Plots (version 3)
 phase_bins = [-pi:2*pi/5:pi];
 bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
 bin_marks = unique(sort(mod(rad2deg(phase_bins +2 * pi),360)));
@@ -349,10 +261,13 @@ for iF = 1:length(fbands)
         end
     end
     thetaticks(bin_marks);
-    mean_angle = circmean(this_theta); 
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'red', 'LineWidth',2)
-    rlim([0, 0.6])
-    title(sprintf('Opto-stim phase excitability %d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
+    mean_angle = circmean(this_theta);
+    mean_rho = mean(this_rho);
+    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'red', 'LineStyle', '--')
+    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'red', 'LineWidth', 3)
+    rlim([0, 0.5])
+    rticks([0 0.25 0.5])
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
 
     % Look at the circular distribution of phase-locked neurons
     keep = find(pl_mask(:,iF));
@@ -360,14 +275,16 @@ for iF = 1:length(fbands)
     this_rho = summary.phaselock_plv(keep,iF);
     ax = subplot(2,3,iF+3);
     for iC = 1:length(this_phase)
-        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', 'black');
+        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', [0.6 0.6 0.6]);
         hold on;
     end
     thetaticks(bin_marks);
     mean_angle = circmean(this_phase); 
     mean_rho = mean(this_rho);
-    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'black', 'LineWidth',2)
+    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'black', 'LineStyle', '--')
+    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'black', 'LineWidth', 3)
     rlim([0, 0.8])
+    rticks([0 0.4 0.8])
     rticklabels
     
     keep = find(pl_mask(:,iF) & sig_mask(:,iF));
@@ -379,22 +296,86 @@ for iF = 1:length(fbands)
     end
     mean_angle = circmean(this_phase);
     mean_rho = mean(this_rho);
-    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'red', 'LineWidth',2)
+    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'red', 'LineStyle', '--')
+    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'red', 'LineWidth', 3)
     rlim([0, 0.8])
-    title(sprintf('Phase-Locking %d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
+    rticks([0 0.4 0.8])
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
 end
 
-%% Figure 6E: For neurons that are both phase locked and significantly phase modulated, how do they show up in the non_stim test
+%% Figure 6D Scatter between mean_phase and most_excitable phase
+[mean_angles, max_ex_angles, foi, locs] = deal([]);
+z_thresh = 2;
+pct_thresh = 0.99;
+sig_mask = summary.fr_z >= z_thresh;
+pl_mask = summary.phaselock_pct >= pct_thresh;
+phase_bins = [-pi:2*pi/5:pi];
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
 for iF = 1:3
-    subplot(1,3,iF)
-    scatter(summary.fr_r(:,iF), summary.c_fr_r(:,iF), 'SizeData', 200, ...
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = [mean_angles, summary.phaselock_mean_phase(keep,iF)'];
+    max_ex_angles = [max_ex_angles, bin_centers(summary.excitable_phase(keep,iF)')];
+    foi = [foi, repmat(iF,1, sum(keep))];
+    locs = [locs, dStr_mask(keep)'];
+end
+
+fig = figure('WindowState', 'maximized');
+for iF = 1:3
+    idx = find(foi == iF);
+    scatter(max_ex_angles(idx), mean_angles(idx), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
+    hold on
+
+end
+xlim([-3.25 3.25])
+ylim([-3.25 3.25])
+xticks([-pi,0,pi])
+yticks([-pi,0,pi])
+xticklabels({'-{\pi}','0','{\pi}'})
+yticklabels({'-{\pi}','0','{\pi}'})
+ylabel('Mean phase')
+xlabel('Most excitable phase')
+ax = gca;
+ax.TickDir = 'out';
+ax.TickLength(1) = 0.03;
+ax.Box = 'off';
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+[r, p] = circ_corrcc(mean_angles, max_ex_angles);
+%% Figure 6-Extended: For neurons that are both phase locked and significantly phase modulated, how do they show up in the non_stim test
+fig = figure('WindowState', 'maximized');
+for iF = 1:3
+%     subplot(2,3,iF)
+%     scatter(summary.fr_r(:,iF), summary.c_fr_r(:,iF), 'SizeData', 100, ...
+%         'MarkerFaceColor', c_list{iF}, 'MarkerFaceAlpha', 0.25, 'MarkerEdgeAlpha', 0)
+%     xlabel('Original Mod. Strength')
+%     ylabel('Corrected Mod. Strength')
+%     xlim([0 0.8])
+%     ylim([0 0.8])
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+
+    ax = subplot(1,3,iF);
+    scatter(summary.fr_z(:,iF), summary.c_fr_z(:,iF), 'SizeData', 200, ...
         'MarkerFaceColor', c_list{iF}, 'MarkerFaceAlpha', 0.25, 'MarkerEdgeAlpha', 0)
-    xlabel('Original Mod. Strength')
-    ylabel('Corrected Mod. Strength')
-    xlim([0 0.8])
-    ylim([0 0.8])
+    xlabel('Original Z score')
+    ylabel('Corrected Z score')
+    hold on
+    plot([2,2], [-3,2], '--black')
+    plot([2,12], [2,2], '--black')
+    plot([-3,2], [2,2], '--black')
+    plot([2,2], [2,12], '--black')
+    xlim([-2.5 10])
+    ylim([-2.5 10])
+    xticks([-2 2 10])
+    yticks([-2 2 10])
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
 end
+
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 %% Version 1
 z_thresh= 2;
 pct_thresh = 0.99;
@@ -429,7 +410,6 @@ pl_mask = summary.phaselock_pct > pct_thresh;
 
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
-    pct_change = 
     ax = subplot(1,3,iF);
     hold onv 
     plot([1 2], [summary.fr_r(dStr_mask,iF), summary.c_fr_r(dStr_mask,iF)], ...
@@ -549,12 +529,12 @@ function s_out = doStuff(s_in)
         s_out.c_fr_z_old = [s_out.c_fr_z_old; corrected_fr_z_oldshufs'];
         s_out.c_fr_z = [s_out.c_fr_z; corrected_fr_z'];
         s_out.c_fr_r = [s_out.c_fr_r; corrected_fr_r'];
-        [~, corrected_ex_phase] = max(corrected_fr_bin);
+        [~, corrected_ex_phase] = max(corrected_fr_bin, [] ,2);
         s_out.corrected_ex_phase = [s_out.corrected_ex_phase; corrected_ex_phase'];
 
         % Load the phase locking stuff
-        fn_prefix = strrep(fn_prefix, '_', '-');
         load(strcat(fn_prefix, '_spike_phaselock_causal_plv.mat'));
+        fn_prefix = strrep(fn_prefix, '_', '-');
         load(strcat(fn_prefix, '_shuf_spec_circ_plv.mat')); % First circularly shifted and then subsampled
 %         load(strcat(fn_prefix, '_shuf_spec_circ2_plv.mat')); % Uniform
         load(strcat(fn_prefix, '_shuf_spec_plv.mat'));  % Uniformly distributed fake spikes
@@ -587,11 +567,13 @@ function s_out = doStuff(s_in)
         [this_pct, this_circ_pct, this_circ2_pct, this_ex_phase, ...
             this_z, this_circ_z, this_circ2_z, this_ns_ex_phase,] = deal(zeros(1,length(fbands)));
         for iF = 1:length(fbands)
-            if isempty(trial_subsampled_plv)
+            if isnan(trial_subsampled_plv(iF))
                 this_pct(iF) = nan;
                 this_z(iF) = nan;
                 this_circ_pct(iF) = nan;
                 this_circ_z(iF) = nan;
+%                 fprintf("There are only %d spikes in %s!\n", ...
+%                     size(trial_spk_phase,2), fn_prefix);
 %                 this_circ2_pct(iF) = nan;
 %                 this_circ2_z(iF) = nan;
             else
@@ -607,7 +589,7 @@ function s_out = doStuff(s_in)
             this_ex_phase(iF) = midx;
         end
       
-        if isempty(trial_subsampled_plv) %this_pct is all nans in this case
+        if isnan(trial_subsampled_plv(iF)) %this_pct is all nans in this case
             s_out.phaselock_z = [s_out.phaselock_z; this_pct];
             s_out.phaselock_pct = [s_out.phaselock_pct; this_pct];
             s_out.phaselock_max_shufplv = [s_out.phaselock_max_shufplv; this_pct];
