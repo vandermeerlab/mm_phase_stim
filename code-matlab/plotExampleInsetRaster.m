@@ -39,7 +39,13 @@ function doStuff(label)
 %     fbands = {[2 5], [6 10], [12 30], [30 55]};
     fbands = {[2 5], [6 10], [30 55]};
     c_list = {'red', 'cyan','magenta', 'green', 'blue'}; % One color for each phase bin
-    c_rgb = {[1 0 0], [0 1 1], [1 0 1], [0 1 0], [0 0 1]};
+    temp = linspecer(nbins);
+    c_rgb = {};
+    for iB = 1:nbins
+        c_rgb{iB} = temp(iB,:);
+    end
+%     c_rgb = {[1 0 0], [0 1 1], [1 0 1], [0 1 0], [0 0 1]};
+    clear temp
     
     % Remove spikes during short stim times
     if contains(ExpKeys.light_source, 'LASER')
@@ -115,7 +121,7 @@ function doStuff(label)
             [~, ~, this_bin] = histcounts(this_phase, phase_bins);
             for iT = 1:max_trials
                    fill([-10,-10,10,10],[iT-0.5,iT+0.5,iT+0.5,iT-0.5], ...
-                       c_list{this_bin(start_idx+iT)}, 'FaceAlpha', 0.25, 'LineStyle', 'none')
+                       c_rgb{this_bin(start_idx+iT)}, 'FaceAlpha', 0.25, 'LineStyle', 'none')
             end
             % Use MultiRaster to do this, because why not
             fake_S = this_cell;
@@ -129,8 +135,8 @@ function doStuff(label)
             cfg.openNewFig = 0;
             MultiRaster(cfg,fake_S);
           
-            xline(0, '--black', 'LineWidth', 1);
-            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--black', 'LineWidth', 1)
+            xline(0, '--cyan', 'LineWidth', 1);
+            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--cyan', 'LineWidth', 1)
             ylabel('Trials colored by LFP Phase at stim');
             xticks([-10 0 10])
             ylim([0.5 max_trials+0.5])

@@ -7,9 +7,10 @@ for iM  = 1:length(mice)
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-        this_label = 'M017-2019-02-16-TT04_2.t'; %dStr example, high mod strength but not sig
-%         this_label = 'M019-2019-04-14-TT08_1.t'; %dStr example, high mod strength but not sig
-%         this_label = 'M019-2019-04-14-TT05_1.t';
+%         this_label = 'M019-2019-04-14-TT05_1.t'; % vStr Didactic example; choose trials 810-835 for inset
+%         this_label = 'M016-2019-02-18-TT04_1.t'; % vStr
+        this_label = 'M018-2019-04-14-TT03_1.t'; % vStr
+%         this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
         doStuff(this_label)
     end
 
@@ -41,7 +42,13 @@ function doStuff(label)
 %     fbands = {[2 5], [6 10], [12 30], [30 55]};
     fbands = {[2 5], [6 10], [30 55]};
     c_list = {'red', 'cyan','magenta', 'green', 'blue'}; % One color for each phase bin
-    c_rgb = {[1 0 0], [0 1 1], [1 0 1], [0 1 0], [0 0 1]};
+    temp = linspecer(nbins);
+    c_rgb = {};
+    for iB = 1:nbins
+        c_rgb{iB} = temp(iB,:);
+    end
+%     c_rgb = {[1 0 0], [0 1 1], [1 0 1], [0 1 0], [0 0 1]};
+    clear temp
     
     % Remove spikes during short stim times
     if contains(ExpKeys.light_source, 'LASER')
@@ -121,13 +128,19 @@ function doStuff(label)
             cfg.openNewFig = 0;
             MultiRaster(cfg,fake_S);
             hold on
-            xline(0, 'cyan', 'LineWidth', 1);
-            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, 'cyan', 'LineWidth', 1)
-            ylabel('Trial #');
+            xline(0, '--cyan', 'LineWidth', 1);
+            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--cyan', 'LineWidth', 1)
             yticks([0 length(this_on_events)])
+            xticks([-10 0 10])
             ylim([0 length(this_on_events)])
             xlim([-10 10]);
+            % Plot the box around the inset trials (only for the didactic example)
+            plot([-10 10], [810 810], 'Color', 'black', 'LineWidth', 2);
+            plot([-10 10], [835 835], 'Color', 'black', 'LineWidth', 2);
+            plot([-10 -10], [810 835], 'Color', 'black', 'LineWidth', 2);
+            plot([10 10], [810 835], 'Color', 'black', 'LineWidth', 2);
             xlabel("Time (ms)")
+            ylabel('Trial #');
             ax.Box = 'off';
             ax.TickDir = 'out';
             ax.TickLength = [0.03 0.02];
@@ -154,7 +167,7 @@ function doStuff(label)
         plot(psd.freq, 10*log10(psd.irasa), '--black', 'LineWidth', 1.5);
         xlim([0 100])
 %         yticklabels([])
-%         yticks([])
+%         yticks([0 length(this_on_events)])
         ylabel('PSD')
         xlabel('Frequency (Hz)')
         ax.Box = 'off';
@@ -187,11 +200,11 @@ function doStuff(label)
                 end
                 if iBin == 1
                    fill([-10,-10,10,10],[0,sum(this_count(1:iBin)),sum(this_count(1:iBin)),0], ...
-                       c_list{iBin}, 'FaceAlpha', 0.25, 'LineStyle', 'none')
+                       c_rgb{iBin}, 'FaceAlpha', 0.5, 'LineStyle', 'none')
                 else
                     fill([-10,-10,10,10],[sum(this_count(1:iBin-1)),sum(this_count(1:iBin)), ...
                         sum(this_count(1:iBin)),sum(this_count(1:iBin-1))], ...
-                       c_list{iBin}, 'FaceAlpha', 0.25, 'LineStyle', 'none')
+                       c_rgb{iBin}, 'FaceAlpha', 0.5, 'LineStyle', 'none')
                 end
             end
             assert(tc == goodTrials(2) - goodTrials(1) + 1, "All trials are not regrouped");
@@ -199,11 +212,12 @@ function doStuff(label)
             cfg.SpikeHeight = 0.48;
             cfg.openNewFig = 0;
             MultiRaster(cfg,fake_S2);
-            xline(0, '--red', 'LineWidth', 1);
-            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--red', 'LineWidth',1)
+            xline(0, '--cyan', 'LineWidth', 1);
+            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--cyan', 'LineWidth',1)
             hold on
             xlabel("Time (ms)")
-%             yticklabels([])
+            yticks([0 length(this_on_events)])
+            xticks([-10 0 10])
             ax.XLim = [-10 10];
             ax.YLim = goodTrials;
             if iF == 1
@@ -226,7 +240,7 @@ function doStuff(label)
             hold on
             b = bar(delta_fr(iF,:),1, 'EdgeColor', 'none');
             b.FaceColor = 'flat';
-            b.FaceAlpha = 0.25;
+            b.FaceAlpha = 0.5;
             for iBin = 1:nbins
                 b.CData(iBin,:) = c_rgb{iBin};
             end
@@ -239,8 +253,8 @@ function doStuff(label)
             qz2 = 2*std(q3)+ mean(q3);
             [qmin, min_idx] = min(out.fr.bin(iF,:));
             [qmax, max_idx] = max(out.fr.bin(iF,:));
-            qoff = qmin + qmin*(qz2 + 1)/(1 - qz2);
-            plot([min_idx, 5.8], [qmin, qmin], '--black')
+            qoff = qmin*(qz2 + 1)/(1 - qz2);
+            plot([min_idx, 5.8], [qmin, qmin], '--black')   
             plot([max_idx, 5.8], [qmax, qmax], '--black')
             errorbar(6, 0.5*(qmax+qmin), 0.5*(qmax-qmin), 'black', 'LineStyle', 'none');
             errorbar(6.25, 0.5*(qoff+qmin), 0.5*(qoff-qmin), 'red', 'LineStyle', 'none');
@@ -255,8 +269,9 @@ function doStuff(label)
             else
                 ax.YLabel.String = {};
             end
-            ax.XLabel.String = 'Phase Bin';
-            ax.YLim = [0 140]; % Need to change this in a case by case basis
+            ylim([0 100]); % Need to change this in a case by case basis
+            yticks([0 50 100]);
+            ax.XLabel.String = 'Phase bin';
             ax.Box = 'off';
             ax.TickLength = [0.06 0.02];
             ax.XAxis.FontSize = tickLabelFS;
@@ -291,7 +306,7 @@ function doStuff(label)
 %         close(fig2)
 
         % Need to pause here for this to work
-        pause(5)
+        pause(2)
         % Manual plot manipulation to make the final figure looks pretty
         % Make a copy of original positions
         daxs_in = [];
@@ -322,7 +337,7 @@ function doStuff(label)
         axs(8).Position(3) = axs(7).Position(3);
 
         exportgraphics(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
-        savefig(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase'));
+%         savefig(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase'));
 %         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
 %         print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-CellReport'));
         close;
