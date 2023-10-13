@@ -10,8 +10,8 @@ mpl.rcParams['pdf.fonttype'] = 42
 # Change the font to Arial 
 mpl.rcParams['font.family'] = 'Arial'
 
-# Change the font size to 20
-mpl.rcParams['font.size'] = 25
+# Change the font size to 30
+mpl.rcParams['font.size'] = 30
 
 
 filepath1 = os.path.join('C:','Users','mvdmlab','Desktop','dStr_sig.csv')
@@ -21,22 +21,24 @@ dStr_data = pd.read_csv(filepath1, index_col=[0,1,2])
 vStr_data = pd.read_csv(filepath2, index_col=[0,1,2])
 
 
-fig = plt.figure(figsize=(18, 15))
-ax = up.plot(dStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input', show_percentages=True, orientation = 'vertical', element_size=None)
-ax['totals'].set_yticks([0,8,15])
+fig = plt.figure(figsize=(21, 15))
+ax = up.plot(dStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input', show_counts=True, show_percentages=True, orientation = 'vertical', element_size=None)
+ax['totals'].set_yticks([0,15])
 ax['totals'].set_ylabel('Totals')
 ax['intersections'].set_ylabel('Count')
+ax['intersections'].set_xticks([0,15])
 ax['totals'].tick_params('both', length=20, which='major')
 ax['intersections'].tick_params('both', length=20, which='major')
 plt.suptitle('dStr')
 # Save figure
 plt.savefig(os.path.join('C:','Users','mvdmlab','Desktop','dStr_summary.pdf'))
 
-fig = plt.figure(figsize=(18, 15))
-ax = up.plot(vStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input', show_percentages=True, orientation = 'vertical', element_size=None)
-ax['totals'].set_yticks([0,20,40])
+fig = plt.figure(figsize=(21, 15))
+ax = up.plot(vStr_data, fig=fig, sum_over='Count', sort_by='input', sort_categories_by='-input', show_counts=True, show_percentages=True, orientation = 'vertical', element_size=None)
+ax['totals'].set_yticks([0,36])
 ax['totals'].set_ylabel('Totals')
 ax['intersections'].set_ylabel('Count')
+ax['intersections'].set_xticks([0,36])
 ax['totals'].tick_params('both', length=20, which='major')
 ax['intersections'].tick_params('both', length=20, which='major')
 plt.suptitle('vStr')
