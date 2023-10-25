@@ -22,7 +22,6 @@ end
 fbands = {[2 5], [6 10], [30 55]};
 c_list = {'red', 'blue', 'green'};
 
-
 % Load the list of final opto cells
 load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
 dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
@@ -126,16 +125,12 @@ fig.Renderer = 'painters'; % makes sure tht the figure is exported with customiz
 [r5,p5] = corr(summary.fr_z(:,2), summary.depth);
 [r6,p6] = corr(summary.fr_z(:,3), summary.depth);
 
-
 fprintf("%d - %d Hz, modCorr : %.2f, p-value: %.3f,\t\t z_corr : %.2f, p-value: %.3f" + ...
     "\n", fbands{1}(1), fbands{1}(2), r1, p1, r4, p4);
 fprintf("%d - %d Hz, modCorr : %.2f, p-value: %.3f,\t\t z_corr : %.2f, p-value: %.3f" + ...
     "\n", fbands{2}(1), fbands{2}(2), r2, p2, r5, p5);
 fprintf("%d - %d Hz, modCorr : %.2f, p-value: %.3f,\t\t z_corr : %.2f, p-value: %.3f" + ...
     "\n", fbands{3}(1), fbands{3}(2), r3, p3, r6, p6);
-
-
-
 
 %%
 function s_out = doStuff(s_in)

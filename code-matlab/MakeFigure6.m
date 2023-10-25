@@ -105,7 +105,7 @@ for iF = 1:length(fbands)
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
     scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
-    xlim([-0.05 0.6])
+    xlim([0 0.6])
     ylim([0 0.8])
     xticks([0 0.6])
     yticks([0 0.8])
@@ -214,6 +214,39 @@ fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fban
 fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
 fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
 
+%% Figure6A: Scatter plot of neurons with significant PLV and mod_strength (version 3)
+pct_thresh = 0.99;
+pl_mask = summary.phaselock_pct >= pct_thresh;
+z_thresh = 2;
+sig_mask = (summary.fr_z > z_thresh);
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(1,3,iF);
+    hold on
+    keep = pl_mask(:,iF) &  sig_mask(:,iF);
+    scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
+    plot([-1 1], [-1 1], '--black')
+    [r1,p1] = corr(summary.fr_r(keep,iF), summary.phaselock_plv(keep,iF));
+    legend({sprintf('R^{2} = %.2f, p = %.3f', r1,p1), ''}, 'Location', 'northwest')
+    xlim([0 0.8])
+    ylim([0 0.8])
+    xticks([0 0.8])
+    yticks([0 0.8])
+    ylabel('Phase Locking Value')
+    xlabel('Modulation strength')
+    axis square;
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+end
+
+fontname(fig, 'Helvetica')
+fontsize(fig, 30, 'points')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+
 %% Input to the Venn diagrams to show phase dependent excitability and phase locking
 pct_thresh = 0.99;
 z_thresh = 2;
@@ -233,7 +266,7 @@ clc
 [sum(vStr_mask), sum(vStr_mask & sig_mask(:,3)), sum(vStr_mask & pl_mask(:,3)), ...
     sum(vStr_mask & sig_mask(:,3) & pl_mask(:,3))]
 
-%% Figure 6C: Polar Plots (version 3)
+%% Figure 6C: Polar Plots (version1: All, but weighted sum and unweighted sum)
 phase_bins = [-pi:2*pi/5:pi];
 bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
 bin_marks = unique(sort(mod(rad2deg(phase_bins +2 * pi),360)));
@@ -242,6 +275,7 @@ z_thresh = 2;
 pct_thresh = 0.99;
 sig_mask = summary.fr_z >= z_thresh;
 pl_mask = summary.phaselock_pct >= pct_thresh;
+clear i
 
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
@@ -254,20 +288,33 @@ for iF = 1:length(fbands)
     for iBin = 1:5
         temp = find(this_phase==iBin);
         for iC = 1:length(temp)  
-            circ_jit = power(-1, iC)*pi/30; % for better visualization
+            circ_jit = power(-1, iC)*iC*pi/18; % for better visualization        
             polarplot([this_theta(temp(iC))+circ_jit, this_theta(temp(iC))+circ_jit], ...
-                [0 this_rho(temp(iC))], 'red');
+                [0 this_rho(temp(iC))], 'red', 'LineWidth', 1);
             hold on;
         end
     end
-    thetaticks(bin_marks);
+    
+    % Unweighted sum won't have a length
     mean_angle = circmean(this_theta);
-    mean_rho = mean(this_rho);
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'red', 'LineStyle', '--')
-    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'red', 'LineWidth', 3)
-    rlim([0, 0.5])
-    rticks([0 0.25 0.5])
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 1)    
+    % weighted sum will have an angle and a length
+    this_vec = [];
+    for iC = 1:length(this_rho)
+        this_vec(iC) = this_rho(iC) * (cos(this_theta(iC)) + i*sin(this_theta(iC)));
+    end
+    sum_vec = sum(this_vec);
+    w_rho = abs(sum_vec)/length(this_vec);
+    w_theta = angle(sum_vec);
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 1)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 3)
+
+    rlim([0, 0.6])
+    rticks([0 0.3 0.6])
+    rticklabels([])
+    thetaticks(bin_marks);
+    thetaticklabels({})
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
 
     % Look at the circular distribution of phase-locked neurons
     keep = find(pl_mask(:,iF));
@@ -275,33 +322,171 @@ for iF = 1:length(fbands)
     this_rho = summary.phaselock_plv(keep,iF);
     ax = subplot(2,3,iF+3);
     for iC = 1:length(this_phase)
-        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', [0.6 0.6 0.6]);
+        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', [0.6 0.6 0.6], 'LineWidth', 1);
         hold on;
     end
-    thetaticks(bin_marks);
-    mean_angle = circmean(this_phase); 
-    mean_rho = mean(this_rho);
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'black', 'LineStyle', '--')
-    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'black', 'LineWidth', 3)
+     
+    % Unweighted sum won't have a length
+    mean_angle = circmean(this_phase);
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 1)    
+    % weighted sum will have an angle and a length
+    this_vec = [];
+    for iC = 1:length(this_rho)
+        this_vec(iC) = this_rho(iC) * (cos(this_phase(iC)) + i*sin(this_phase(iC)));
+    end
+    sum_vec = sum(this_vec);
+    w_rho = abs(sum_vec)/length(this_vec);
+    w_theta = angle(sum_vec);
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 1)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 3)
     rlim([0, 0.8])
     rticks([0 0.4 0.8])
-    rticklabels
+    rticklabels([])
+    thetaticks(bin_marks);
+    thetaticklabels({})
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
+end
+fontname(fig, 'Helvetica')
+fontsize(fig, 45, 'points')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+
+%% Figure 6C: Polar Plots (version2: All as well as BOTH, but weighted sum and unweighted sum)
+phase_bins = [-pi:2*pi/5:pi];
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
+bin_marks = unique(sort(mod(rad2deg(phase_bins +2 * pi),360)));
+
+z_thresh = 2;
+pct_thresh = 0.99;
+sig_mask = summary.fr_z >= z_thresh;
+pl_mask = summary.phaselock_pct >= pct_thresh;
+clear i
+
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    % Look at the circular description of most excitable phases
+    keep = find(sig_mask(:,iF));
+    keep2 = find(sig_mask(:,iF) & pl_mask(:,iF));
+    keep3 = [];
+    for iC = 1:length(keep)
+        keep3(iC) = sum(keep(iC) == keep2);
+    end
+    this_phase = summary.excitable_phase(keep);
+    this_theta = bin_centers(this_phase);
+    this_rho = summary.fr_r(keep,iF);
+    ax = subplot(2,3,iF);
+    for iBin = 1:5
+        temp = find(this_phase==iBin);
+        temp2 = find(this_phase(keep3==1));
+        temp3 = [];
+        for iC = 1:length(temp)
+            temp3(iC) = sum(temp(iC) == temp2);
+        end
+        for iC = 1:length(temp)  
+            circ_jit = power(-1, iC)*iC*pi/18; % for better visualization        
+            if temp3(iC) == 1
+                polarplot([this_theta(temp(iC))+circ_jit, this_theta(temp(iC))+circ_jit], ...
+                [0 this_rho(temp(iC))], 'green', 'LineWidth', 1);
+                hold on;
+            else
+                polarplot([this_theta(temp(iC))+circ_jit, this_theta(temp(iC))+circ_jit], ...
+                [0 this_rho(temp(iC))], 'red', 'LineWidth', 1);
+                hold on;
+            end
+        end
+    end
     
+    % Unweighted sum won't have a length
+    mean_angle = circmean(this_theta);
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 1)
+    % For both
+    mean_angle = circmean(this_theta(keep3 == 1));
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'blue', 'LineStyle', '--', 'LineWidth', 1)
+    % weighted sum will have an angle and a length
+    this_vec = [];
+    for iC = 1:length(this_rho)
+        this_vec(iC) = this_rho(iC) * (cos(this_theta(iC)) + i*sin(this_theta(iC)));
+    end
+    sum_vec = sum(this_vec);
+    w_rho = abs(sum_vec)/length(this_vec);
+    w_theta = angle(sum_vec);
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 1)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 2)
+    % For both
+    sum_vec = sum(this_vec(keep3 == 1));
+    w_rho = abs(sum_vec)/length(this_vec(keep3 ==1));
+    w_theta = angle(sum_vec);
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'magenta', 'LineStyle', '--', 'LineWidth', 1)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'magenta', 'LineWidth', 2)
+    rlim([0, 0.8])
+    rticks([0 0.4 0.8])
+    rticklabels([])
+    thetaticks(bin_marks);
+    thetaticklabels({})
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
+       
+
+    % Look at the circular distribution of phase-locked neurons
+    keep = find(pl_mask(:,iF));
+    this_phase = summary.phaselock_mean_phase(keep,iF);
+    this_rho = summary.phaselock_plv(keep,iF);
+    ax = subplot(2,3,iF+3);
+    for iC = 1:length(this_phase)
+        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', [0.6 0.6 0.6], 'LineWidth', 1);
+        hold on;
+    end
+     
+    % Unweighted sum won't have a length
+    mean_angle = circmean(this_phase);
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 1)    
+    % weighted sum will have an angle and a length
+    this_vec = [];
+    for iC = 1:length(this_rho)
+        this_vec(iC) = this_rho(iC) * (cos(this_phase(iC)) + i*sin(this_phase(iC)));
+    end
+    sum_vec = sum(this_vec);
+    w_rho = abs(sum_vec)/length(this_vec);
+    w_theta = angle(sum_vec);
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 1)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 3)
+    rticklabels([])
+    thetaticks(bin_marks);
+    thetaticklabels({})
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
+
+% Look at the circular distribution of phase-locked neurons (BOTH)
     keep = find(pl_mask(:,iF) & sig_mask(:,iF));
     this_phase = summary.phaselock_mean_phase(keep,iF);
     this_rho = summary.phaselock_plv(keep,iF);
     for iC = 1:length(this_phase)
-            polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', 'red');
-            hold on;
+        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', 'green', 'LineWidth', 1);
+        hold on;
     end
+     
+    % Unweighted sum won't have a length
     mean_angle = circmean(this_phase);
-    mean_rho = mean(this_rho);
-    polarplot([mean_angle, mean_angle], [0, 1], 'Color', 'red', 'LineStyle', '--')
-    polarplot([mean_angle, mean_angle], [0, mean_rho], 'Color', 'red', 'LineWidth', 3)
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'blue', 'LineStyle', '--', 'LineWidth', 1)    
+    % weighted sum will have an angle and a length
+    this_vec = [];
+    for iC = 1:length(this_rho)
+        this_vec(iC) = this_rho(iC) * (cos(this_phase(iC)) + i*sin(this_phase(iC)));
+    end
+    sum_vec = sum(this_vec);
+    w_rho = abs(sum_vec)/length(this_vec);
+    w_theta = angle(sum_vec);
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'magenta', 'LineStyle', '--', 'LineWidth', 1)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'magenta', 'LineWidth', 3)
     rlim([0, 0.8])
     rticks([0 0.4 0.8])
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
+    rticklabels([])
+    thetaticks(bin_marks);
+    thetaticklabels({})
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize', 25)
 end
+fontname(fig, 'Helvetica')
+fontsize(fig, 45, 'points')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
 
 %% Figure 6D Scatter between mean_phase and most_excitable phase
 [mean_angles, max_ex_angles, foi, locs] = deal([]);
@@ -341,7 +526,154 @@ ax.TickLength(1) = 0.03;
 ax.Box = 'off';
 fontname(fig, 'Helvetica')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
-[r, p] = circ_corrcc(mean_angles, max_ex_angles);
+% [r, p] = circ_corrcc(mean_angles, max_ex_angles);
+
+%% Figure 6D Scatter between mean_phase and most_excitable phase (Version 2 : different bands in different columnss)
+z_thresh = 2;
+pct_thresh = 0.99;
+sig_mask = summary.fr_z >= z_thresh;
+pl_mask = summary.phaselock_pct >= pct_thresh;
+phase_bins = -pi:2*pi/5:pi;
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
+fig = figure('WindowState', 'maximized');
+for iF = 1:3
+    ax = subplot(1,3,iF);
+    hold on;
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = summary.phaselock_mean_phase(keep,iF)';
+    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
+    scatter(max_ex_angles, mean_angles, 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
+    plot([-5 5], [-5 5], '--black')
+    xlim([-pi pi])
+    ylim([-pi pi])
+    xticks([-pi,0,pi])
+    yticks([-pi,0,pi])
+    xticklabels({'-{\pi}','0','{\pi}'})
+    yticklabels({'-{\pi}','0','{\pi}'})
+    if iF == 1
+        ylabel('Mean phase')
+    end
+    xlabel('Most excitable phase')
+    ax = gca;
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+    axis square;
+    ax.XAxis.FontSize = 45;
+    ax.YAxis.FontSize = 45;
+end
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+%% Statistical test for above
+fig = figure;
+num_shufs = 1000;
+% Plot shuffle histograms for 
+for iF = 1:3
+    ax = subplot(1,3,iF);
+    hold on;
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = summary.phaselock_mean_phase(keep,iF)';
+    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
+    % absolute
+    norm_diff = mod(mean_angles - max_ex_angles, 2*pi);
+    min_diff = min(2*pi-norm_diff, norm_diff);
+    mean_diff = circ_mean(min_diff');
+    sdiff = zeros(1,num_shufs);
+    for iShuf = 1:num_shufs
+        sidx = randperm(length(max_ex_angles));
+        temp_diff = mod(mean_angles - max_ex_angles(sidx), 2*pi);
+        temp_diff = min(2*pi-temp_diff, temp_diff);
+        sdiff(iShuf) = circ_mean(temp_diff');
+    end
+    histogram(sdiff, 0:pi/10:pi, 'FaceColor', c_list{iF});
+    xline(mean_diff, '--black', 'LineWidth', 3);
+%     [this_sum, this_bin] = histcounts(sdiff, 0:pi/10:pi, 'Normalization','cdf');
+%     this_bin = 0.5*(this_bin(1:end-1) + this_bin(2:end));
+%     this_cdf = [this_bin', this_sum'];
+%     [h, p] = kstest(mean_diff, 'CDF', this_cdf);
+%     legend({'',sprintf('%.2f',p)});
+    legend({'',sprintf('%.2f',sum(mean_diff<sdiff)/num_shufs)});
+    xlim([0 pi])
+%     ylim([0 pi])
+    xticks([0,pi])
+%     yticks([-pi,0,pi])
+    xticklabels({'0','{\pi}'})
+%     yticklabels({'-{\pi}','0','{\pi}'})
+    ylabel('Count')
+    xlabel('Mean phase difference')
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+    ax.XAxis.FontSize = 20;
+    ax.YAxis.FontSize = 20;
+end
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+% [r, p] = circ_corrcc(mean_angles, max_ex_angles);
+%% Figure 6D alternate version (Plot the histogram of circular distance)
+fig = figure('WindowState', 'maximized');
+phase_difs = [];
+z_thresh = 2;
+pct_thresh = 0.99;
+sig_mask = summary.fr_z >= z_thresh;
+pl_mask = summary.phaselock_pct >= pct_thresh;
+phase_bins = [-pi:2*pi/5:pi];
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
+for iF = 1:3
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = summary.phaselock_mean_phase(keep,iF)';
+    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
+    phase_difs = [phase_difs, abs(circ_dist(mean_angles, max_ex_angles))];
+end
+histogram(phase_difs, 0:pi/20:pi)
+hold on 
+xticks([0, pi/3, 2*pi/3, pi])
+yticks([0 6])
+ylim([0 6])
+xticklabels({'0','{\pi}/3', '2{\pi}/3', '{\pi}'})
+xline(mean(phase_difs), 'LineWidth', 2, 'LineStyle', '--');
+ylabel('Count')
+xlabel('Absolute circular distance between mean phase and most-excitable phase')
+ax = gca;
+ax.TickDir = 'out';
+ax.TickLength(1) = 0.03;
+ax.Box = 'off';
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+%% Figure 6D alternate version 2 (Plot the histogram of circular distance)
+fig = figure('WindowState', 'maximized');
+z_thresh = 2;
+pct_thresh = 0.99;
+sig_mask = summary.fr_z >= z_thresh;
+pl_mask = summary.phaselock_pct >= pct_thresh;
+phase_bins = [-pi:2*pi/5:pi];
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
+for iF = 1:3
+    ax = subplot(1,3,iF);
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = summary.phaselock_mean_phase(keep,iF)';
+    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
+    phase_difs = abs(circ_dist(mean_angles, max_ex_angles));
+    histogram(phase_difs, 0:pi/20:pi)
+    hold on 
+    xticks([0, pi/3, 2*pi/3, pi])
+    yticks([0 3])
+    ylim([0 3])
+    xticklabels({'0','{\pi}/3', '2{\pi}/3', '{\pi}'})
+    xline(mean(phase_difs), 'LineWidth', 2, 'LineStyle', '--');
+    ylabel('Count')
+    xlabel('Absolute circular distance between mean phase and most-excitable phase')
+    ax = gca;
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+end
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+
 %% Figure 6-Extended: For neurons that are both phase locked and significantly phase modulated, how do they show up in the non_stim test
 fig = figure('WindowState', 'maximized');
 for iF = 1:3
