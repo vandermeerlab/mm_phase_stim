@@ -43,7 +43,7 @@ theta_bool = theta_bool == 1;
 gamma_bool = gamma_bool == 1;
 
 keep = sig_mask;
-[dStr_sig, vStr_sig] = deal(zeros(size(delta_bool)));
+[dStr_sig, vStr_sig,all_sig] = deal(zeros(size(delta_bool)));
 
 
 dStr_sig(1) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,3));
@@ -64,10 +64,21 @@ vStr_sig(6) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,3));
 vStr_sig(7) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3));
 vStr_sig(8) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3));
 
+all_sig(1) = sum(~keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
+all_sig(2) = sum(keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
+all_sig(3) = sum(~keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
+all_sig(4) = sum(~keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
+all_sig(5) = sum(keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
+all_sig(6) = sum(keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
+all_sig(7) = sum(~keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
+all_sig(8) = sum(keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
+
 dStr_table = table(delta_bool, theta_bool, gamma_bool, dStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
 vStr_table = table(delta_bool, theta_bool, gamma_bool, vStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
+all_table = table(delta_bool, theta_bool, gamma_bool, all_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
 writetable(dStr_table, 'C:\Users\mvdmlab\Desktop\dStr_sig.csv');
 writetable(vStr_table, 'C:\Users\mvdmlab\Desktop\vStr_sig.csv');
+writetable(all_table, 'C:\Users\mvdmlab\Desktop\all_sig.csv');
 
 
 %% Figure3: Plot depth of modulation and Z-Score side-by side
@@ -83,13 +94,15 @@ for iF = 1:length(fbands)
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
     scatter(summary.depth(vStr_mask & sig_mask(:,iF)), summary.fr_r(vStr_mask & sig_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
-    ylim([-0.05 0.6])
+    [r,p] = corr(summary.fr_r(:,iF), summary.depth);
+    legend({sprintf('R^{2} = %.2f, p = %.2f', r,p)})
+    ylim([0 0.6])
     xlim([2 5])
     xticks([2 3.5 5])
     yticks([0 0.3 0.6])
-    
     xlabel('Recording depth (mm)')
     ylabel('Modulation strength')
+    axis square
     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
     ax.TickDir = 'out';
     ax.TickLength(1) = 0.03;
@@ -101,13 +114,16 @@ for iF = 1:length(fbands)
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
     scatter(summary.depth(vStr_mask), summary.fr_z(vStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
-    ylim([-2.25 10])
+    yline(2, '--black')
+    [r,p] = corr(summary.fr_z(:,iF), summary.depth);
+    legend({sprintf('R^{2} = %.2f, p = %.2f', r,p), ''})
+    ylim([-2 10])
     xlim([2 5])
     xticks([2 3.5 5])
     yticks([-2 2 6 10])
     xlabel('Recording depth (mm)')
     ylabel('z-score')
-    yline(2, '--black')
+    axis square;
     ax.TickDir = 'out';
     ax.TickLength(1) = 0.03;
     ax.Box = 'off';
@@ -115,7 +131,7 @@ end
 fontname(fig, 'Helvetica')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 
-
+%%
 % Get the correlation values between these
 [r1,p1] = corr(summary.fr_r(:,1), summary.depth);
 [r2,p2] = corr(summary.fr_r(:,2), summary.depth);
