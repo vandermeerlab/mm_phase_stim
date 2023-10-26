@@ -225,10 +225,10 @@ for iF = 1:length(fbands)
     hold on
     keep = pl_mask(:,iF) &  sig_mask(:,iF);
     scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 800);
     plot([-1 1], [-1 1], '--black')
     [r1,p1] = corr(summary.fr_r(keep,iF), summary.phaselock_plv(keep,iF));
-    legend({sprintf('R^{2} = %.2f, p = %.3f', r1,p1), ''}, 'Location', 'northwest')
+    legend({sprintf('R^{2} = %.2f, p = %.3f', r1,p1), ''}, 'Location', 'northwest', 'FontSize', 25)
     xlim([0 0.8])
     ylim([0 0.8])
     xticks([0 0.8])
@@ -240,10 +240,12 @@ for iF = 1:length(fbands)
     ax.TickDir = 'out';
     ax.TickLength(1) = 0.03;
     ax.Box = 'off';
+    ax.XAxis.FontSize = 40;
+    ax.YAxis.FontSize = 40;
 end
 
 fontname(fig, 'Helvetica')
-fontsize(fig, 30, 'points')
+% fontsize(fig, 30, 'points')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 
 
@@ -543,7 +545,7 @@ for iF = 1:3
     mean_angles = summary.phaselock_mean_phase(keep,iF)';
     max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
     scatter(max_ex_angles, mean_angles, 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 800);
     plot([-5 5], [-5 5], '--black')
     xlim([-pi pi])
     ylim([-pi pi])
@@ -551,9 +553,7 @@ for iF = 1:3
     yticks([-pi,0,pi])
     xticklabels({'-{\pi}','0','{\pi}'})
     yticklabels({'-{\pi}','0','{\pi}'})
-    if iF == 1
-        ylabel('Mean phase')
-    end
+    ylabel('Mean phase')
     xlabel('Most excitable phase')
     ax = gca;
     ax.TickDir = 'out';
@@ -567,7 +567,7 @@ fontname(fig, 'Helvetica')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 
 %% Statistical test for above
-fig = figure;
+fig = figure('WindowState', 'maximized');
 num_shufs = 1000;
 % Plot shuffle histograms for 
 for iF = 1:3
@@ -594,7 +594,7 @@ for iF = 1:3
 %     this_cdf = [this_bin', this_sum'];
 %     [h, p] = kstest(mean_diff, 'CDF', this_cdf);
 %     legend({'',sprintf('%.2f',p)});
-    legend({'',sprintf('%.2f',sum(mean_diff<sdiff)/num_shufs)});
+    legend({'',sprintf('%.2f', 1 - sum(mean_diff<sdiff)/num_shufs)});
     xlim([0 pi])
 %     ylim([0 pi])
     xticks([0,pi])
@@ -603,11 +603,14 @@ for iF = 1:3
 %     yticklabels({'-{\pi}','0','{\pi}'})
     ylabel('Count')
     xlabel('Mean phase difference')
+    t = ax.YTick;
+    yticks([t(1),t(end)]);
+    ylim([t(1),t(end)]);
     ax.TickDir = 'out';
     ax.TickLength(1) = 0.03;
     ax.Box = 'off';
-    ax.XAxis.FontSize = 20;
-    ax.YAxis.FontSize = 20;
+    ax.XAxis.FontSize = 45;
+    ax.YAxis.FontSize = 45;
 end
 fontname(fig, 'Helvetica')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
