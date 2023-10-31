@@ -82,7 +82,7 @@ function doStuff
         end
 
         [all_sc_phase, all_fr_phase] = deal(nan(length(stim_on), length(fbands), nbins));
-        all_spk_phase = cell(size(fbands));
+        [all_phase,all_spk_phase] = deal(cell(size(fbands)));
         sanity_spk = 0; sanity_t = 0;
         for iStim = 2:length(stim_on)
             end_t = stim_on(iStim) - 0.01;
@@ -103,6 +103,7 @@ function doStuff
                 for iF = 1:length(fbands)
                     this_echt = echt(csc.data(start_idx:end_idx), fbands{iF}(1), fbands{iF}(2), Fs);
                     this_phase = angle(this_echt);
+                    all_phase{iF} = [all_phase{iF}, this_phase];
                     all_spk_phase{iF} = [all_spk_phase{iF}, this_phase(real_idx)];
                     this_phase = this_phase(t_idx); % Only the relevant phases
                     [pcounts, ~, pbins] = histcounts(this_phase, ns_bins);
@@ -128,6 +129,7 @@ function doStuff
         phase_out.real_mfr = sanity_spk/sanity_t;
         phase_out.spk_count = sanity_spk;
         phase_out.all_spk_phase = all_spk_phase;
+        phase_out.all_phase = all_phase;
     
     
     %     % Sanity plot: Uncomment to debug

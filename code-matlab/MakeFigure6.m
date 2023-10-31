@@ -566,7 +566,6 @@ end
 fontname(fig, 'Helvetica')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 
-%% Statistical test for above
 fig = figure('WindowState', 'maximized');
 num_shufs = 1000;
 % Plot shuffle histograms for 
@@ -615,6 +614,91 @@ end
 fontname(fig, 'Helvetica')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 % [r, p] = circ_corrcc(mean_angles, max_ex_angles);
+%% Figure 6 Extended 1
+%% Figure 6D Scatter between mean_phase and most_excitable phase (Version 2 : different bands in different columnss)
+z_thresh = 2;
+pct_thresh = 0.99;
+sig_mask = summary.fr_z >= z_thresh;
+pl_mask = summary.phaselock_pct >= pct_thresh;
+phase_bins = -pi:2*pi/5:pi;
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
+fig = figure('WindowState', 'maximized');
+for iF = 1:3
+    ax = subplot(1,3,iF);
+    hold on;
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = summary.phaselock_mean_phase(keep,iF)';
+    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
+    scatter(max_ex_angles, mean_angles, 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 800);
+    plot([-5 5], [-5 5], '--black')
+    xlim([-pi pi])
+    ylim([-pi pi])
+    xticks([-pi,0,pi])
+    yticks([-pi,0,pi])
+    xticklabels({'-{\pi}','0','{\pi}'})
+    yticklabels({'-{\pi}','0','{\pi}'})
+    ylabel('Mean phase')
+    xlabel('Most excitable phase')
+    ax = gca;
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+    axis square;
+    ax.XAxis.FontSize = 45;
+    ax.YAxis.FontSize = 45;
+end
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+%% Statistical test for above
+fig = figure('WindowState', 'maximized');
+num_shufs = 1000;
+% Plot shuffle histograms for 
+for iF = 1:3
+    ax = subplot(1,3,iF);
+    hold on;
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = summary.phaselock_mean_phase(keep,iF)';
+    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
+    % absolute
+    norm_diff = mod(mean_angles - max_ex_angles, 2*pi);
+    min_diff = min(2*pi-norm_diff, norm_diff);
+    mean_diff = circ_mean(min_diff');
+    sdiff = zeros(1,num_shufs);
+    for iShuf = 1:num_shufs
+        sidx = randperm(length(max_ex_angles));
+        temp_diff = mod(mean_angles - max_ex_angles(sidx), 2*pi);
+        temp_diff = min(2*pi-temp_diff, temp_diff);
+        sdiff(iShuf) = circ_mean(temp_diff');
+    end
+    histogram(sdiff, 0:pi/10:pi, 'FaceColor', c_list{iF});
+    xline(mean_diff, '--black', 'LineWidth', 3);
+%     [this_sum, this_bin] = histcounts(sdiff, 0:pi/10:pi, 'Normalization','cdf');
+%     this_bin = 0.5*(this_bin(1:end-1) + this_bin(2:end));
+%     this_cdf = [this_bin', this_sum'];
+%     [h, p] = kstest(mean_diff, 'CDF', this_cdf);
+%     legend({'',sprintf('%.2f',p)});
+    legend({'',sprintf('%.2f', 1 - sum(mean_diff<sdiff)/num_shufs)});
+    xlim([0 pi])
+%     ylim([0 pi])
+    xticks([0,pi])
+%     yticks([-pi,0,pi])
+    xticklabels({'0','{\pi}'})
+%     yticklabels({'-{\pi}','0','{\pi}'})
+    ylabel('Count')
+    xlabel('Mean phase difference')
+    t = ax.YTick;
+    yticks([t(1),t(end)]);
+    ylim([t(1),t(end)]);
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+    ax.XAxis.FontSize = 45;
+    ax.YAxis.FontSize = 45;
+end
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 %% Figure 6D alternate version (Plot the histogram of circular distance)
 fig = figure('WindowState', 'maximized');
 phase_difs = [];
