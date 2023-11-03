@@ -17,7 +17,7 @@ end
 function doStuff
     % Declaring variables
     % Setting up parameters
-    fbands = {[2 5], [6 10], [12 30], [30 55]};
+    fbands = {[2 5], [6 10], [30 55]};
 
     LoadExpKeys;
     if isempty(ExpKeys.goodCell)
