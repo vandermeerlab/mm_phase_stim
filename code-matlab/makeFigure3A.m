@@ -48,11 +48,11 @@ for i = 1:length(sel)
     plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'magenta');
 end
 xticks([1 2])
-yticks([0 150 350])
+yticks([0 160 320])
 xticklabels({'Sham stim', 'Opto stim'})
 ylabel('\Delta Firing rate (Hz)')
 xlim([0.85 2.15])
-ylim([-25 350])
+ylim([-25 320])
 title('dStr');
 box off;
 ax.TickLength(1) = 0.03;
@@ -75,7 +75,7 @@ xlabel('Time (ms)')
 ylabel('Normalized Amplitude')
 legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
     mean(peak_to_trough(sel1))/32, std(peak_to_trough(sel1)/32))}, 'FontSize', 12)
-title('dStr Opto Responsive')
+title('Opto Responsive')
 xticks([0 0.5 1]);
 yticks([0 0.5 1]);
 box off;
@@ -94,7 +94,7 @@ xlabel('Time (ms)')
 ylabel('Normalized Amplitude')
 legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
     mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
-title('dStr Opto non-responsive')
+title('Opto non-responsive')
 xticks([0 0.5 1]);
 yticks([0 0.5 1]);
 box off;
@@ -116,9 +116,9 @@ end
 xticks([1 2])
 xticklabels({'Sham stim', 'Opto stim'})
 ylabel('\Delta Firing rate (Hz)')
-yticks([0 150 350])
+yticks([0 160 320])
 xlim([0.85 2.15])
-ylim([-25 350])
+ylim([-25 320])
 title('vStr')
 box off;
 ax.TickLength(1) = 0.03;
@@ -136,7 +136,7 @@ xlabel('Time (ms)')
 ylabel('Normalized Amplitude')
 legend({sprintf('Peak to trough mean: %.2f +/- %.2f ms', ...
     mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
-title('vStr Opto Responsive')
+title('Opto Responsive')
 xticks([0 0.5 1]);
 yticks([0 0.5 1]);
 box off;
@@ -155,13 +155,14 @@ xlabel('Time (ms)')
 ylabel('Normalized Amplitude')
 legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
     mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
-title('vStr Opto non-responsive')
+title('Opto non-responsive')
 xticks([0 0.5 1]);
 yticks([0 0.5 1]);
 box off;
 ax.TickLength(1) = 0.03;
 ax.TickDir = 'out';
 
+fontsize(fig, 30, 'points');
 fontname(fig, 'Helvetica');
 fig.Renderer = 'painters';
 
