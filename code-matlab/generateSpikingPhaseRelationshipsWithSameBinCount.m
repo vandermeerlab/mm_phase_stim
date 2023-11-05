@@ -22,7 +22,7 @@ function doStuff
     fbands = {[2 5], [6 10], [30 55]};
     c_list = {'red', 'blue','green'};
     nshufs = 100;
-    bin_counts = 5; % [5, 7, 10, 15, 20];
+    bin_counts = 25; % [5, 7, 10, 15, 20];
     
     % Load the phases at stim_on in various frequency bands
     load('stim_phases.mat');

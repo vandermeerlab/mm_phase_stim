@@ -125,7 +125,7 @@ function doStuff
     plot(this_tvec, mean(this_control_snip), 'magenta');
     xline(0, '--black')
     legend({'Stim','Control'})
-    sgtitle(fn_prefix, 'Interpreter', 'none');
+    sgtitle(pwd, 'Interpreter', 'none');
     mkdir('STA_dump');
     cd('STA_dump');
     print(fig, '-dpng', 'stim_phase_dist' );
