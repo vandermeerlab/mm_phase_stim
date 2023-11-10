@@ -9,8 +9,8 @@ for iM  = 1:length(mice)
         cd(this_dir);
 %         this_label = 'M019-2019-04-14-TT05_1.t'; % vStr Didactic example; choose trials 810-835 for inset
 %         this_label = 'M016-2019-02-18-TT04_1.t'; % vStr
-        this_label = 'M018-2019-04-14-TT03_1.t'; % vStr
-%         this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
+%         this_label = 'M018-2019-04-14-TT03_1.t'; % vStr
+        this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
         doStuff(this_label)
     end
 
@@ -37,7 +37,7 @@ function doStuff(label)
     
     % Set variables
     axisLabelFS = 30;
-    tickLabelFS = 20;
+    tickLabelFS = 30;
     nbins = 5;
 %     fbands = {[2 5], [6 10], [12 30], [30 55]};
     fbands = {[2 5], [6 10], [30 55]};
@@ -111,7 +111,8 @@ function doStuff(label)
 
         % Trial-stim raster
         if ~isempty(ExpKeys.stim_times)
-            ax = subplot(4,4,[1,5,9]);
+%             ax = subplot(4,4,[1,5,9]);
+            ax = subplot(3,4,[1,5]);
             this_on_events = stim_on;
             if ~isempty(ExpKeys.goodTrials) % Only keep the good trials
                 this_on_events = this_on_events(ExpKeys.goodTrials(iC,1):ExpKeys.goodTrials(iC,2));
@@ -153,7 +154,8 @@ function doStuff(label)
 
         % Plot PSD on the bottom left
         load('trial_psd.mat');
-        ax = subplot(4,4,13);
+%         ax = subplot(4,4,13);
+        ax = subplot(3,4,9);
 %         ax.PositionConstraint = "innerposition";
         hold on;
         plot(psd.freq, 10*log10(psd.original), 'black', 'LineWidth', 1.5);
@@ -170,6 +172,7 @@ function doStuff(label)
 %         yticks([0 length(this_on_events)])
         ylabel('PSD')
         xlabel('Frequency (Hz)')
+        ax.YLim(1) =  min(10*log10(psd.original));
         ax.Box = 'off';
         ax.TickDir = 'out';
         ax.TickLength = [0.06 0.02];
@@ -185,7 +188,8 @@ function doStuff(label)
         % by that
         phase_bins = -pi:2*pi/nbins:pi;
         for iF = 1:length(fbands)
-            ax = subplot(4,4,[iF+1,iF+5,iF+9]);
+%             ax = subplot(4,4,[iF+1,iF+5,iF+9]);
+            ax = subplot(3,4,[iF+1,iF+5]);
             hold on
             this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
             [this_count, ~, this_bin] = histcounts(this_phase, phase_bins);
@@ -227,6 +231,7 @@ function doStuff(label)
             end
             ax.TickDir = 'out';
             ax.Title.String = sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2));
+            ax.Title.FontSize = 45;
             ax.Box = 'off';
             ax.TickLength = [0.03 0.02];
             ax.XAxis.FontSize = tickLabelFS;
@@ -235,7 +240,8 @@ function doStuff(label)
             ax.YLabel.FontSize = axisLabelFS;
             axs = [axs, ax];
 
-            ax = subplot(4,4,iF+13);
+%             ax = subplot(4,4,iF+13);
+            ax = subplot(3,4,iF+9);
 %             ax.PositionConstraint = "outerposition";
             hold on
             b = bar(delta_fr(iF,:),1, 'EdgeColor', 'none');
@@ -254,10 +260,10 @@ function doStuff(label)
             [qmin, min_idx] = min(out.fr.bin(iF,:));
             [qmax, max_idx] = max(out.fr.bin(iF,:));
             qoff = qmin*(qz2 + 1)/(1 - qz2);
-            plot([min_idx, 5.8], [qmin, qmin], '--black')   
-            plot([max_idx, 5.8], [qmax, qmax], '--black')
-            errorbar(6, 0.5*(qmax+qmin), 0.5*(qmax-qmin), 'black', 'LineStyle', 'none');
-            errorbar(6.25, 0.5*(qoff+qmin), 0.5*(qoff-qmin), 'red', 'LineStyle', 'none');
+            plot([min_idx, 5.65], [qmin, qmin], '--black')   
+            plot([max_idx, 5.65], [qmax, qmax], '--black')
+            errorbar(5.75, 0.5*(qmax+qmin), 0.5*(qmax-qmin), 'black', 'LineStyle', 'none');
+            errorbar(6, 0.5*(qoff+qmin), 0.5*(qoff-qmin), 'red', 'LineStyle', 'none');
 %             plot([6, 6], [qmin, qmax], '--black', 'LineWidth', 1)
 %             plot([6.25,6.25], [qmin, qmin+qoff], '--red', 'LineWidth', 1)
             clear q0 q1 q2 q3 qz2 qoff qmin qmax min_idx max_idx
@@ -265,12 +271,12 @@ function doStuff(label)
             ax.XLim = [0.5 6.5];
             ax.TickDir = 'out';
             if iF == 1
-                ax.YLabel.String = '{\Delta} FR';
+                ax.YLabel.String = '{\Delta} FR (Hz)';
             else
                 ax.YLabel.String = {};
             end
             ylim([0 100]); % Need to change this in a case by case basis
-            yticks([0 50 100]);
+            yticks([0 100]);
             ax.XLabel.String = 'Phase bin';
             ax.Box = 'off';
             ax.TickLength = [0.06 0.02];
@@ -324,17 +330,17 @@ function doStuff(label)
         axs(3).OuterPosition(1) = axs(1).OuterPosition(1) + axs(1).OuterPosition(3);
         axs(3).OuterPosition(2) = axs(3).OuterPosition(2)+0.05;
         axs(4).Position(1) = axs(3).Position(1);
-        axs(4).Position(3) = axs(3).Position(3);
+        axs(4).Position(3) = axs(3).Position(3)+0.03;
 
         axs(5).OuterPosition(1) = axs(3).OuterPosition(1) + axs(3).OuterPosition(3);
         axs(5).OuterPosition(2) = axs(5).OuterPosition(2)+0.05;
         axs(6).Position(1) = axs(5).Position(1);
-        axs(6).Position(3) = axs(5).Position(3);
+        axs(6).Position(3) = axs(5).Position(3)+0.03;
 
         axs(7).OuterPosition(1) = axs(5).OuterPosition(1) + axs(5).OuterPosition(3);
         axs(7).OuterPosition(2) = axs(7).OuterPosition(2)+0.05;
         axs(8).Position(1) = axs(7).Position(1);
-        axs(8).Position(3) = axs(7).Position(3);
+        axs(8).Position(3) = axs(7).Position(3)+0.03;
 
         exportgraphics(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
 %         savefig(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase'));

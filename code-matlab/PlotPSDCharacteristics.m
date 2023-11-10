@@ -14,6 +14,9 @@ for iM  = 1:length(mice)
         summary = doStuff(summary);
     end
 end
+dStr_mask = summary.depth < 3.5;
+% fband = {[2 5], [6 10], [12 30], [30, 55]};
+fband = {[2 5], [6 10], [30, 55]};
 %% Normalize all the psds
 for i = 1:length(summary.depth)
     norm_og(i,:) = (summary.og(i,:) - min(summary.og(i,:)))/(max(summary.og(i,:)) - min(summary.og(i,:)));
@@ -23,9 +26,7 @@ end
 
 
 %%
-dStr_mask = summary.depth < 3.5;
-% fband = {[2 5], [6 10], [12 30], [30, 55]};
-fband = {[2 5], [6 10], [30, 55]};
+
 
 % Plot dStr
 sel =  find(dStr_mask);
@@ -96,6 +97,7 @@ title('vStr IRASA')
 norm_irasa(:,59:61) = nan;
 fig = figure('WindowState', 'maximized');
 
+sel =  find(dStr_mask);
 % Plot dStr stuff
 subplot(2,1,1)
 imagesc(norm_irasa(dStr_mask,:))
@@ -107,13 +109,17 @@ for iF = 1:length(fband)
 end
 title('dStr IRASA');
 xticks([2 5 6 10 12 30 55, 60, 100])
+xlim([1 100])
+xlabel('Frequency (Hz)')
 ylabel('Sessions')
 yticks([])
 ax = gca;
 box off;
 ax.TickDir = 'out';
 
+
 % Plot vStr stuff
+sel =  find(~dStr_mask);
 subplot(2,1,2)
 imagesc(norm_irasa(~dStr_mask,:))
 hold on
@@ -124,14 +130,16 @@ for iF = 1:length(fband)
 end
 title('vStr IRASA');
 xticks([2 5 6 10 12 30 55, 60, 100])
+xlim([1 100])
 ylabel('Sessions')
+xlabel('Frequency (Hz)')
 yticks([])
 ax = gca;
 box off;
 ax.TickDir = 'out';
 fontname(fig, 'Helvetica');
 fig.Renderer = 'painters';
-
+fontsize(fig, 30, 'points');
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;

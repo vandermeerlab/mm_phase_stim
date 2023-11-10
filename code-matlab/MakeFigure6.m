@@ -50,163 +50,9 @@ eli_mask = ~isnan(summary.phaselock_plv);
 % Phase-dependent excitability significance mask
 z_thresh = 2;
 sig_mask = (summary.fr_z > z_thresh) & eli_mask;
-%% Figure6 (Optional/Extended): Scatter plot of depth vs PLV
-pl_z_thresh = 2;
-pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
-
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    ax = subplot(1,3,iF);
-    hold on
-    scatter(summary.depth(dStr_mask), summary.phaselock_plv(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
-    scatter(summary.depth(dStr_mask & pl_mask(:,iF)), summary.phaselock_plv(dStr_mask & pl_mask(:, iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
-    scatter(summary.depth(vStr_mask), summary.phaselock_plv(vStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
-    scatter(summary.depth(vStr_mask & pl_mask(:,iF)), summary.phaselock_plv(vStr_mask & pl_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
-    ylim([0 0.8])
-    xlim([2 5])
-    xlabel('Recording depth (mm)')
-    ylabel('Phase Locking Value')
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-    ax.TickDir = 'out';
-    ax.TickLength(1) = 0.03;
-    ax.Box = 'off';
-end
-fontname(fig, 'Helvetica')
-fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
-
-% Get the correlation values between these
-[r1,p1] = corr(summary.depth(~isnan(summary.phaselock_plv(:,1)),1), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,1)),1));
-[r2,p2] = corr(summary.depth(~isnan(summary.phaselock_plv(:,2))), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,2)),2));
-[r3,p3] = corr(summary.depth(~isnan(summary.phaselock_plv(:,3))), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,3)),3));
-
-fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{1}(1), fbands{1}(2), r1, p1);
-fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
-fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
-
-%% Figure6B: Scatter plot of neurons with significant PLV and mod_strength as well as Z_score (version 1)
-pl_z_thresh = 2;
-pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
-z_thresh = 2;
-sig_mask = (summary.fr_z > z_thresh) & eli_mask;
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    ax = subplot(2,3,iF);
-    hold on
-    keep = dStr_mask & pl_mask(:,iF);
-    keep_sig = dStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
-    scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
-    scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
-    keep = vStr_mask & pl_mask(:,iF);
-    keep_sig = vStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
-    scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
-    scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
-    xlim([0 0.6])
-    ylim([0 0.8])
-    xticks([0 0.6])
-    yticks([0 0.8])
-    ylabel('Phase Locking Value')
-    xlabel('Modulation strength')
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-    ax.TickDir = 'out';
-    ax.TickLength(1) = 0.03;
-    ax.Box = 'off';
-
-    ax = subplot(2,3,iF+3);
-    hold on
-    keep = dStr_mask & pl_mask(:,iF) & eli_mask(:,iF);
-    scatter(summary.fr_z(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
-%     scatter(summary.phaselock_plv(keep_sig), summary.fr_z(keep_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
-%         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
-    keep = vStr_mask & pl_mask(:,iF) & eli_mask(:,iF);
-    keep_sig = vStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
-    scatter(summary.fr_z(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
-%     scatter(summary.phaselock_plv(keep_sig), summary.fr_z(keep_sig,iF) , 'MarkerFaceColor', c_list{iF}, ...
-%         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
-    xlim([-3 8])
-    ylim([0 0.8])
-    xticks([-3 2 8])
-    yticks([0 0.8])
-    xline(2, '--black')
-    ylabel('Phase Locking Value')
-    xlabel('Z-scored modulation strength')
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-    ax.TickDir = 'out';
-    ax.TickLength(1) = 0.03;
-    ax.Box = 'off';
-end
-
-fontname(fig, 'Helvetica')
-fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
-
-% Get the correlation values between these
-[r1,p1] = corr(summary.fr_r(~isnan(summary.phaselock_plv(:,1)),1), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,1)),1));
-[r2,p2] = corr(summary.fr_r(~isnan(summary.phaselock_plv(:,2))), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,2)),2));
-[r3,p3] = corr(summary.fr_r(~isnan(summary.phaselock_plv(:,3))), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,3)),3));
-fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{1}(1), fbands{1}(2), r1, p1);
-fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
-fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
-
-[r1,p1] = corr(summary.fr_z(~isnan(summary.phaselock_plv(:,1)),1), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,1)),1));
-[r2,p2] = corr(summary.fr_z(~isnan(summary.phaselock_plv(:,2))), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,2)),2));
-[r3,p3] = corr(summary.fr_z(~isnan(summary.phaselock_plv(:,3))), ...
-    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,3)),3));
-fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{1}(1), fbands{1}(2), r1, p1);
-fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
-fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
-
-%% Figure6B: Scatter plot of PLV and mod_strength for significantly phase_locked neurons (version 2)
-pl_z_thresh = 2;
-pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
-
-fig = figure('WindowState', 'maximized');
-for iF = 1:length(fbands)
-    ax = subplot(1,3,iF);
-    hold on
-    keep = pl_mask(:,iF);
-    scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 800);
-    plot([-1 1], [-1 1], '--black')
-    [r1,p1] = corr(summary.fr_r(keep,iF), summary.phaselock_plv(keep,iF));
-    legend({sprintf('R^{2} = %.2f, p = %.3f', r1,p1), ''}, 'Location', 'northwest', 'FontSize', 25)
-    xlim([0 0.8])
-    ylim([0 0.8])
-    xticks([0 0.8])
-    yticks([0 0.8])
-    ylabel('Phase Locking Value')
-    xlabel('Modulation strength')
-    axis square;
-%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
-    ax.TickDir = 'out';
-    ax.TickLength(1) = 0.03;
-    ax.Box = 'off';
-    ax.XAxis.FontSize = 40;
-    ax.YAxis.FontSize = 40;
-end
-
-fontname(fig, 'Helvetica')
-% fontsize(fig, 30, 'points')
-fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 
 
-%% Input to the Venn diagrams to show phase dependent excitability and phase locking
+%% Figure 6A: Input to the Venn diagrams to show phase dependent excitability and phase locking
 pl_z_thresh = 2;
 pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
 z_thresh = 2;
@@ -222,8 +68,7 @@ fprintf('30 - 55 Hz: Eligible: %d, PL: %d, PE: %d, PL&PE: %d\n', ...
     sum(eli_mask(:,3)), sum(pl_mask(:,3)), sum(sig_mask(:,3)), ...
     sum(pl_mask(:,3) & sig_mask(:,3)))
 
-
-%% Figure 6C: Polar Plots (version1: All, but weighted sum and unweighted sum)
+%% Figure 6A/ (6B-6C): Polar Plots (version1: All, but weighted sum and unweighted sum)
 phase_bins = [-pi:2*pi/5:pi];
 bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
 bin_marks = unique(sort(mod(rad2deg(phase_bins +2 * pi),360)));
@@ -241,20 +86,20 @@ for iF = 1:length(fbands)
     this_phase = summary.excitable_phase(keep);
     this_theta = bin_centers(this_phase);
     this_rho = summary.fr_r(keep,iF);
-    ax = subplot(2,3,iF);
+    ax = subplot(1,6,2*iF);
     for iBin = 1:5
         temp = find(this_phase==iBin);
         for iC = 1:length(temp)  
             circ_jit = power(-1, iC)*iC*pi/18; % for better visualization        
             polarplot([this_theta(temp(iC))+circ_jit, this_theta(temp(iC))+circ_jit], ...
-                [0 this_rho(temp(iC))], 'red', 'LineWidth', 1);
+                [0 this_rho(temp(iC))], 'red', 'LineWidth', 1.5);
             hold on;
         end
     end
     
     % Unweighted sum won't have a length
     mean_angle = circmean(this_theta);
-    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 1)    
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 2)    
     % weighted sum will have an angle and a length
     this_vec = [];
     for iC = 1:length(this_rho)
@@ -263,8 +108,8 @@ for iF = 1:length(fbands)
     sum_vec = sum(this_vec);
     w_rho = abs(sum_vec)/length(this_vec);
     w_theta = angle(sum_vec);
-    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 1)
-    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 3)
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 2)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 5)
 
     rlim([0, 0.6])
     rticks([0 0.3 0.6])
@@ -277,15 +122,15 @@ for iF = 1:length(fbands)
     keep = find(pl_mask(:,iF));
     this_phase = summary.phaselock_mean_phase(keep,iF);
     this_rho = summary.phaselock_plv(keep,iF);
-    ax = subplot(2,3,iF+3);
+    ax = subplot(1,6,2*iF-1);
     for iC = 1:length(this_phase)
-        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', [0.6 0.6 0.6], 'LineWidth', 1);
+        polarplot([this_phase(iC) this_phase(iC)], [0 this_rho(iC)], 'Color', [0.6 0.6 0.6], 'LineWidth', 1.5);
         hold on;
     end
      
     % Unweighted sum won't have a length
     mean_angle = circmean(this_phase);
-    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 1)    
+    polarplot([mean_angle, mean_angle], [0, 5], 'Color', 'cyan', 'LineStyle', '--', 'LineWidth', 2)    
     % weighted sum will have an angle and a length
     this_vec = [];
     for iC = 1:length(this_rho)
@@ -294,8 +139,8 @@ for iF = 1:length(fbands)
     sum_vec = sum(this_vec);
     w_rho = abs(sum_vec)/length(this_vec);
     w_theta = angle(sum_vec);
-    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 1)
-    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 3)
+    polarplot([w_theta, w_theta], [0, 5], 'Color', 'black', 'LineStyle', '--', 'LineWidth', 2)
+    polarplot([w_theta, w_theta], [0, w_rho], 'Color', 'black', 'LineWidth', 5)
     rlim([0, 0.8])
     rticks([0 0.4 0.8])
     rticklabels([])
@@ -444,7 +289,165 @@ fontname(fig, 'Helvetica')
 fontsize(fig, 45, 'points')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 
+%% Figure6 (Optional/Extended): Scatter plot of depth vs PLV
+pl_z_thresh = 2;
+pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
+
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(1,3,iF);
+    hold on
+    scatter(summary.depth(dStr_mask), summary.phaselock_plv(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
+    scatter(summary.depth(dStr_mask & pl_mask(:,iF)), summary.phaselock_plv(dStr_mask & pl_mask(:, iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
+    scatter(summary.depth(vStr_mask), summary.phaselock_plv(vStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'Marker', 'd', 'SizeData', 200);
+    scatter(summary.depth(vStr_mask & pl_mask(:,iF)), summary.phaselock_plv(vStr_mask & pl_mask(:,iF),iF) , 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
+    ylim([0 0.8])
+    xlim([2 5])
+    xlabel('Recording depth (mm)')
+    ylabel('Phase Locking Value')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+end
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+% Get the correlation values between these
+[r1,p1] = corr(summary.depth(~isnan(summary.phaselock_plv(:,1)),1), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,1)),1));
+[r2,p2] = corr(summary.depth(~isnan(summary.phaselock_plv(:,2))), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,2)),2));
+[r3,p3] = corr(summary.depth(~isnan(summary.phaselock_plv(:,3))), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,3)),3));
+
+fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{1}(1), fbands{1}(2), r1, p1);
+fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
+fprintf("%d - %d Hz, Corr: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
+
+%% Figure6B: Scatter plot of neurons with significant PLV and mod_strength as well as Z_score (version 1)
+pl_z_thresh = 2;
+pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
+z_thresh = 2;
+sig_mask = (summary.fr_z > z_thresh) & eli_mask;
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(2,3,iF);
+    hold on
+    keep = dStr_mask & pl_mask(:,iF);
+    keep_sig = dStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
+    scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
+    scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
+    keep = vStr_mask & pl_mask(:,iF);
+    keep_sig = vStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
+    scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
+    scatter(summary.fr_r(keep_sig,iF), summary.phaselock_plv(keep_sig), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
+    xlim([0 0.6])
+    ylim([0 0.8])
+    xticks([0 0.6])
+    yticks([0 0.8])
+    ylabel('Phase Locking Value')
+    xlabel('Modulation strength')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+
+    ax = subplot(2,3,iF+3);
+    hold on
+    keep = dStr_mask & pl_mask(:,iF) & eli_mask(:,iF);
+    scatter(summary.fr_z(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 200);
+%     scatter(summary.phaselock_plv(keep_sig), summary.fr_z(keep_sig,iF), 'MarkerFaceColor', c_list{iF}, ...
+%         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'SizeData', 50);
+    keep = vStr_mask & pl_mask(:,iF) & eli_mask(:,iF);
+    keep_sig = vStr_mask & pl_mask(:,iF) & sig_mask(:,iF);
+    scatter(summary.fr_z(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'Marker', 'd', 'SizeData', 200);
+%     scatter(summary.phaselock_plv(keep_sig), summary.fr_z(keep_sig,iF) , 'MarkerFaceColor', c_list{iF}, ...
+%         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 1, 'MarkerEdgeAlpha', 1, 'Marker', 'd', 'SizeData', 50);
+    xlim([-3 8])
+    ylim([0 0.8])
+    xticks([-3 2 8])
+    yticks([0 0.8])
+    xline(2, '--black')
+    ylabel('Phase Locking Value')
+    xlabel('Z-scored modulation strength')
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+end
+
+fontname(fig, 'Helvetica')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+% Get the correlation values between these
+[r1,p1] = corr(summary.fr_r(~isnan(summary.phaselock_plv(:,1)),1), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,1)),1));
+[r2,p2] = corr(summary.fr_r(~isnan(summary.phaselock_plv(:,2))), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,2)),2));
+[r3,p3] = corr(summary.fr_r(~isnan(summary.phaselock_plv(:,3))), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,3)),3));
+fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{1}(1), fbands{1}(2), r1, p1);
+fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
+fprintf("%d - %d Hz, Corr b/w mod-strength and PLV: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
+
+[r1,p1] = corr(summary.fr_z(~isnan(summary.phaselock_plv(:,1)),1), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,1)),1));
+[r2,p2] = corr(summary.fr_z(~isnan(summary.phaselock_plv(:,2))), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,2)),2));
+[r3,p3] = corr(summary.fr_z(~isnan(summary.phaselock_plv(:,3))), ...
+    summary.phaselock_plv(~isnan(summary.phaselock_plv(:,3)),3));
+fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{1}(1), fbands{1}(2), r1, p1);
+fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{2}(1), fbands{2}(2), r2, p2);
+fprintf("%d - %d Hz, Corr b/w z-score and PLV: %.2f, p-value: %.3f\n", fbands{3}(1), fbands{3}(2), r3, p3);
+
+%% Figure6B: Scatter plot of PLV and mod_strength for significantly phase_locked neurons (version 2)
+pl_z_thresh = 2;
+pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
+
+fig = figure('WindowState', 'maximized');
+for iF = 1:length(fbands)
+    ax = subplot(1,3,iF);
+    hold on
+    keep = pl_mask(:,iF);
+    scatter(summary.fr_r(keep,iF), summary.phaselock_plv(keep), 'MarkerFaceColor', c_list{iF}, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 800);
+    plot([-1 1], [-1 1], '--black')
+    [r1,p1] = corr(summary.fr_r(keep,iF), summary.phaselock_plv(keep,iF));
+    legend({sprintf('R^{2} = %.2f, p = %.3f', r1,p1), ''}, 'Location', 'northwest', 'FontSize', 25)
+    xlim([0 0.8])
+    ylim([0 0.8])
+    xticks([0 0.8])
+    yticks([0 0.8])
+    ylabel('PLV')
+    xlabel('Modulation strength')
+    axis square;
+%     title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    ax.TickDir = 'out';
+    ax.TickLength(1) = 0.03;
+    ax.Box = 'off';
+    ax.XAxis.FontSize = 40;
+    ax.YAxis.FontSize = 40;
+end
+
+fontname(fig, 'Helvetica')
+% fontsize(fig, 30, 'points')
+fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+
+
+
 %% Figure 6D Scatter between mean_phase and most_excitable phase (Version 1 : Combined across various bands)
+rng(2023);
 pl_z_thresh = 2;
 pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
 z_thresh = 2;
@@ -501,19 +504,21 @@ for iShuf = 1:num_shufs
     sdiff(iShuf) = circ_mean(temp_diff');
 end
 fig = figure('WindowState', 'maximized');
-histogram(sdiff, 0:pi/10:pi, 'FaceColor', [0.6 0.6 0.6]);
+histogram(sdiff, 0:pi/25:pi, 'FaceColor', [0.6 0.6 0.6]);
+hold on
 xline(mean_diff, '--black', 'LineWidth', 3);
 %     [this_sum, this_bin] = histcounts(sdiff, 0:pi/10:pi, 'Normalization','cdf');
 %     this_bin = 0.5*(this_bin(1:end-1) + this_bin(2:end));
 %     this_cdf = [this_bin', this_sum'];
 %     [h, p] = kstest(mean_diff, 'CDF', this_cdf);
 %     legend({'',sprintf('%.2f',p)});
-legend({'',sprintf('%.2f', 1 - sum(mean_diff<sdiff)/num_shufs)});
+legend({'',sprintf('%.3f', 1 - sum(mean_diff<sdiff)/num_shufs)});
 xlim([0 pi])
 xticks([0,pi])
 xticklabels({'0','{\pi}'})
 ylabel('Count')
 xlabel('Mean phase difference')
+ax = gca;
 ax.TickDir = 'out';
 ax.TickLength(1) = 0.03;
 ax.Box = 'off';
@@ -523,6 +528,7 @@ fontname(fig, 'Helvetica')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 % [r, p] = circ_corrcc(mean_angles, max_ex_angles);
 %% Figure 6D Scatter between mean_phase and most_excitable phase (Version 2 : different bands in different columnss)
+rng(2023)
 pl_z_thresh = 2;
 pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
 z_thresh = 2;
@@ -578,109 +584,25 @@ for iF = 1:3
         temp_diff = min(2*pi-temp_diff, temp_diff);
         sdiff(iShuf) = circ_mean(temp_diff');
     end
-    histogram(sdiff, 0:pi/10:pi, 'FaceColor', c_list{iF});
+    histogram(sdiff, 0:pi/12:pi, 'Normalization', 'probability' ,'FaceColor', c_list{iF});
     xline(mean_diff, '--black', 'LineWidth', 3);
 %     [this_sum, this_bin] = histcounts(sdiff, 0:pi/10:pi, 'Normalization','cdf');
 %     this_bin = 0.5*(this_bin(1:end-1) + this_bin(2:end));
 %     this_cdf = [this_bin', this_sum'];
 %     [h, p] = kstest(mean_diff, 'CDF', this_cdf);
 %     legend({'',sprintf('%.2f',p)});
-    legend({'',sprintf('%.2f', 1 - sum(mean_diff<sdiff)/num_shufs)});
+    legend({'',sprintf('diff=%.3f, p=%.3f', mean_diff,1 - sum(mean_diff<sdiff)/num_shufs)});
     xlim([0 pi])
 %     ylim([0 pi])
     xticks([0,pi])
 %     yticks([-pi,0,pi])
     xticklabels({'0','{\pi}'})
 %     yticklabels({'-{\pi}','0','{\pi}'})
-    ylabel('Count')
+    ylabel('Proportion')
     xlabel('Mean phase difference')
     t = ax.YTick;
-    yticks([t(1),t(end)]);
-    ylim([t(1),t(end)]);
-    ax.TickDir = 'out';
-    ax.TickLength(1) = 0.03;
-    ax.Box = 'off';
-    ax.XAxis.FontSize = 45;
-    ax.YAxis.FontSize = 45;
-end
-fontname(fig, 'Helvetica')
-fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
-% [r, p] = circ_corrcc(mean_angles, max_ex_angles);
-%% Figure 6D Scatter between mean_phase and most_excitable phase (Version 2 : different bands in different columnss)
-pl_z_thresh = 2;
-pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
-z_thresh = 2;
-sig_mask = (summary.fr_z > z_thresh) & eli_mask;
-phase_bins = -pi:2*pi/5:pi;
-bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
-fig = figure('WindowState', 'maximized');
-for iF = 1:3
-    ax = subplot(1,3,iF);
-    hold on;
-    keep = sig_mask(:,iF) & pl_mask(:,iF);
-    mean_angles = summary.phaselock_mean_phase(keep,iF)';
-    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
-    scatter(max_ex_angles, mean_angles, 'MarkerFaceColor', c_list{iF}, ...
-        'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0, 'SizeData', 800);
-    plot([-5 5], [-5 5], '--black')
-    xlim([-pi pi])
-    ylim([-pi pi])
-    xticks([-pi,0,pi])
-    yticks([-pi,0,pi])
-    xticklabels({'-{\pi}','0','{\pi}'})
-    yticklabels({'-{\pi}','0','{\pi}'})
-    ylabel('Mean phase')
-    xlabel('Most excitable phase')
-    ax = gca;
-    ax.TickDir = 'out';
-    ax.TickLength(1) = 0.03;
-    ax.Box = 'off';
-    axis square;
-    ax.XAxis.FontSize = 45;
-    ax.YAxis.FontSize = 45;
-end
-fontname(fig, 'Helvetica')
-fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
-
-fig = figure('WindowState', 'maximized');
-num_shufs = 1000;
-% Plot shuffle histograms for 
-for iF = 1:3
-    ax = subplot(1,3,iF);
-    hold on;
-    keep = sig_mask(:,iF) & pl_mask(:,iF);
-    mean_angles = summary.phaselock_mean_phase(keep,iF)';
-    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
-    % absolute
-    norm_diff = mod(mean_angles - max_ex_angles, 2*pi);
-    min_diff = min(2*pi-norm_diff, norm_diff);
-    mean_diff = circ_mean(min_diff');
-    sdiff = zeros(1,num_shufs);
-    for iShuf = 1:num_shufs
-        sidx = randperm(length(max_ex_angles));
-        temp_diff = mod(mean_angles - max_ex_angles(sidx), 2*pi);
-        temp_diff = min(2*pi-temp_diff, temp_diff);
-        sdiff(iShuf) = circ_mean(temp_diff');
-    end
-    histogram(sdiff, 0:pi/10:pi, 'FaceColor', c_list{iF});
-    xline(mean_diff, '--black', 'LineWidth', 3);
-%     [this_sum, this_bin] = histcounts(sdiff, 0:pi/10:pi, 'Normalization','cdf');
-%     this_bin = 0.5*(this_bin(1:end-1) + this_bin(2:end));
-%     this_cdf = [this_bin', this_sum'];
-%     [h, p] = kstest(mean_diff, 'CDF', this_cdf);
-%     legend({'',sprintf('%.2f',p)});
-    legend({'',sprintf('%.2f', 1 - sum(mean_diff<sdiff)/num_shufs)});
-    xlim([0 pi])
-%     ylim([0 pi])
-    xticks([0,pi])
-%     yticks([-pi,0,pi])
-    xticklabels({'0','{\pi}'})
-%     yticklabels({'-{\pi}','0','{\pi}'})
-    ylabel('Count')
-    xlabel('Mean phase difference')
-    t = ax.YTick;
-    yticks([t(1),t(end)]);
-    ylim([t(1),t(end)]);
+    yticks([0 0.5 1]);
+    ylim([0 1]);
     ax.TickDir = 'out';
     ax.TickLength(1) = 0.03;
     ax.Box = 'off';
@@ -791,23 +713,27 @@ fig.Renderer = 'painters'; % makes sure tht the figure is exported with customiz
 fig = figure('WindowState', 'maximized');
 for iF = 1:3
     ax = subplot(1,3,iF);
-    scatter(summary.fr_z(:,iF), summary.c_fr_z(:,iF), 'SizeData', 200, ...
-        'MarkerFaceColor', c_list{iF}, 'MarkerFaceAlpha', 0.25, 'MarkerEdgeAlpha', 0)
-    xlabel('Original Z score')
-    ylabel('Corrected Z score')
+    scatter(summary.fr_z(:,iF), summary.c_fr_z(:,iF), 'SizeData', 300, ...
+        'MarkerFaceColor', c_list{iF}, 'MarkerFaceAlpha', 0.25, ...
+        'MarkerEdgeColor', c_list{iF}, 'MarkerEdgeAlpha', 0.25)
+    xlabel('Original Z-score')
+    ylabel('Corrected Z-score')
     hold on
     plot([2,2], [-3,2], '--black')
     plot([2,12], [2,2], '--black')
     plot([-3,2], [2,2], '--black')
     plot([2,2], [2,12], '--black')
-    xlim([-2.5 10])
-    ylim([-2.5 10])
+    xlim([-2 10])
+    ylim([-2 10])
     xticks([-2 2 10])
     yticks([-2 2 10])
+    axis square
     ax.TickDir = 'out';
     ax.TickLength(1) = 0.03;
+    ax.XAxis.FontSize = 30;
+    ax.YAxis.FontSize = 30;
     ax.Box = 'off';
-    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)))
+    title(sprintf('%d - %d Hz', fbands{iF}(1), fbands{iF}(2)), 'FontSize',30)
 end
 
 fontname(fig, 'Helvetica')
