@@ -103,41 +103,163 @@ function doStuff
     % Get rid of all the 3rd band stuff IF there are 4 bands
     if size(causal_phase, 1) == 4 causal_phase(3,:) = []; end
 
-    fig = figure('WindowState', 'Maximized');
+fig = figure('WindowState', 'Maximized');
     for iF = 1:length(fbands)
-        subplot(3,9, 18+ (iF-1)*3+1)
+        subplot(3,7,7*iF-2)
         histogram(stim_phase(iF,:),phase_bins, 'Normalization', 'probability', 'FaceColor',c_list{iF});
         title(sprintf('Hilbert Phase at Stim'));%,fbands{iF}(1), fbands{iF}(2)));
-        ylim([0 1])
-        yticks([0 0.5 1])
+        ylim([0 0.7])
+        yticks([0 0.35 0.7])
+        xticks([])
+        xlim([-pi pi]);
+        xlabel('Phase bin')
+        ylabel('Proportion')
+        box off
+%         axis square
+        ax = gca;
+        ax.TickDir = 'out';
         
-        subplot(3,9, (iF-1)*3+2)
+        subplot(3,7,7*iF-1)
         histogram(control_phase(iF,:),phase_bins, 'Normalization', 'probability', 'FaceColor',c_list{iF});
-        title(sprintf('Hilbert at Control'));%,fbands{iF}(1), fbands{iF}(2)));
-        ylim([0 1])
-        yticks([0 0.5 1])
+        title(sprintf('Hilbert Phase at Control'));%,fbands{iF}(1), fbands{iF}(2)));
+        ylim([0 0.7])
+        yticks([0 0.35 0.7])
+        xticks([])
+        xlim([-pi pi]);
+        xlim([-pi pi]);
+        xlabel('Phase bin')
+        box off
+%         axis square
+        ax = gca;
+        ax.TickDir = 'out';
 
-        subplot(3,9, (iF-1)*3+3)
+        subplot(3,7,7*iF)
         histogram(causal_phase(iF,:),phase_bins, 'Normalization', 'probability', 'FaceColor',c_list{iF});
         title(sprintf('ecHT Phase at Stim'));% ,fbands{iF}(1), fbands{iF}(2)));
-        ylim([0 1])
-        yticks([0 0.5 1])
+        ylim([0 0.7])
+        yticks([0 0.35 0.7])
+        xticks([])
+        xlim([-pi pi]);
+        xlim([-pi pi]);
+        xlabel('Phase bin')
+        box off
+%         axis square
+        ax = gca;
+        ax.TickDir = 'out';
     end
-
+%     fontname(fig, 'Helvetica');
+%     fontsize(fig, 25, 'points');
+%     fig.Renderer = 'painters';
+%     close; % Put breakpoint here!
+   
     % Plot example distortions of artifacts
-    normfun = @(x) (x - min(x))/(max(x) - min(x));
+    normfun = @(x) (x - min(x))/(max(x) - min(x)); 
+%     fig = figure('WindowState', 'Maximized');
     
     % Plot example snippets in delta-range
-    ax = subplot(3,9,1:3);
+    ax = subplot(3,7,[1 2]);
     hold on
     iStim = 10;
     plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
-    plot(this_tvec, squeeze(normfun(filt_snip(iF,iStim,:))), 'Color', c_list{iF}, 'LineStyle', '--');
-    plot(this_tvec, squeeze(normfun(phase_snip(iF,iStim,:))), 'Color', c_list{iF});
+    plot(this_tvec, squeeze(normfun(filt_snip(1,iStim,:))), 'Color', c_list{1}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(1,iStim,:))), 'Color', c_list{1});
     xline(0, '--black')
+    xlim([-0.25 0.25])
+%     xlabel('Time (sec)')
     xticks([-0.25 0 0.25])
     yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
     
-    dummy = 1;
+    ax = subplot(3,7,[3 4]);
+    hold on
+    iStim = 136;
+    plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
+    plot(this_tvec, squeeze(normfun(filt_snip(1,iStim,:))), 'Color', c_list{1}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(1,iStim,:))), 'Color', c_list{1});
+    xline(0, '--black')
+    xlim([-0.25 0.25])
+%     xlabel('Time (sec)')
+    xticks([-0.25 0 0.25])
+    yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
+
+    % Plot example snippets in theta-range
+    ax = subplot(3,7,[8 9]);
+    hold on
+    iStim = 552;
+    plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
+    plot(this_tvec, squeeze(normfun(filt_snip(2,iStim,:))), 'Color', c_list{2}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(2,iStim,:))), 'Color', c_list{2});
+    xline(0, '--black')
+    xlim([-0.25 0.25])
+%     xlabel('Time (sec)')
+    xticks([-0.25 0 0.25])
+    yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
+    
+    ax = subplot(3,7,[10 11]);
+    hold on
+    iStim = 585;
+    plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
+    plot(this_tvec, squeeze(normfun(filt_snip(2,iStim,:))), 'Color', c_list{2}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(2,iStim,:))), 'Color', c_list{2});
+    xline(0, '--black')
+    xlim([-0.25 0.25])
+%     xlabel('Time (sec)')
+    xticks([-0.25 0 0.25])
+    yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
+    
+    % Plot example snippets in gamma-range
+    ax = subplot(3,7,[15 16]);
+    hold off
+    iStim = 1250;
+    plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
+    hold on
+    plot(this_tvec, squeeze(normfun(filt_snip(3,iStim,:))), 'Color', c_list{3}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(3,iStim,:))), 'Color', c_list{3});
+    xline(0, '--black')
+    xlim([-0.05 0.05])
+    xlabel('Time (sec)')
+    xticks([-0.05 0 0.05])
+    yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
+    
+    ax = subplot(3,7,[17 18]);
+    hold off
+    iStim = 1328;
+    plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
+    hold on
+    plot(this_tvec, squeeze(normfun(filt_snip(3,iStim,:))), 'Color', c_list{3}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(3,iStim,:))), 'Color', c_list{3});
+    xline(0, '--black')
+    xlim([-0.05 0.05])
+    xlabel('Time (sec)')
+    xticks([-0.05 0 0.05])
+    yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
+
+    fontname(fig, 'Helvetica');
+%     fontsize(fig, 25, 'points');
+    fig.Renderer = 'painters';
+    
     
 end
