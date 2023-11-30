@@ -2,7 +2,7 @@
 
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
-for iM  = 1:length(mice)
+for iM  = 1 :length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
     for iS = 1:length(sid)
@@ -26,13 +26,13 @@ function doStuff
         cfg.getRatings = 1;
         cfg.uint = '64';
     end
-    cfg.fc = ExpKeys.goodCell;
+%     cfg.fc = ExpKeys.goodCell;
     S = LoadSpikes(cfg);
     
     %% Set variables
     max_delay = 0.01; % sec (window for the first response since stimulus)
     max_long_delay = 0.4; % sec
-    num_sham = 10000; % Number of sham stim used
+    num_sham = 1000000; % Number of sham stim used
     num_nonstim = 10000; % Number of spoints to be selected for non_stim
     
     %% Remove spikes during short stim times
@@ -103,8 +103,8 @@ function doStuff
         od.post_stim = [];
         od.long_stim = [];
         od.sham_stim = [];
-        od.trial_nonstim = [];
-        od.matched_nonstim = [];
+%         od.trial_nonstim = [];
+%         od.matched_nonstim = [];
         
         % Pre-stim response
         if ~isempty(ExpKeys.pre_stim_times)
@@ -178,40 +178,6 @@ function doStuff
             od.trial_stim.mfr = length(temp.t{1})/diff(ExpKeys.stim_times);
         end
 
-        % Non-stim evoked response (Choose num_nonstim points in time that are at
-        % least 0.6 seconds away from a stim_onset in any direction to
-        % avoid potential artifact contamination during phase estimation
-        if ~isempty(ExpKeys.stim_times)
-            dt = 0.001; % in seconds
-            tvec = []; % Pre stim 1 time is funky in some recordings;
-            for iStim = 1:length(stim_on)-1
-                if stim_on(iStim)+0.55 <= stim_on(iStim+1)-0.01
-                    tvec = [tvec, stim_on(iStim)+0.55:dt:stim_on(iStim+1)-0.01];
-                end
-            end
-            assert(~any(diff(tvec) == 0), 'tvec is not unique!');
-            this_on_events = randperm(length(tvec));
-            this_on_events = tvec(sort(this_on_events(1:num_nonstim)));
-            clear tvec;
-            latency = nan(size(this_on_events));
-            fr = zeros(size(this_on_events));
-            bfr = zeros(size(this_on_events));
-            for iStim = 1:length(this_on_events)
-                st.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)) & ...
-                    (this_cell.t{1} < this_on_events(iStim)+max_delay));
-                baseline.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
-                    (this_cell.t{1} < this_on_events(iStim)));
-                if ~isempty(st.t{1})
-                    latency(iStim) = st.t{1}(1) - this_on_events(iStim);
-                end
-                fr(iStim) = length(st.t{1})/max_delay;
-                bfr(iStim) = length(baseline.t{1})/max_delay;
-            end
-            od.trial_nonstim.latency = latency;
-            od.trial_nonstim.fr = fr;
-            od.trial_nonstim.bfr = bfr;
-            od.trial_nonstim.on_events = this_on_events;
-        end
 
 %         % Non-stim evoked response (Choose 1 point each from each ISI to
 %         % match the characteristics of the stim evoked response
@@ -316,127 +282,43 @@ function doStuff
         % Sham-stim from real data as well as poisson train, response to confirm opto cell
         if ~isempty(ExpKeys.stim_times)
             this_time = ExpKeys.stim_times(1):1/32000:ExpKeys.stim_times(2);
+            % Generate num_random sham_stim fo
             this_on_events = sort(randsample(this_time, num_sham));
             fr = zeros(size(this_on_events));
             bfr = zeros(size(this_on_events));
-            p_fr = zeros(size(this_on_events));
-            p_bfr = zeros(size(this_on_events));
+%             p_fr = zeros(size(this_on_events));
+%             p_bfr = zeros(size(this_on_events));
 
             
-            % Generate a poisson spike train in this period using the mfr
-            % generate dfr based on poisson spike train with pre_stim_baseline mfr
-            dt = 1/32000;
-            pspike = dt*od.trial_stim.mfr; % based on actual mean_firing_rate
-            spk_poiss = rand(size(this_time)); % random numbers between 0 and 1
-            spk_poiss_t = this_time(spk_poiss < pspike)'; % generate spike train
-            p_cell = this_cell;
-            p_cell.t{1} = spk_poiss_t;
+%             % Generate a poisson spike train in this period using the mfr
+%             % generate dfr based on poisson spike train with pre_stim_baseline mfr
+%             dt = 1/32000;
+%             pspike = dt*od.trial_stim.mfr; % based on actual mean_firing_rate
+%             spk_poiss = rand(size(this_time)); % random numbers between 0 and 1
+%             spk_poiss_t = this_time(spk_poiss < pspike)'; % generate spike train
+%             p_cell = this_cell;
+%             p_cell.t{1} = spk_poiss_t;
 
             for iStim = 1:length(this_on_events)
                 st.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)) & ...
                     (this_cell.t{1} < this_on_events(iStim)+max_delay));
                 baseline.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
                     (this_cell.t{1} < this_on_events(iStim)));
-                p_st.t{1} = p_cell.t{1}((p_cell.t{1} >= this_on_events(iStim)) & ...
-                    (p_cell.t{1} < this_on_events(iStim)+max_delay));
-                p_baseline.t{1} = p_cell.t{1}((p_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
-                    (p_cell.t{1} < this_on_events(iStim)));
+%                 p_st.t{1} = p_cell.t{1}((p_cell.t{1} >= this_on_events(iStim)) & ...
+%                     (p_cell.t{1} < this_on_events(iStim)+max_delay));
+%                 p_baseline.t{1} = p_cell.t{1}((p_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
+%                     (p_cell.t{1} < this_on_events(iStim)));
 
                 fr(iStim) = length(st.t{1})/max_delay;
                 bfr(iStim) = length(baseline.t{1})/max_delay;
-                p_fr(iStim) = length(p_st.t{1})/max_delay;
-                p_bfr(iStim) = length(p_baseline.t{1})/max_delay;
+%                 p_fr(iStim) = length(p_st.t{1})/max_delay;
+%                 p_bfr(iStim) = length(p_baseline.t{1})/max_delay;
             end
             od.sham_stim.fr = fr;
             od.sham_stim.bfr = bfr;
-            od.sham_stim.p_fr = p_fr;
-            od.sham_stim.p_bfr = p_bfr;
+%             od.sham_stim.p_fr = p_fr;
+%             od.sham_stim.p_bfr = p_bfr;
         end
-
-%         % Reverse spike times during trial stim duration to see if the
-%         % current positive bias of the sham_stim remains
-%         if ~isempty(ExpKeys.stim_times)
-%             % reverse the spike train such that the total duration and
-%             % subsequent inter spike time different stays the same
-%             this_rev_cell = this_cell;
-%             this_rev_cell.t{1} = this_cell.t{1}(end) - this_cell.t{1} +  ...
-%                 this_cell.t{1}(1);
-%             this_rev_cell.t{1} = this_rev_cell.t{1}(end:-1:1);
-%             this_time = ExpKeys.stim_times(1):1/32000:ExpKeys.stim_times(2);
-%             this_on_events = sort(randsample(this_time, num_sham));
-%             clear this_time;
-%             fr = zeros(size(this_on_events));
-%             bfr = zeros(size(this_on_events));
-%             fr_m = zeros(size(this_on_events));
-%             bfr_m = zeros(size(this_on_events));
-%             for iStim = 1:length(this_on_events)
-%                 st = restrict(this_rev_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
-%                 baseline = restrict(this_rev_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
-%                 % Use manual indexing to compare to restrict later
-%                 st_m = this_rev_cell;
-%                 st_m.t{1} = st_m.t{1}((st_m.t{1} >= this_on_events(iStim)) & ...
-%                     (st_m.t{1} < this_on_events(iStim)+max_delay));
-%                 baseline_m = this_rev_cell;
-%                 baseline_m.t{1} = baseline_m.t{1}((baseline_m.t{1} >= this_on_events(iStim)-max_delay) & ...
-%                     (baseline_m.t{1} < this_on_events(iStim)));
-%                 if ~isempty(st.t{1})
-%                     fr(iStim) = length(st.t{1})/max_delay;
-%                     bfr(iStim) = length(baseline.t{1})/max_delay;
-%                 end
-%                 if ~isempty(st_m.t{1})
-%                     fr_m(iStim) = length(st_m.t{1})/max_delay;
-%                     bfr_m(iStim) = length(baseline_m.t{1})/max_delay;
-%                 end
-%             end
-%             od.rev_stim.fr = fr;
-%             od.rev_stim.bfr = bfr;
-%             od.rev_stim.fr_m = fr_m;
-%             od.rev_stim.bfr_m = bfr_m;
-%             clear fr bfr fr_m bfr_m
-%         end
-
-%         % Shuffle spike times during trial stim duration such that ISI distribution stays the same
-%         % to see if the current positive bias of the sham_stim remains
-%         if ~isempty(ExpKeys.stim_times)
-%             % reverse the spike train such that the total duration and
-%             % subsequent inter spike time different stays the same
-%             this_shuf_cell = this_cell;
-%             this_isi = diff(this_cell.t{1});
-%             this_isi = this_isi(randperm(length(this_isi)));
-%             offsets = cumsum([0; this_isi]);
-%             this_shuf_cell.t{1} = this_cell.t{1}(1) + offsets;
-%             this_time = ExpKeys.stim_times(1):1/32000:ExpKeys.stim_times(2);
-%             this_on_events = sort(randsample(this_time, num_sham));
-%             clear this_time;
-%             fr = zeros(size(this_on_events));
-%             bfr = zeros(size(this_on_events));
-%             fr_m = zeros(size(this_on_events));
-%             bfr_m = zeros(size(this_on_events));
-%             for iStim = 1:length(this_on_events)
-%                 st = restrict(this_shuf_cell, iv(this_on_events(iStim), this_on_events(iStim)+max_delay));
-%                 baseline = restrict(this_shuf_cell, iv(this_on_events(iStim)-max_delay, this_on_events(iStim)));
-%                 % Use manual indexing to compare to restrict later
-%                 st_m = this_shuf_cell;
-%                 st_m.t{1} = st_m.t{1}((st_m.t{1} >= this_on_events(iStim)) & ...
-%                     (st_m.t{1} < this_on_events(iStim)+max_delay));
-%                 baseline_m = this_shuf_cell;
-%                 baseline_m.t{1} = baseline_m.t{1}((baseline_m.t{1} >= this_on_events(iStim)-max_delay) & ...
-%                     (baseline_m.t{1} < this_on_events(iStim)));
-%                 if ~isempty(st.t{1})
-%                     fr(iStim) = length(st.t{1})/max_delay;
-%                     bfr(iStim) = length(baseline.t{1})/max_delay;
-%                 end
-%                 if ~isempty(st_m.t{1})
-%                     fr_m(iStim) = length(st_m.t{1})/max_delay;
-%                     bfr_m(iStim) = length(baseline_m.t{1})/max_delay;
-%                 end
-%             end
-%             od.shuf_stim.fr = fr;
-%             od.shuf_stim.bfr = bfr;
-%             od.shuf_stim.fr_m = fr_m;
-%             od.shuf_stim.bfr_m = bfr_m;
-%             clear fr bfr fr_m bfr_m
-%         end
   
         % Save variables
         fn_prefix = extractBefore(restricted_S.label{iC}, '.t');

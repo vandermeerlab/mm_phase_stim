@@ -21,7 +21,7 @@ function doStuff
     
     fbands = {[2 5], [6 10], [30 55]};
     c_list = {'red', 'blue','green'};
-    nshufs = 100;
+    nshufs = 1000;
     stim_binc = 5;
     ns_binc = 25;
     phase_bins = -pi:2*pi/stim_binc:pi;

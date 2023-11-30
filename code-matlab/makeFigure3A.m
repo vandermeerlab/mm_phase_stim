@@ -6,8 +6,9 @@ summary = [];
 [summary.labels, summary.nostim_delta, summary.opto_delta, ...
     summary.sham_delta, summary.poisson_delta, summary.nostim_delta_sd, summary.opto_delta_sd, ...
     summary.sham_delta_sd, summary.poisson_delta_sd, ...
-    summary.p_val, summary.h, summary.isopto, summary.depth, ...
-    summary.waveforms, summary.depth] = deal([]);
+    summary.p_val, summary.h, summary.p_val_t, summary.h_t, ...
+    summary.isopto, summary.depth, summary.waveforms, ...
+    summary.depth] = deal([]);
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -22,6 +23,7 @@ dStr_mask = summary.depth < 3.5;
 vStr_mask = summary.depth >= 3.5;
 ks_mask = summary.h == 1; % That the sham and opto difference in firing-rate is different
 og_opto_mask = summary.isopto == 1;
+pct_mask = summary.h_t == 1; 
 
 peak_to_trough = zeros(size(summary.depth));
 for i = 1:length(summary.waveforms)
@@ -196,9 +198,11 @@ function s_out = doStuff(s_in)
         % Load the stim_response
         load(strcat(fn_prefix,'_stim_response.mat'));
 
-        nostim_dfr = od.trial_nonstim.fr' - od.trial_nonstim.bfr';
-        sham_dfr = od.sham_stim.fr' - od.sham_stim.bfr';
-        poisson_dfr = od.sham_stim.p_fr' - od.sham_stim.p_bfr';
+%         nostim_dfr = od.trial_nonstim.fr' - od.trial_nonstim.bfr';
+        % Comapare to a similar distribution as before
+        ridx = randi(1000000,1,10000);
+        sham_dfr = od.sham_stim.fr(ridx)' - od.sham_stim.bfr(ridx)';
+%         poisson_dfr = od.sham_stim.p_fr' - od.sham_stim.p_bfr';
         opto_idx = find(strcmp(S.label{iC},ExpKeys.goodCell));
 
         if isempty(opto_idx) % Non opto_cell
@@ -212,15 +216,35 @@ function s_out = doStuff(s_in)
         s_out.h = [s_out.h; h];
         s_out.p_val = [s_out.p_val; p];
         
+        % Do a percentile-test based shuffle
+        nshuf = 1000;
+        sham_dfr_mean = zeros(1,nshuf);
+        sham_dfr_sd = zeros(1,nshuf);
+        for ishuf = 1:nshuf
+            ridx = randi(1000000,1,(max(max(ExpKeys.goodTrials)) - ...
+                min(min(ExpKeys.goodTrials)) + 1));
+            this_shuf_dfr = od.sham_stim.fr(ridx) - od.sham_stim.bfr(ridx);
+            sham_dfr_mean(ishuf) = mean(this_shuf_dfr);
+            sham_dfr_sd(ishuf) = std(this_shuf_dfr);
+        end        
+        h2= (mean(opto_dfr) > prctile(sham_dfr_mean, 99)) | ...
+            (mean(opto_dfr) < prctile(sham_dfr_mean, 1));
+        p2 = max(sum(mean(opto_dfr) > sham_dfr_mean), ...
+            sum(mean(opto_dfr) < sham_dfr_mean))/1000;
+        s_out.h_t = [s_out.h_t; h2];
+        s_out.p_val_t = [s_out.p_val_t; 1- p2];
+
+        
+%         % Plot x
         s_out.opto_delta = [s_out.opto_delta; mean(opto_dfr)];
         s_out.opto_delta_sd = [s_out.opto_delta_sd; std(opto_dfr)];
-        s_out.nostim_delta = [s_out.nostim_delta; mean(nostim_dfr)];
-        s_out.nostim_delta_sd = [s_out.nostim_delta_sd; std(nostim_dfr)];
+%         s_out.nostim_delta = [s_out.nostim_delta; mean(nostim_dfr)];
+%         s_out.nostim_delta_sd = [s_out.nostim_delta_sd; std(nostim_dfr)];
         
         s_out.sham_delta = [s_out.sham_delta; mean(sham_dfr)];
         s_out.sham_delta_sd = [s_out.sham_delta_sd; std(sham_dfr)];
-        s_out.poisson_delta = [s_out.poisson_delta, mean(poisson_dfr)];
-        s_out.poisson_delta_sd = [s_out.poisson_delta, std(poisson_dfr)];
+%         s_out.poisson_delta = [s_out.poisson_delta, mean(poisson_dfr)];
+%         s_out.poisson_delta_sd = [s_out.poisson_delta, std(poisson_dfr)];
 
         s_out.labels = [s_out.labels; string(fn_prefix)];
         s_out.depth = [s_out.depth; ExpKeys.probeDepth];
