@@ -148,6 +148,14 @@ fprintf("%d - %d Hz, modCorr : %.2f, p-value: %.3f,\t\t z_corr : %.2f, p-value: 
 fprintf("%d - %d Hz, modCorr : %.2f, p-value: %.3f,\t\t z_corr : %.2f, p-value: %.3f" + ...
     "\n", fbands{3}(1), fbands{3}(2), r3, p3, r6, p6);
 
+%% Get the population stats
+delta_mod = summary.fr_r(sig_mask(:,1));
+delta_z = summary.fr_z(sig_mask(:,1));
+theta_mod = summary.fr_r(sig_mask(:,2));
+theta_z = summary.fr_z(sig_mask(:,2));
+gamma_mod = summary.fr_r(sig_mask(:,3));
+gamma_z = summary.fr_z(sig_mask(:,3));
+
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;

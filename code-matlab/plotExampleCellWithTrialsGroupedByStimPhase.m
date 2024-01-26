@@ -7,10 +7,10 @@ for iM  = 1:length(mice)
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-%         this_label = 'M019-2019-04-14-TT05_1.t'; % vStr Didactic example; choose trials 810-835 for inset
+% %         this_label = 'M019-2019-04-14-TT05_1.t'; % vStr Didactic example; choose trials 810-835 for inset
 %         this_label = 'M016-2019-02-18-TT04_1.t'; % vStr
-%         this_label = 'M018-2019-04-14-TT03_1.t'; % vStr
-        this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
+        this_label = 'M018-2019-04-14-TT03_1.t'; % vStr
+%         this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
         doStuff(this_label)
     end
 

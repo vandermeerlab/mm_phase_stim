@@ -160,6 +160,124 @@ fontname(fig, 'Helvetica')
 fontsize(fig, 45, 'points')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
 
+%% Bootstrapped statistical test for comparing means between phase-locking and phase-excitabilty
+rng(2023);
+phase_bins = [-pi:2*pi/5:pi];
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
+pl_z_thresh = 2;
+pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
+z_thresh = 2;
+sig_mask = (summary.fr_z > z_thresh) & eli_mask;
+clear i
+nboot = 1000; % Number of times to boo
+
+for iF = 1:length(fbands)
+    keep = find(sig_mask(:,iF));
+    ex_phase = summary.excitable_phase(keep);
+    ex_theta = bin_centers(ex_phase);
+    ex_rho = summary.fr_r(keep,iF);
+    ex_vec = [];
+    for iC = 1:length(keep)
+        ex_vec(iC) = ex_rho(iC) * (cos(ex_theta(iC)) + i*sin(ex_theta(iC)));
+    end
+    sum_ex = sum(ex_vec);
+    real_ex_angle = angle(sum_ex);
+
+    % generate bootstrapped max_ex_angles
+    boot_ex_angle = zeros(1,nboot);
+    for iBoot = 1:nboot
+        boot_ex_vec = [];
+        for iC = 1:length(keep)
+            c_idx = randi([1, length(keep)]); % randomly choose with replacement
+            boot_ex_vec(iC) = ex_rho(c_idx) * (cos(ex_theta(c_idx)) + ...
+                i*sin(ex_theta(c_idx)));
+        end
+        boot_ex_mean = sum(boot_ex_vec);
+        boot_ex_angle(iBoot) = angle(boot_ex_mean);
+    end
+    
+    % Look at the circular distribution of phase-locked neurons
+    keep = find(pl_mask(:,iF));
+    pl_phase = summary.phaselock_mean_phase(keep,iF);
+    pl_rho = summary.phaselock_plv(keep,iF);
+    pl_vec = [];
+    for iC = 1:length(keep)
+        pl_vec(iC) = pl_rho(iC) * (cos(pl_phase(iC)) + i*sin(pl_phase(iC)));
+    end
+    sum_pl = sum(pl_vec);
+    real_pl_angle = angle(sum_pl);
+
+    % generate bootstrapped mean_pl_angles
+    boot_pl_angle = zeros(1,nboot);
+    for iBoot = 1:nboot
+        boot_pl_vec = [];
+        for iC = 1:length(keep)
+            c_idx = randi([1, length(keep)]); % randomly choose with replacement
+            boot_pl_vec(iC) = pl_rho(c_idx) * (cos(pl_phase(c_idx)) + ...
+                i*sin(pl_phase(c_idx)));
+        end
+        boot_pl_mean = sum(boot_pl_vec);
+        boot_ex_angle(iBoot) = angle(boot_pl_mean);
+    end
+    real_ang_diff = mod(real_ex_angle - real_pl_angle, 2*pi);
+    real_ang_diff = min(2*pi-real_ang_diff, real_ang_diff); % Wrapping the difference between 0 and pi
+
+    boot_ang_diff = mod(boot_ex_angle - boot_pl_angle, 2*pi);
+    boot_ang_diff = min(2*pi-boot_ang_diff, boot_ang_diff); % Wrapping the difference between 0 and pi
+
+    % p-values
+    p_value = sum(real_ang_diff >= boot_ang_diff)/1000;
+    fprintf("p-value for %d - %d Hz = %.3f\n", fbands{iF}(1), fbands{iF}(2), p_value);
+end
+
+%% Bootstrapped statistical test for comparing means between phase-locking and phase-excitabilty (all neurons pooled)
+rng(2023);
+phase_bins = [-pi:2*pi/5:pi];
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
+pl_z_thresh = 2;
+pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
+z_thresh = 2;
+sig_mask = (summary.fr_z > z_thresh) & eli_mask;
+clear i
+nboot = 1000; % Number of times to boo
+
+all_ex_vec = [];
+all_pl_vec = [];
+
+for iF = 1:length(fbands)
+    keep = find(sig_mask(:,iF));
+    ex_phase = summary.excitable_phase(keep);
+    ex_theta = bin_centers(ex_phase);
+    ex_rho = summary.fr_r(keep,iF);
+    for iC = 1:length(keep)
+        all_ex_vec = [all_ex_vec,  ex_rho(iC) * (cos(ex_theta(iC)) + i*sin(ex_theta(iC)))];
+    end
+   
+    % Look at the circular distribution of phase-locked neurons
+    keep = find(pl_mask(:,iF));
+    pl_phase = summary.phaselock_mean_phase(keep,iF);
+    pl_rho = summary.phaselock_plv(keep,iF);
+    for iC = 1:length(keep)
+        all_pl_vec = [all_pl_vec, pl_rho(iC) * (cos(pl_phase(iC)) + i*sin(pl_phase(iC)))];
+    end
+end
+
+real_ex_angle = angle(sum(all_ex_vec));
+real_pl_angle = angle(sum(all_pl_vec));
+real_ang_diff = mod(real_ex_angle - real_pl_angle, 2*pi);
+real_ang_diff = min(2*pi-real_ang_diff, real_ang_diff); % Wrapping the difference between 0 and pi
+
+all_boot_diff = zeros(1, nboot);
+for iBoot = 1:nboot
+    boot_ex_vec = all_ex_vec(randi([1, length(all_ex_vec)], 1, length(all_ex_vec)));
+    boot_pl_vec = all_pl_vec(randi([1, length(all_pl_vec)], 1, length(all_pl_vec)));
+    boot_ex_angle = angle(sum(boot_ex_vec));
+    boot_pl_angle = angle(sum(boot_pl_vec));
+    boot_ang_diff = mod(boot_ex_angle - boot_pl_angle, 2*pi);
+    all_boot_diff(iBoot) = min(2*pi - boot_ang_diff, boot_ang_diff);
+end
+
+fprintf('p-value is %.3f\n', sum(real_ang_diff >= all_boot_diff)/1000);
 
 %% Figure 7C: Polar Plots (version2: All as well as BOTH, but weighted sum and unweighted sum)
 phase_bins = [-pi:2*pi/5:pi];
@@ -451,8 +569,22 @@ end
 fontname(fig, 'Helvetica')
 % fontsize(fig, 30, 'points')
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
+%% circ-circ correlation between mean_phase and most_excitable phase
+rng(2023);
+pl_z_thresh = 2;
+pl_mask = (summary.phaselock_circ_z >= pl_z_thresh) & eli_mask;
+z_thresh = 2;
+sig_mask = (summary.fr_z > z_thresh) & eli_mask;
+phase_bins = -pi:2*pi/5:pi;
+bin_centers = 0.5*(phase_bins(1:5)+phase_bins(2:6));
 
-
+for iF = 1:3
+    keep = sig_mask(:,iF) & pl_mask(:,iF);
+    mean_angles = summary.phaselock_mean_phase(keep,iF)';
+    max_ex_angles = bin_centers(summary.excitable_phase(keep,iF)');
+    [r, p] = circ_corrcc(mean_angles, max_ex_angles);
+    fprintf('Correlation = %.3f, p-value = %.3f for %d - %d Hz\n',r , p, fbands{iF}(1), fbands{iF}(2));
+end
 
 %% Figure (Extended) Scatter between mean_phase and most_excitable phase (Version 1 : Combined across various bands)
 rng(2023);
