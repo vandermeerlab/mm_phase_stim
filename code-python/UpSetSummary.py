@@ -18,9 +18,9 @@ filepath1 = os.path.join('C:','Users','mvdmlab','Desktop','dStr_sig.csv')
 filepath2 = os.path.join('C:','Users','mvdmlab','Desktop','vStr_sig.csv')
 filepath3 = os.path.join('C:','Users','mvdmlab','Desktop','all_sig.csv')
 
-dStr_data = pd.read_csv(filepath1, index_col=[0,1,2])
-vStr_data = pd.read_csv(filepath2, index_col=[0,1,2])
-all_data = pd.read_csv(filepath3, index_col=[0,1,2])
+dStr_data = pd.read_csv(filepath1, index_col=[0,1,2,3])
+vStr_data = pd.read_csv(filepath2, index_col=[0,1,2,3])
+all_data = pd.read_csv(filepath3, index_col=[0,1,2,3])
 
 
 fig = plt.figure(figsize=(21, 15))

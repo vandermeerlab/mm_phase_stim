@@ -1,5 +1,5 @@
-%% Assumes that spike-sorting has been done
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+%% Script to generate Figures 4 (partially), 5 and 8 (partially)
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -7,11 +7,12 @@ for iM  = 1:length(mice)
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-% %         this_label = 'M019-2019-04-14-TT05_1.t'; % vStr Didactic example; choose trials 810-835 for inset
-%         this_label = 'M016-2019-02-18-TT04_1.t'; % vStr
-        this_label = 'M018-2019-04-14-TT03_1.t'; % vStr
-%         this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
-        doStuff(this_label)
+%         this_label = 'M019-2019-04-14-TT05_1.t'; % Fig 4A vStr Didactic example; choose trials 810-835 for inset
+%         this_label = 'M016-2019-02-18-TT04_1.t'; % Fig 5A vStr
+%         this_label = 'M018-2019-04-14-TT03_1.t'; % Fig 5B vStr
+%         this_label = 'M017-2019-02-19-TT05_1.t'; % Fig 5C dStr
+%          this_label = 'M295-2022-01-06-TT06_4.t'; % vStr clearly inhibited non-opto cell
+         doStuff(this_label)
     end
 
 end
@@ -24,23 +25,23 @@ function doStuff(label)
     if isempty(cfg_spk.fc)
         return
     end
-    % if not the required cell, skip
-    if ~strcmp(cfg_spk.fc, label)
-        return
-    end
+%     % if not the required cell, skip
+%     if ~strcmp(cfg_spk.fc, label)
+%         return 
+%     end
     % cfg_spk.min_cluster_quality = 3;
     if ~strcmp(ExpKeys.experimenter, 'EC')
         cfg_spk.getRatings = 1;
         cfg_spk.uint = '64';
     end
+    cfg_spk.fc = {label}; % Hacky insert
     S = LoadSpikes(cfg_spk);
     
     % Set variables
     axisLabelFS = 30;
     tickLabelFS = 30;
     nbins = 5;
-%     fbands = {[2 5], [6 10], [12 30], [30 55]};
-    fbands = {[2 5], [6 10], [30 55]};
+    fbands = {[2 5], [6 10], [12 28], [30 55]};
     c_list = {'red', 'cyan','magenta', 'green', 'blue'}; % One color for each phase bin
     temp = linspecer(nbins);
     c_rgb = {};
@@ -109,78 +110,89 @@ function doStuff(label)
         restricted_cell = SelectTS([], restricted_S, iC);
         goodTrials = ExpKeys.goodTrials(iC,:);
 
-        % Trial-stim raster
-        if ~isempty(ExpKeys.stim_times)
+%         % Trial-stim raster
+%         if ~isempty(ExpKeys.stim_times)
 %             ax = subplot(4,4,[1,5,9]);
-            ax = subplot(3,4,[1,5]);
-            this_on_events = stim_on;
-            if ~isempty(ExpKeys.goodTrials) % Only keep the good trials
-                this_on_events = this_on_events(ExpKeys.goodTrials(iC,1):ExpKeys.goodTrials(iC,2));
-            end
-            % Use MultiRaster to do this, because why not
-            fake_S = this_cell;
-            for iT = 1:length(this_on_events)
-                temp_S = restrict(S, iv(this_on_events(iT) - 0.01, this_on_events(iT) + 0.01));
-                fake_S.t{iT} = 1000*(temp_S.t{1} - this_on_events(iT));
-                fake_S.label{iT} = temp_S.label{1};
-            end
-            cfg = [];
-            cfg.SpikeHeight = 0.48;
-            cfg.openNewFig = 0;
-            MultiRaster(cfg,fake_S);
-            hold on
-            xline(0, '--cyan', 'LineWidth', 1);
-            xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--cyan', 'LineWidth', 1)
-            yticks([0 length(this_on_events)])
-            xticks([-10 0 10])
-            ylim([0 length(this_on_events)])
-            xlim([-10 10]);
-            % Plot the box around the inset trials (only for the didactic example)
-            plot([-10 10], [810 810], 'Color', 'black', 'LineWidth', 2);
-            plot([-10 10], [835 835], 'Color', 'black', 'LineWidth', 2);
-            plot([-10 -10], [810 835], 'Color', 'black', 'LineWidth', 2);
-            plot([10 10], [810 835], 'Color', 'black', 'LineWidth', 2);
-            xlabel("Time (ms)")
-            ylabel('Trial #');
-            ax.Box = 'off';
-            ax.TickDir = 'out';
-            ax.TickLength = [0.03 0.02];
-            ax.XAxis.FontSize = tickLabelFS;
-            ax.YAxis.FontSize = tickLabelFS;
-            ax.XLabel.FontSize = axisLabelFS;
-            ax.YLabel.FontSize = axisLabelFS;
-            axs = [axs, ax];
-        end
-
-        % Plot PSD on the bottom left
-        load('trial_psd.mat');
-%         ax = subplot(4,4,13);
-        ax = subplot(3,4,9);
-%         ax.PositionConstraint = "innerposition";
-        hold on;
-        plot(psd.freq, 10*log10(psd.original), 'black', 'LineWidth', 1.5);
-        for iF = 1:length(fbands)
-            f_idx = find(round(psd.freq) >= fbands{iF}(1) & round(psd.freq) <= fbands{iF}(2));
-%             area(psd.freq(f_idx), 10*log10(psd.original(f_idx)), 'FaceColor', c_list{iF}, ...
+%             ax = subplot(3,4,[1,5]);
+%             this_on_events = stim_on;
+%             if ~isempty(ExpKeys.goodTrials) % Only keep the good trials
+%                 this_on_events = this_on_events(ExpKeys.goodTrials(iC,1):ExpKeys.goodTrials(iC,2));
+%             end
+%             % Use MultiRaster to do this, because why not
+%             fake_S = this_cell;
+%             for iT = 1:length(this_on_events)
+%                 temp_S = restrict(S, iv(this_on_events(iT) - 0.01, this_on_events(iT) + 0.01));
+%                 fake_S.t{iT} = 1000*(temp_S.t{1} - this_on_events(iT));
+%                 fake_S.label{iT} = temp_S.label{1};
+%             end
+%             cfg = [];
+%             cfg.SpikeHeight = 0.48;
+%             cfg.openNewFig = 0;
+%             MultiRaster(cfg,fake_S);
+%             hold on
+%             xline(0, '--cyan', 'LineWidth', 1);
+%             xline(ExpKeys.short_stim_pulse_width+stop_delay*1000, '--cyan', 'LineWidth', 1)
+%             yticks([0 length(this_on_events)])
+%             xticks([-10 0 10])
+%             ylim([0 length(this_on_events)])
+%             xlim([-10 10]);
+%             % Plot the box around the inset trials (only for the didactic example)
+%             plot([-10 10], [810 810], 'Color', 'black', 'LineWidth', 2);
+%             plot([-10 10], [835 835], 'Color', 'black', 'LineWidth', 2);
+%             plot([-10 -10], [810 835], 'Color', 'black', 'LineWidth', 2);
+%             plot([10 10], [810 835], 'Color', 'black', 'LineWidth', 2);
+%             xlabel("Time (ms)")
+%             ylabel('Trial #');
+%             ax.Box = 'off';
+%             ax.TickDir = 'out';
+%             ax.TickLength = [0.03 0.02];
+%             ax.XAxis.FontSize = tickLabelFS;
+%             ax.YAxis.FontSize = tickLabelFS;
+%             ax.XLabel.FontSize = axisLabelFS;
+%             ax.YLabel.FontSize = axisLabelFS;
+%             axs = [axs, ax];
+%         end
+% 
+%         % Plot PSD on the bottom left
+%         load('trial_psd.mat');
+% %         ax = subplot(4,4,13);
+%         ax = subplot(3,4,9);
+% %         ax.PositionConstraint = "innerposition";
+%         hold on;
+%         plot(psd.freq, 10*log10(psd.original), 'black', 'LineWidth', 1.5);
+%         for iF = 1:length(fbands)
+%             f_idx = find(round(psd.freq) >= fbands{iF}(1) & round(psd.freq) <= fbands{iF}(2));
+% %             area(psd.freq(f_idx), 10*log10(psd.original(f_idx)), 'FaceColor', c_list{iF}, ...
+% %                 'FaceAlpha', 0.5, 'BaseValue', min(10*log10(psd.original)))
+%             area(psd.freq(f_idx), 10*log10(psd.original(f_idx)), 'FaceColor', [0.7 0.7 0.7], ...
 %                 'FaceAlpha', 0.5, 'BaseValue', min(10*log10(psd.original)))
-            area(psd.freq(f_idx), 10*log10(psd.original(f_idx)), 'FaceColor', [0.7 0.7 0.7], ...
-                'FaceAlpha', 0.5, 'BaseValue', min(10*log10(psd.original)))
+%         end
+%         plot(psd.freq, 10*log10(psd.irasa), '--black', 'LineWidth', 1.5);
+%         xlim([0 100])
+% %         yticklabels([])
+% %         yticks([0 length(this_on_events)])
+%         ylabel('PSD')
+%         xlabel('Frequency (Hz)')
+%         ax.YLim(1) =  min(10*log10(psd.original));
+%         ax.Box = 'off';
+%         ax.TickDir = 'out';
+%         ax.TickLength = [0.06 0.02];
+%         ax.XAxis.FontSize = tickLabelFS;
+%         ax.YAxis.FontSize = tickLabelFS;
+%         ax.XLabel.FontSize = axisLabelFS;
+%         ax.YLabel.FontSize = axisLabelFS;
+%         axs = [axs, ax];
+
+        this_on_events = stim_on;
+        if ~isempty(ExpKeys.goodTrials) % Only keep the good trials
+            this_on_events = this_on_events(ExpKeys.goodTrials(iC,1):ExpKeys.goodTrials(iC,2));
         end
-        plot(psd.freq, 10*log10(psd.irasa), '--black', 'LineWidth', 1.5);
-        xlim([0 100])
-%         yticklabels([])
-%         yticks([0 length(this_on_events)])
-        ylabel('PSD')
-        xlabel('Frequency (Hz)')
-        ax.YLim(1) =  min(10*log10(psd.original));
-        ax.Box = 'off';
-        ax.TickDir = 'out';
-        ax.TickLength = [0.06 0.02];
-        ax.XAxis.FontSize = tickLabelFS;
-        ax.YAxis.FontSize = tickLabelFS;
-        ax.XLabel.FontSize = axisLabelFS;
-        ax.YLabel.FontSize = axisLabelFS;
-        axs = [axs, ax];
+        fake_S = this_cell;
+        for iT = 1:length(this_on_events)
+            temp_S = restrict(S, iv(this_on_events(iT) - 0.01, this_on_events(iT) + 0.01));
+            fake_S.t{iT} = 1000*(temp_S.t{1} - this_on_events(iT));
+            fake_S.label{iT} = temp_S.label{1};
+        end
 
         % outputT has the trial numbers, and outputS has the spiketiming within
         % that given trial. If a trial has no spikes, it doesn't exist in outputT
@@ -189,7 +201,7 @@ function doStuff(label)
         phase_bins = -pi:2*pi/nbins:pi;
         for iF = 1:length(fbands)
 %             ax = subplot(4,4,[iF+1,iF+5,iF+9]);
-            ax = subplot(3,4,[iF+1,iF+5]);
+            ax = subplot(3,4,[iF,iF+4]);
             hold on
             this_phase = causal_phase(iF,goodTrials(1):goodTrials(2));
             [this_count, ~, this_bin] = histcounts(this_phase, phase_bins);
@@ -241,7 +253,7 @@ function doStuff(label)
             axs = [axs, ax];
 
 %             ax = subplot(4,4,iF+13);
-            ax = subplot(3,4,iF+9);
+            ax = subplot(3,4,iF+8);
 %             ax.PositionConstraint = "outerposition";
             hold on
             b = bar(delta_fr(iF,:),1, 'EdgeColor', 'none');
@@ -275,8 +287,8 @@ function doStuff(label)
             else
                 ax.YLabel.String = {};
             end
-            ylim([0 100]); % Need to change this in a case by case basis
-            yticks([0 100]);
+            ylim([0 50]); % Need to change this in a case by case basis
+            yticks([0 50]);
             ax.XLabel.String = 'Phase bin';
             ax.Box = 'off';
             ax.TickLength = [0.06 0.02];
@@ -312,40 +324,40 @@ function doStuff(label)
 %         close(fig2)
 
         % Need to pause here for this to work
-        pause(2)
-        % Manual plot manipulation to make the final figure looks pretty
-        % Make a copy of original positions
-        daxs_in = [];
-        daxs_out = [];
-        for i = 1:length(axs)
-            daxs_in = [daxs_in; axs(i).Position];
-            daxs_out = [daxs_out; axs(i).OuterPosition];
-        end
+%         pause(2)
+%         % Manual plot manipulation to make the final figure looks pretty
+%         % Make a copy of original positions
+%         daxs_in = [];
+%         daxs_out = [];
+%         for i = 1:length(axs)
+%             daxs_in = [daxs_in; axs(i).Position];
+%             daxs_out = [daxs_out; axs(i).OuterPosition];
+%         end
+% 
+%         axs(2).OuterPosition(1) = axs(1).OuterPosition(1);
+%         axs(1).OuterPosition(2) = axs(1).OuterPosition(2)+0.05;
+%         axs(2).Position(1) = axs(1).Position(1);
+%         axs(2).Position(3) = axs(1).Position(3);
+% 
+%         axs(3).OuterPosition(1) = axs(1).OuterPosition(1) + axs(1).OuterPosition(3);
+%         axs(3).OuterPosition(2) = axs(3).OuterPosition(2)+0.05;
+%         axs(4).Position(1) = axs(3).Position(1);
+%         axs(4).Position(3) = axs(3).Position(3)+0.03;
+% 
+%         axs(5).OuterPosition(1) = axs(3).OuterPosition(1) + axs(3).OuterPosition(3);
+%         axs(5).OuterPosition(2) = axs(5).OuterPosition(2)+0.05;
+%         axs(6).Position(1) = axs(5).Position(1);
+%         axs(6).Position(3) = axs(5).Position(3)+0.03;
+% 
+%         axs(7).OuterPosition(1) = axs(5).OuterPosition(1) + axs(5).OuterPosition(3);
+%         axs(7).OuterPosition(2) = axs(7).OuterPosition(2)+0.05;
+%         axs(8).Position(1) = axs(7).Position(1);
+%         axs(8).Position(3) = axs(7).Position(3)+0.03;
 
-        axs(2).OuterPosition(1) = axs(1).OuterPosition(1);
-        axs(1).OuterPosition(2) = axs(1).OuterPosition(2)+0.05;
-        axs(2).Position(1) = axs(1).Position(1);
-        axs(2).Position(3) = axs(1).Position(3);
-
-        axs(3).OuterPosition(1) = axs(1).OuterPosition(1) + axs(1).OuterPosition(3);
-        axs(3).OuterPosition(2) = axs(3).OuterPosition(2)+0.05;
-        axs(4).Position(1) = axs(3).Position(1);
-        axs(4).Position(3) = axs(3).Position(3)+0.03;
-
-        axs(5).OuterPosition(1) = axs(3).OuterPosition(1) + axs(3).OuterPosition(3);
-        axs(5).OuterPosition(2) = axs(5).OuterPosition(2)+0.05;
-        axs(6).Position(1) = axs(5).Position(1);
-        axs(6).Position(3) = axs(5).Position(3)+0.03;
-
-        axs(7).OuterPosition(1) = axs(5).OuterPosition(1) + axs(5).OuterPosition(3);
-        axs(7).OuterPosition(2) = axs(7).OuterPosition(2)+0.05;
-        axs(8).Position(1) = axs(7).Position(1);
-        axs(8).Position(3) = axs(7).Position(3)+0.03;
-
-        exportgraphics(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
-%         savefig(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase'));
+        exportgraphics(this_fig, strcat('data\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
+%         savefig(this_fig, strcat('data\', fn_prefix,'-TrialsGroupedByStimPhase'));
 %         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
-%         print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-CellReport'));
+%         print(this_fig, '-dpng',  strcat('data\', fn_prefix, '-CellReport'));
         close;
     end
 end

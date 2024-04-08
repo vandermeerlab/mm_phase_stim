@@ -1,6 +1,6 @@
 %% Script to generate the relationships between spiking and LFP Phase
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -19,8 +19,8 @@ function doStuff
         return
     end
     
-    fbands = {[2 5], [6 10], [30 55]};
-    c_list = {'red', 'blue','green'};
+    fbands = {[2 5], [6 10], [12 28], [30 55]};
+    c_list = {'red', 'blue','magenta', 'cyan'};
     nshufs = 1000;
     stim_binc = 5;
     ns_binc = 25;
@@ -31,8 +31,6 @@ function doStuff
 
     % Load the phases at stim_on in various frequency bands
     load('stim_phases.mat');
-    % Get rid of all the 3rd band stuff IF there are 4 bands
-    if size(causal_phase, 1) == 4 causal_phase(3,:) = []; end
 
     for iC = 1:length(ExpKeys.goodCell)
         fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
@@ -106,7 +104,7 @@ function doStuff
             clear q0 q1 q2 q3 this_bin this_count
 
             % Plot the Spike-phase distribution
-            ax = subplot(4,5,(iF-1)*5+1);
+            ax = subplot(5,5,(iF-1)*5+1);
             bar(ax,ns_ticks,ns_spk_count(iF,:),1,c_list{iF});
             xlabel('Phase Bin')
             ylabel('Spike Count')
@@ -115,28 +113,28 @@ function doStuff
             ax.XLim = [-3.25 3.25];
 
             % Plot the FR_phase distribution
-            ax = subplot(4,5,(iF-1)*5+2);
+            ax = subplot(5,5,(iF-1)*5+2);
             bar(ax,ns_ticks,ns_fr(iF,:),1,c_list{iF});
             xlabel('Phase Bin')
             ylabel('FR')
             ax.XLim = [-3.25 3.25];
 
             % Plot the lookup
-            ax = subplot(4,5,(iF-1)*5+3);
+            ax = subplot(5,5,(iF-1)*5+3);
             bar(ax,ns_ticks,ns_lookup(iF,:),1,c_list{iF});
             ax.Title.String = 'NonStim Lookup';
             xlabel('Phase Bin')
             ylabel('{\Delta} FR')
             ax.XLim = [-3.25 3.25];
             
-            ax = subplot(4,5,(iF-1)*5+4);
+            ax = subplot(5,5,(iF-1)*5+4);
             xlabel('Phase Bin')
             ylabel('{\Delta} FR')
             bar(ax,x_ticks,out.fr.bin(iF,:),1,c_list{iF});
             ax.Title.String = 'Original {\Delta FR}';
             ax.XLim = [-3.25 3.25];
 
-            ax = subplot(4,5,(iF-1)*5+5);
+            ax = subplot(5,5,(iF-1)*5+5);
             xlabel('Phase Bin')
             ylabel('{\Delta} FR')
             bar(ax,x_ticks,corrected_fr_bin(iF,:),1,c_list{iF});
@@ -144,7 +142,7 @@ function doStuff
             ax.XLim = [-3.25 3.25];  
         end
 
-        ax = subplot(4,5,19);
+        ax = subplot(5,5,24);
         hold on
         for iF = 1:length(fbands)
             scatter(mean(fbands{iF}), out.fr.zscore(iF), 'MarkerFaceColor', ...
@@ -155,7 +153,7 @@ function doStuff
         ax.XAxis.Label.String = 'Freq (Hz)';
         ax.YAxis.Label.String = 'Z-score';
 
-        ax = subplot(4,5,20);
+        ax = subplot(5,5,25);
         hold on
         for iF = 1:length(fbands)
             scatter(mean(fbands{iF}), corrected_fr_z(iF), 'MarkerFaceColor', ...

@@ -150,12 +150,6 @@ for iF = 1:nFiles
     sample_count_tvec(iF) = length(tvec);
     sample_count_data(iF) = length(data);
     
-    % check if the data is the same length for each channel.  
-    if iF >1 && length(data) ~= length(csc_tsd.data(iF-1,:))
-        message = 'Data lengths differ across channels.';
-        error(message);
-    end
-    
     % decimate data if specified
     if ~isempty(cfg.decimateByFactor)
         
@@ -164,6 +158,14 @@ for iF = 1:nFiles
         tvec = tvec(1:cfg.decimateByFactor:end);
         hdr.SamplingFrequency = hdr.SamplingFrequency./cfg.decimateByFactor;
         
+    else
+    
+    % check if the data is the same length for each channel.  
+        if iF >1 && length(data) ~= length(csc_tsd.data(iF-1,:))
+            message = 'Data lengths differ across channels.';
+            error(message);
+        end
+    
     end
     
     % done, add to tsd
@@ -226,13 +228,10 @@ for hline = 1:length(Header)
     a = regexp(line(2:end),'(?<key>^\S+)\s+(?<val>.*)|(?<key>\S+)','names');
 
     % deal with characters not allowed by MATLAB struct
-%     if strcmp(a.key,'DspFilterDelay_ï¿½s') | strcmp(a.key,'DspFilterDelay_µs') | strcmp(a.key, 'DspFilterDelay_�s 4250')
-%         a.key = 'DspFilterDelay_us';
-%     end
-    if startsWith(a.key, 'DspFilterDelay')
+    if strcmp(a.key,'DspFilterDelay_�s') | strcmp(a.key,'DspFilterDelay_�s')
         a.key = 'DspFilterDelay_us';
     end
-
+    
     csc_info = setfield(csc_info,a.key,a.val);
     
     % convert to double if possible

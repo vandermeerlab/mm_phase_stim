@@ -35,4 +35,3 @@ for iF = 1:nFiles
 	end 		% if tfn valid
 end		% for all files
 fprintf(2,'\n');
-

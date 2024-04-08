@@ -1,5 +1,5 @@
-%% Assumes that spike-sorting has been done
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+%% Script to generate part of Figure 4
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));

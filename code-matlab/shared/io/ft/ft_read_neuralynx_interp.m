@@ -104,22 +104,13 @@ for i = 1:nchans
     end
     datinterp   = interp1(ts, data.trial{1}, tsinterp);
 
-%     % you can use NaN to replace the data in the gaps
-%     gaps     = find(diff(ts)>2*mode_dts); % skips at least a sample
-%     for igap = 1:length(gaps)
-%       sel = tsinterp < ts(gaps(igap)+1) & tsinterp > ts(gaps(igap));
-%       datinterp(sel) = NaN;
-%     end
-
-    % Interpolate the signal in the gaps
-    gaps = find(diff(ts)>2*mode_dts); % skips at least a sample
-    if ~isempty(gaps)
-            fprintf('Largest gap is %.2f sec\n', max(diff(ts))/data.hdr.Fs);
-        for igap = 1:length(gaps)
-          sel = find(tsinterp < ts(gaps(igap)+1) & tsinterp > ts(gaps(igap)));
-          datinterp(sel) = interp1(tsinterp(1:sel(end)-1),datainterp(1:sel(end)-1), tsinterp(sel), 'spline', 'extrap');
-        end
-    end 
+    % you can use NaN to replace the data in the gaps
+    gaps     = find(diff(ts)>2*mode_dts); % skips at least a sample
+    for igap = 1:length(gaps)
+      sel = tsinterp < ts(gaps(igap)+1) & tsinterp > ts(gaps(igap));
+      datinterp(sel) = NaN;
+    end
+  
     % set data at the end and beginning to nans
     if startflag==1
       n = floor(offset(i)/mode_dts);

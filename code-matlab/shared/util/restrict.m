@@ -1,5 +1,5 @@
-function in = restrict(in,varargin)
-% function out = restrict(in,varargin)
+function [in,keep] = restrict(in,varargin)
+% function [out,keep] = restrict(in,varargin)
 %
 % restricts times in data object to specific intervals
 %
@@ -16,6 +16,8 @@ function in = restrict(in,varargin)
 %
 % MvdM 2014-07-20 initial version
 % youkitan 2016-11-27 edit: type checking update
+%
+% see also antirestrict()
 
 % convert input arguments to iv if not already done
 if nargin == 2
@@ -82,6 +84,17 @@ switch type
     case 'iv'
         in.tstart = in.tstart(keep);
         in.tend = in.tend(keep);
+        
+        if isfield(in,'usr')
+            if ~isempty(in.usr)
+               fn = fieldnames(in.usr);
+               for iFN = 1:length(fn)
+                   temp = in.usr.(fn{iFN});
+                   temp = temp(keep);
+                   in.usr.(fn{iFN}) = temp;
+               end
+            end
+        end
         
 end
 

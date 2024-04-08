@@ -1,6 +1,6 @@
 %% Script to characterize opto_cells on the basis of firing rate changes and mean wave-form
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.labels, summary.nostim_delta, summary.opto_delta, ...
@@ -29,6 +29,8 @@ peak_to_trough = zeros(size(summary.depth));
 for i = 1:length(summary.waveforms)
     norm_wf(i,:) = (summary.waveforms(i,:) - min(summary.waveforms(i,:)))/...
         (max(summary.waveforms(i,:)) - min(summary.waveforms(i,:)));
+    % Reversing the waveform since input was inverted
+    norm_wf(i,:) = -1 * norm_wf(i,:);
     [~, pidx] = max(norm_wf(i,:));
     [~, tidx] = min(norm_wf(i,:));
     peak_to_trough(i) = tidx - pidx;
@@ -172,6 +174,9 @@ fig.Renderer = 'painters';
 dStr_opto = summary.labels(ks_mask & dStr_mask & summary.opto_delta > summary.sham_delta);
 vStr_opto = summary.labels(ks_mask & vStr_mask & summary.opto_delta > summary.sham_delta);
 
+dStr_others = summary.labels(dStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
+vStr_others = summary.labels(vStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
+
 %%
 opto_p = [summary.labels(ks_mask),summary.h(ks_mask),summary.p_val(ks_mask), summary.sham_delta(ks_mask), summary.opto_delta(ks_mask)];
 other_p = [summary.labels(~ks_mask),summary.h(~ks_mask), summary.p_val(~ks_mask), summary.sham_delta(~ks_mask), summary.opto_delta(~ks_mask)];
@@ -182,6 +187,7 @@ function s_out = doStuff(s_in)
     if isempty(ExpKeys.goodCell)
         return
     end
+%     fprintf('%s\n',pwd);
     cfg = [];
 %     cfg.fc = ExpKeys.goodCell;
     if ~strcmp(ExpKeys.experimenter, 'EC')
