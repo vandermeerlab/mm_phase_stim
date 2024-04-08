@@ -172,6 +172,9 @@ fig.Renderer = 'painters';
 dStr_opto = summary.labels(ks_mask & dStr_mask & summary.opto_delta > summary.sham_delta);
 vStr_opto = summary.labels(ks_mask & vStr_mask & summary.opto_delta > summary.sham_delta);
 
+dStr_others = summary.labels(dStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
+vStr_others = summary.labels(vStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
+
 %%
 opto_p = [summary.labels(ks_mask),summary.h(ks_mask),summary.p_val(ks_mask), summary.sham_delta(ks_mask), summary.opto_delta(ks_mask)];
 other_p = [summary.labels(~ks_mask),summary.h(~ks_mask), summary.p_val(~ks_mask), summary.sham_delta(~ks_mask), summary.opto_delta(~ks_mask)];

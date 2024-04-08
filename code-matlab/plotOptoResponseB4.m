@@ -1,4 +1,4 @@
-cd('E:\Dropbox (Dartmouth College)\manish_data\M020\M020-2019-06-09_vStr_4p7_light_cells_TT7_min\');
+cd('E:\Dropbox (Dartmouth College)\manish_data\M019\M019-2019-04-14_vStr_4p2_light_cells_TT5 _min\');
 %     cd('E:\Dropbox (Dartmouth College)\manish_data\M018\M018-2019-04-12_dStr_3p8_light_cells_TT7_min\'); % Select Cell
 %     cd('E:\Dropbox (Dartmouth College)\manish_data\M319\M319-2022-06-28\'); % Select Cell
 % cd('E:\Dropbox (Dartmouth College)\manish_data\M019\M019-2019-04-12_vStr_4p2_light_cells_TT7_min');
@@ -35,7 +35,8 @@ end
 
 for iC = 1:length(S.label)
     % Set variables and parameters
-    fbands = {[2 5], [6 10], [12 30], [30 55]};
+    fbands = {[2 5], [6 10], [30 55]};
+%     c_list = {'red', 'cyan','magenta', 'green', 'blue'};
     c_list = {'red', 'blue','magenta', 'green'};
     nbins = 5;
     phase_bins = -pi:2*pi/nbins:pi;

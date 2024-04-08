@@ -245,6 +245,9 @@ all_ex_vec = [];
 all_pl_vec = [];
 
 for iF = 1:length(fbands)
+%     if iF == 3
+%         continue
+%     end
     keep = find(sig_mask(:,iF));
     ex_phase = summary.excitable_phase(keep);
     ex_theta = bin_centers(ex_phase);

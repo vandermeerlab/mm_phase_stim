@@ -17,7 +17,7 @@ end
 function doStuff
     % Declaring variables
     % Setting up parameters
-    fbands = {[2 5], [6 10], [30 55]};
+    fbands = {[2 5], [6 10], [12 28], [30 55]};
 
     LoadExpKeys;
     if isempty(ExpKeys.goodCell)
@@ -37,7 +37,24 @@ function doStuff
     else
         csc = LoadCSC(cfg);
     end
+    
+    % Sometimes csc.tvec can be have weird elements because of gaps in recording
+    to_remove = find(diff(csc.tvec)<=0);
+    while (~isempty(to_remove))
+        csc.tvec(to_remove+1) = [];
+        csc.data(to_remove+1) = [];
+        to_remove = find(diff(csc.tvec)<=0);
+    end
+    
+    % If Input inverted was true for this csc, invert the polarity of the
+    % csc signal
+    if csc.cfg.hdr{1}.InputInverted == 'True'
+        csc.data = csc.data * -1;
+        fprintf('Input Invert was ON for %s, reversing the LFP signal polarity for phase estimation', ...
+            strcat(ExpKeys.subject_id, '_', ExpKeys.date));
+    end
     Fs = 1/median(diff(csc.tvec));
+
 
     csc = restrict(csc, iv(ExpKeys.stim_times));
 
@@ -57,30 +74,33 @@ function doStuff
     end
 
     causal_phase = nan(length(fbands), length(stim_on));
+    causal_power = cell(length(fbands), length(stim_on));
     nEnds = nearest_idx3(stim_on, csc.tvec);
 
-    for iB = 2%1:length(fbands)
+    for iB = 1:length(fbands)
         win_length  = 0.5; % we are using this window length because we don't see much of a difference in phase estimation % TODO : Find a way to communicate this to the readers
         nStarts = nearest_idx3(stim_on - win_length, csc.tvec);
         for iS = 1:length(stim_on)
             this_echt = echt(csc.data(nStarts(iS):nEnds(iS)), fbands{iB}(1), fbands{iB}(2), Fs);
             this_phase = angle(this_echt);
             causal_phase(iB,iS) = this_phase(end); % The last sample's phase
+            % Power from last 0.25 sec prior to stim (proportional to magnitude squared)
+            mid = ceil(length(this_phase)/2);
+            causal_power{iB,iS} = abs(this_phase(mid:end)).*abs(this_phase(mid:end)); 
             % Diagnostic to check how are angles assined (Uncomment to run)
-            diag_fig = figure;
-            ax1 = subplot(2,1,1);
-            plot(abs(this_echt))
-            ax2 = subplot(2,1,2);
-            plot(angle(this_echt))
-            hold on
-            yline(0, 'red')
-            yline(pi/2, 'green')
-            yline(pi, 'black')
-            linkaxes([ax1,ax2],'x')
-            close(diag_fig)
+%             diag_fig = figure;
+%             ax1 = subplot(2,1,1);
+%             plot(abs(this_echt))
+%             ax2 = subplot(2,1,2);
+%             plot(angle(this_echt))
+%             hold on
+%             yline(0, 'red')
+%             yline(pi/2, 'green')
+%             yline(pi, 'black')
+%             linkaxes([ax1,ax2],'x')
+%             close(diag_fig)
         end
     end
     % Assume you are in the correct folder
-    save('stim_phases','causal_phase'); % should add option to save in specified output dir
-    close;
+    save('stim_phases','causal_phase', 'causal_power'); % should add option to save in specified output dir
 end
