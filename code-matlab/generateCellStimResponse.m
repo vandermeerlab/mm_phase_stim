@@ -2,7 +2,7 @@
 
 top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
-for iM  = 1 :length(mice)
+for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
     for iS = 1:length(sid)
@@ -33,7 +33,6 @@ function doStuff
     max_delay = 0.01; % sec (window for the first response since stimulus)
     max_long_delay = 0.4; % sec
     num_sham = 1000000; % Number of sham stim used
-    num_nonstim = 10000; % Number of spoints to be selected for non_stim
     
     %% Remove spikes during short stim times
     if contains(ExpKeys.light_source, 'LASER')
@@ -103,8 +102,6 @@ function doStuff
         od.post_stim = [];
         od.long_stim = [];
         od.sham_stim = [];
-%         od.trial_nonstim = [];
-%         od.matched_nonstim = [];
         
         % Pre-stim response
         if ~isempty(ExpKeys.pre_stim_times)
@@ -177,39 +174,6 @@ function doStuff
             temp = restrict(this_cell, iv(ExpKeys.stim_times(1), ExpKeys.stim_times(2)));
             od.trial_stim.mfr = length(temp.t{1})/diff(ExpKeys.stim_times);
         end
-
-
-%         % Non-stim evoked response (Choose 1 point each from each ISI to
-%         % match the characteristics of the stim evoked response
-%         if ~isempty(ExpKeys.stim_times)
-%             dt = 0.001; % in seconds
-%             this_on_events = zeros(size(stim_on));
-%             for iStim = 1:length(stim_on)-1
-%                 tvec = [stim_on(iStim)+0.25:dt:stim_on(iStim+1)-0.01];
-%                 this_on_events(iStim) = tvec(randi(length(tvec)));           
-%             end
-%             tvec = stim_on(end)+0.25:dt:stim_on(end)+1;
-%             this_on_events(end) = tvec(randi(length(tvec)));
-%             clear tvec
-%             latency = nan(size(this_on_events));
-%             fr = zeros(size(this_on_events));
-%             bfr = zeros(size(this_on_events));
-%             for iStim = 1:length(this_on_events)
-%                 st.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)) & ...
-%                     (this_cell.t{1} < this_on_events(iStim)+max_delay));
-%                 baseline.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
-%                     (this_cell.t{1} < this_on_events(iStim)));
-%                 if ~isempty(st.t{1})
-%                     latency(iStim) = st.t{1}(1) - this_on_events(iStim);
-%                 end
-%                 fr(iStim) = length(st.t{1})/max_delay;
-%                 bfr(iStim) = length(baseline.t{1})/max_delay;
-%             end
-%             od.trial_nonstim.latency = latency;
-%             od.trial_nonstim.fr = fr;
-%             od.trial_nonstim.bfr = bfr;
-%             od.trial_nonstim.on_events = this_on_events;
-%         end
 
         % Post-stim response
         if ~isempty(ExpKeys.post_stim_times)
@@ -286,38 +250,18 @@ function doStuff
             this_on_events = sort(randsample(this_time, num_sham));
             fr = zeros(size(this_on_events));
             bfr = zeros(size(this_on_events));
-%             p_fr = zeros(size(this_on_events));
-%             p_bfr = zeros(size(this_on_events));
-
-            
-%             % Generate a poisson spike train in this period using the mfr
-%             % generate dfr based on poisson spike train with pre_stim_baseline mfr
-%             dt = 1/32000;
-%             pspike = dt*od.trial_stim.mfr; % based on actual mean_firing_rate
-%             spk_poiss = rand(size(this_time)); % random numbers between 0 and 1
-%             spk_poiss_t = this_time(spk_poiss < pspike)'; % generate spike train
-%             p_cell = this_cell;
-%             p_cell.t{1} = spk_poiss_t;
 
             for iStim = 1:length(this_on_events)
                 st.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)) & ...
                     (this_cell.t{1} < this_on_events(iStim)+max_delay));
                 baseline.t{1} = this_cell.t{1}((this_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
                     (this_cell.t{1} < this_on_events(iStim)));
-%                 p_st.t{1} = p_cell.t{1}((p_cell.t{1} >= this_on_events(iStim)) & ...
-%                     (p_cell.t{1} < this_on_events(iStim)+max_delay));
-%                 p_baseline.t{1} = p_cell.t{1}((p_cell.t{1} >= this_on_events(iStim)-max_delay) & ...
-%                     (p_cell.t{1} < this_on_events(iStim)));
-
                 fr(iStim) = length(st.t{1})/max_delay;
                 bfr(iStim) = length(baseline.t{1})/max_delay;
-%                 p_fr(iStim) = length(p_st.t{1})/max_delay;
-%                 p_bfr(iStim) = length(p_baseline.t{1})/max_delay;
+
             end
             od.sham_stim.fr = fr;
             od.sham_stim.bfr = bfr;
-%             od.sham_stim.p_fr = p_fr;
-%             od.sham_stim.p_bfr = p_bfr;
         end
   
         % Save variables
