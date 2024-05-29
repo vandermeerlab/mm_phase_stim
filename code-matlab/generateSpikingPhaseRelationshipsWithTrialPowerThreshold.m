@@ -125,9 +125,9 @@ function doStuff
                 out.lat_ws.bin(iF,:) = this_lat_ws;
                 out.lat_ws.ratio(iF) = (max(this_lat_ws) - min(this_lat_ws))/(max(this_lat_ws) + min(this_lat_ws));
                 out.fr.bin(iF,:) = this_fr;
-                out.fr.ratio(iF) = (max(this_fr) - min(this_fr))/(max(this_fr) + min(this_fr));
+                out.fr.ratio(iF) = abs(max(this_fr) - min(this_fr))/(abs(max(this_fr)) + abs(min(this_fr)));
                 out.fr_ws.bin(iF,:) = this_fr_ws;
-                out.fr_ws.ratio(iF) = (max(this_fr_ws) - min(this_fr_ws))/(max(this_fr_ws) + min(this_fr_ws));
+                out.fr_ws.ratio(iF) = abs(max(this_fr_ws) - min(this_fr_ws))/(abs(max(this_fr_ws)) + abs(min(this_fr_ws)));
                 out.fr.sd(iF,:) = this_fr_sd;
                 out.fr_ws.sd(iF,:) = this_fr_ws_sd;
 
@@ -145,8 +145,8 @@ function doStuff
                     end
                     shuf_lat_ratio(iShuf) = (max(shuf_lat) - min(shuf_lat))/(max(shuf_lat) + min(shuf_lat));
                     shuf_lat_ws_ratio(iShuf) = (max(shuf_lat_ws) - min(shuf_lat_ws))/(max(shuf_lat_ws) + min(shuf_lat_ws));
-                    shuf_fr_ratio(iShuf) = (max(shuf_fr) - min(shuf_fr))/(max(shuf_fr) + min(shuf_fr));
-                    shuf_fr_ws_ratio(iShuf) = (max(shuf_fr_ws) - min(shuf_fr_ws))/(max(shuf_fr_ws) + min(shuf_fr_ws));
+                    shuf_fr_ratio(iShuf) = abs(max(shuf_fr) - min(shuf_fr))/(abs(max(shuf_fr)) + abs(min(shuf_fr)));
+                    shuf_fr_ws_ratio(iShuf) = abs(max(shuf_fr_ws) - min(shuf_fr_ws))/(abs(max(shuf_fr_ws)) + abs(min(shuf_fr_ws)));
                     % Also save shufs for significance calculation and description in figures later
                     out.lat.shufs(iF,iShuf,:) = shuf_lat'; 
                     out.lat_ws.shufs(iF,iShuf,:) = shuf_lat_ws';
