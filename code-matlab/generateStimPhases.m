@@ -49,8 +49,7 @@ function doStuff
     % If Input inverted was true for this csc, invert the polarity of the
     % csc signal
     if csc.cfg.hdr{1}.InputInverted == 'True'
-        csc.data = csc.data * -1;
-        fprintf('Input Invert was ON for %s, reversing the LFP signal polarity for phase estimation', ...
+        fprintf('Input Invert was ON for %s', ...
             strcat(ExpKeys.subject_id, '_', ExpKeys.date));
     end
     Fs = 1/median(diff(csc.tvec));
@@ -87,7 +86,7 @@ function doStuff
             % Power from last 0.25 sec prior to stim (proportional to magnitude squared)
             mid = ceil(length(this_phase)/2);
             causal_power{iB,iS} = abs(this_phase(mid:end)).*abs(this_phase(mid:end)); 
-            % Diagnostic to check how are angles assined (Uncomment to run)
+% %             Diagnostic to check how are angles assined (Uncomment to run)
 %             diag_fig = figure;
 %             ax1 = subplot(2,1,1);
 %             plot(abs(this_echt))
@@ -101,6 +100,8 @@ function doStuff
 %             close(diag_fig)
         end
     end
+    % Inverting phases (because LFP was recorded upside down)
+    causal_phase = -1*causal_phase;
     % Assume you are in the correct folder
     save('stim_phases','causal_phase', 'causal_power'); % should add option to save in specified output dir
 end

@@ -26,11 +26,23 @@ function doStuff
     % Load the phases at stim_on in various frequency bands
     load('stim_phases.mat');
 
-    for iC = 1:length(ExpKeys.goodCell)
-        fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
+    cfg = [];
+    if ~strcmp(ExpKeys.experimenter, 'EC')
+        cfg.min_cluster_quality = 3;
+        cfg.getRatings = 1;
+        cfg.uint = '64';
+    end
+%     cfg.fc = ExpKeys.goodCell;
+   
+    S = LoadSpikes(cfg);
+    % Reject goodCell and continue if other cells in the session
+    S_others = SelectTS([],S,~ismember(S.label, ExpKeys.goodCell));
+
+    for iC = 1:length(S_others.t)
+        fn_prefix = extractBefore(S_others.label{iC}, '.t');
         % Load the stim_responses
         load(strcat(fn_prefix, '_stim_response.mat'));
-        goodTrials = ExpKeys.goodTrials(iC,:);
+        goodTrials = [min(min(ExpKeys.goodTrials)), max(max(ExpKeys.goodTrials))];
 
         all_lat = od.trial_stim.latency(goodTrials(1):goodTrials(2));
         all_lat_ws = od.trial_stim.latency_wo_stim(goodTrials(1):goodTrials(2));

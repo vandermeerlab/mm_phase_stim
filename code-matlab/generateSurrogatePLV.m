@@ -123,5 +123,7 @@ function doStuff
     fprintf("Total number of fake spikes is %d\n", all_spk_count);
     fake_spk_phase = cellfun(@(x) x(spk_idx), filt_phase, 'UniformOutput', false);
 
+    % Inverting phase because LFP was recorded with invert ON
+    fake_spk_phase = -1 * fake_spk_phase;
     save('surrogate_plv','fake_spk_phase');
 end
