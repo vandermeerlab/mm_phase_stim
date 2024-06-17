@@ -57,7 +57,6 @@ function doStuff
 
     csc = restrict(csc, iv(ExpKeys.stim_times));
 
-    % Plot phase distribution of stim before and after rejecting plots
     if contains(ExpKeys.light_source, 'LASER')
         start_delay = 0.0011;
     else

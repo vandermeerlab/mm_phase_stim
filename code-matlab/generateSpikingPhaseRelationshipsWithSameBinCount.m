@@ -79,7 +79,7 @@ function doStuff
                    this_fr_ws_sd(iB) = std(all_fr_ws(this_bin==iB));
                 end
                 
-                % Using (max-min)/(max+min) as the ratio
+                % Using abs(max-min)/(abs(max)+abs(min)) as the ratip
                 out.lat.bin(iF,:)= this_lat;
                 out.lat.ratio(iF) = (max(this_lat) - min(this_lat))/(max(this_lat) + min(this_lat));
                 out.lat_ws.bin(iF,:) = this_lat_ws;
