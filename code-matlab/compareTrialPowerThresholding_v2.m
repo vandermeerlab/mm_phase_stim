@@ -1,7 +1,7 @@
 %% Script to compare the effect of amplitude based thresholding of trials
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
@@ -25,7 +25,7 @@ fbands = {[2 5], [6 10], [12 28] [30 55]};
 c_list = {'red', 'blue', 'magenta', 'cyan'};
 
 % Load the list of final opto cells
-load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
+load('E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
 dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
 vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 

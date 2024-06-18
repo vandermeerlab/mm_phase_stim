@@ -46,12 +46,11 @@ function doStuff
         to_remove = find(diff(csc.tvec)<=0);
     end
     
-    % If Input inverted was true for this csc, invert the polarity of the
-    % csc signal
-    if csc.cfg.hdr{1}.InputInverted == 'True'
-        fprintf('Input Invert was ON for %s', ...
-            strcat(ExpKeys.subject_id, '_', ExpKeys.date));
-    end
+%     % Check if "Input invert" was true for this csc
+%     if csc.cfg.hdr{1}.InputInverted == 'True'
+%         fprintf('Input Invert was ON for %s', ...
+%             strcat(ExpKeys.subject_id, '_', ExpKeys.date));
+%     end
     Fs = 1/median(diff(csc.tvec));
 
 

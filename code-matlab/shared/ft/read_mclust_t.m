@@ -1,4 +1,4 @@
-function S = LoadSpikes(tfilelist, encoding)
+function S = LoadSpikes(tfilelist)
 
 % adapted from M-clust function LoadSpikes
 
@@ -22,14 +22,9 @@ for iF = 1:nFiles
 			warning([ 'Could not open tfile ' tfn]);
 		end
 		
-		ReadHeader(tfp);
-        
-        if encoding == 64
-            S{iF} = fread(tfp,inf,'uint64');	% read as 64 bit ints
-        else
-            S{iF} = fread(tfp,inf,'uint32'); % read as 32 bit ints     
-        end	
-	    S{iF} = double(S{iF}*100);
+		ReadHeader(tfp);    
+		S{iF} = fread(tfp,inf,'uint32');	
+	  S{iF} = double(S{iF}*100);
 
 		fclose(tfp);		
 	end 		% if tfn valid
