@@ -1006,11 +1006,6 @@ function s_out = doStuff(s_in)
         fn_prefix = strrep(fn_prefix, '_', '-');
         load(strcat(fn_prefix, '_shuf_spec_plv.mat'));  % Uniformly distributed fake spikes
 
-        % Get rid of all the 3rd band stuff IF there are 4 bands
-        if size(causal_phase, 1) == 4 causal_phase(3,:) = []; end
-        if size(shuf_circ_plv, 2) == 4 shuf_circ_plv(:,3) = []; end
-        if size(shuf_plv, 2) == 4 shuf_plv(:,3) = []; end     
-
         if size(shuf_plv) ~= size(shuf_circ_plv)
             shuf_circ_plv = shuf_circ_plv';
         end
