@@ -1,7 +1,7 @@
 %% Script to generate various scatter summary plots
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
@@ -19,11 +19,11 @@ for iM  = 1:length(mice)
     end
 end
 
-fbands = {[2 5], [6 10], [30 55]};
-c_list = {'red', 'blue', 'green'};
+fbands = {[2 5], [6 10], [12 28], [30 55]};
+c_list = {'red', 'blue','magenta', 'cyan'};
 
 % Load the list of final opto cells
-load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
+load('E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
 dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
 vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 
@@ -34,57 +34,82 @@ vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 % Significance mask
 z_thresh = 2;
 sig_mask = (summary.fr_z > z_thresh);
-%% Figure3: Create CSV for UPSET Plot
-delta_bool = [0;1;0;0;1;1;0;1];
-theta_bool = [0;0;1;0;1;0;1;1];
-gamma_bool = [0;0;0;1;0;1;1;1];
+%% Figure6C: Create CSV for UPSET Plot
+delta_bool = [0;1;0;0;0;1;1;1;0;0;0;1;1;1;0;1];
+theta_bool = [0;0;1;0;0;1;0;0;1;1;0;1;1;0;1;1];
+beta_bool  = [0;0;0;1;0;0;1;0;1;0;1;1;0;1;1;1];
+gamma_bool = [0;0;0;0;1;0;0;1;0;1;1;0;1;1;1;1];
 delta_bool = delta_bool == 1;
 theta_bool = theta_bool == 1;
+beta_bool = beta_bool == 1;
 gamma_bool = gamma_bool == 1;
 
 keep = sig_mask;
 [dStr_sig, vStr_sig,all_sig] = deal(zeros(size(delta_bool)));
 
+dStr_sig(1) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(2) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(3) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(4) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(5) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,3) & keep(dStr_mask,4));
+dStr_sig(6) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(7) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(8) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,3) & keep(dStr_mask,4));
+dStr_sig(9) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(10) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,3) & keep(dStr_mask,4));
+dStr_sig(11) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,3) & keep(dStr_mask,4));
+dStr_sig(12) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,3) & ~keep(dStr_mask,4));
+dStr_sig(13) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,3) & keep(dStr_mask,4));
+dStr_sig(14) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,3) & keep(dStr_mask,4));
+dStr_sig(15) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,3) & keep(dStr_mask,4));
+dStr_sig(16) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,3) & keep(dStr_mask,4));
 
-dStr_sig(1) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,3));
-dStr_sig(2) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & ~keep(dStr_mask,3));
-dStr_sig(3) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,3));
-dStr_sig(4) = sum(~keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,3));
-dStr_sig(5) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & ~keep(dStr_mask,3));
-dStr_sig(6) = sum(keep(dStr_mask,1) & ~keep(dStr_mask,2) & keep(dStr_mask,3));
-dStr_sig(7) = sum(~keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,3));
-dStr_sig(8) = sum(keep(dStr_mask,1) & keep(dStr_mask,2) & keep(dStr_mask,3));
+vStr_sig(1) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(2) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(3) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(4) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(5) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,3) & keep(vStr_mask,4));
+vStr_sig(6) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(7) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(8) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,3) & keep(vStr_mask,4));
+vStr_sig(9) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(10) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,3) & keep(vStr_mask,4));
+vStr_sig(11) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,3) & keep(vStr_mask,4));
+vStr_sig(12) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3) & ~keep(vStr_mask,4));
+vStr_sig(13) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,3) & keep(vStr_mask,4));
+vStr_sig(14) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,3) & keep(vStr_mask,4));
+vStr_sig(15) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3) & keep(vStr_mask,4));
+vStr_sig(16) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3) & keep(vStr_mask,4));
 
-vStr_sig(1) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,3));
-vStr_sig(2) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & ~keep(vStr_mask,3));
-vStr_sig(3) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,3));
-vStr_sig(4) = sum(~keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,3));
-vStr_sig(5) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & ~keep(vStr_mask,3));
-vStr_sig(6) = sum(keep(vStr_mask,1) & ~keep(vStr_mask,2) & keep(vStr_mask,3));
-vStr_sig(7) = sum(~keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3));
-vStr_sig(8) = sum(keep(vStr_mask,1) & keep(vStr_mask,2) & keep(vStr_mask,3));
+all_sig(1) = sum(~keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(2) = sum(keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(3) = sum(~keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(4) = sum(~keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(5) = sum(~keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
+all_sig(6) = sum(keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(7) = sum(keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(8) = sum(keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
+all_sig(9) = sum(~keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(10) = sum(~keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
+all_sig(11) = sum(~keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
+all_sig(12) = sum(keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & ~keep(dStr_mask | vStr_mask,4));
+all_sig(13) = sum(keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & ~keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
+all_sig(14) = sum(keep(dStr_mask | vStr_mask,1) & ~keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
+all_sig(15) = sum(~keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
+all_sig(16) = sum(keep(dStr_mask | vStr_mask,1) & keep(dStr_mask | vStr_mask,2) & keep(dStr_mask | vStr_mask,3) & keep(dStr_mask | vStr_mask,4));
 
-all_sig(1) = sum(~keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
-all_sig(2) = sum(keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
-all_sig(3) = sum(~keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
-all_sig(4) = sum(~keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
-all_sig(5) = sum(keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & ~keep((dStr_mask | vStr_mask),3));
-all_sig(6) = sum(keep((dStr_mask | vStr_mask),1) & ~keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
-all_sig(7) = sum(~keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
-all_sig(8) = sum(keep((dStr_mask | vStr_mask),1) & keep((dStr_mask | vStr_mask),2) & keep((dStr_mask | vStr_mask),3));
-
-dStr_table = table(delta_bool, theta_bool, gamma_bool, dStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
-vStr_table = table(delta_bool, theta_bool, gamma_bool, vStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
-all_table = table(delta_bool, theta_bool, gamma_bool, all_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz','30-55 Hz', 'Count'});
+dStr_table = table(delta_bool, theta_bool, beta_bool, gamma_bool, dStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz', '12-28 Hz', '30-55 Hz', 'Count'});
+vStr_table = table(delta_bool, theta_bool, beta_bool, gamma_bool, vStr_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz', '12-28 Hz', '30-55 Hz', 'Count'});
+all_table = table(delta_bool, theta_bool, beta_bool, gamma_bool, all_sig, 'VariableNames', {'2-5 Hz', '6-10 Hz', '12-28 Hz', '30-55 Hz', 'Count'});
 writetable(dStr_table, 'C:\Users\mvdmlab\Desktop\dStr_sig.csv');
 writetable(vStr_table, 'C:\Users\mvdmlab\Desktop\vStr_sig.csv');
 writetable(all_table, 'C:\Users\mvdmlab\Desktop\all_sig.csv');
 
 
-%% Figure3: Plot depth of modulation and Z-Score side-by side
+%% Figure6A and 6B: Plot depth of modulation and Z-Score side-by side
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
-    ax = subplot(2,3,iF);
+    ax = subplot(2,4,iF);
     hold on
     scatter(summary.depth(dStr_mask), summary.fr_r(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
@@ -108,7 +133,7 @@ for iF = 1:length(fbands)
     ax.TickLength(1) = 0.03;
     ax.Box = 'off';
 
-    ax = subplot(2,3,iF+3);
+    ax = subplot(2,4,iF+4);
     hold on
     scatter(summary.depth(dStr_mask), summary.fr_z(dStr_mask,iF) , 'MarkerFaceColor', c_list{iF}, ...
         'MarkerEdgeColor', c_list{iF}, 'MarkerFaceAlpha', 0.2, 'MarkerEdgeAlpha', 0.5, 'SizeData', 200);
@@ -148,13 +173,7 @@ fprintf("%d - %d Hz, modCorr : %.2f, p-value: %.3f,\t\t z_corr : %.2f, p-value: 
 fprintf("%d - %d Hz, modCorr : %.2f, p-value: %.3f,\t\t z_corr : %.2f, p-value: %.3f" + ...
     "\n", fbands{3}(1), fbands{3}(2), r3, p3, r6, p6);
 
-%% Get the population stats
-delta_mod = summary.fr_r(sig_mask(:,1));
-delta_z = summary.fr_z(sig_mask(:,1));
-theta_mod = summary.fr_r(sig_mask(:,2));
-theta_z = summary.fr_z(sig_mask(:,2));
-gamma_mod = summary.fr_r(sig_mask(:,3));
-gamma_z = summary.fr_z(sig_mask(:,3));
+
 
 %%
 function s_out = doStuff(s_in)

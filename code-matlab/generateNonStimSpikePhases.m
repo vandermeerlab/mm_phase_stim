@@ -1,6 +1,6 @@
 %% Assumes that good LFPs have been picked out
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 
 for iM  = 1:length(mice)
@@ -18,11 +18,10 @@ end
 function doStuff
     % Declaring variables
     % Setting up parameters
-    fbands = {[2 5], [6 10], [30 55]};
-    c_list = {'red', 'blue','green'};
+    fbands = {[2 5], [6 10], [12 28], [30 55]};
+    c_list = {'red', 'blue','magenta', 'cyan'};
     % we are using this window length because we don't 
     % see much of a difference in phase estimation 
-    % TODO : Find a way to communicate this to the readers
     bin_width = 0.01; % seconds
     stim_win = 0.25; % seconds around stim to ignore spikes
     nbins = 25;
@@ -106,6 +105,9 @@ function doStuff
                     all_phase{iF} = [all_phase{iF}, this_phase];
                     all_spk_phase{iF} = [all_spk_phase{iF}, this_phase(real_idx)];
                     this_phase = this_phase(t_idx); % Only the relevant phases
+                    % Inverting the phases here because data was recorded
+                    % with Input inverted
+                    this_phase = -1*this_phase;
                     [pcounts, ~, pbins] = histcounts(this_phase, ns_bins);
                     [sc_phase, fr_phase] = deal(zeros(length(fbands), nbins));
                     for iBin = 1:nbins

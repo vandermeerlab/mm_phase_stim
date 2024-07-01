@@ -1,6 +1,6 @@
 %% Script to generate spike-LFP phase locking
 rng(491994); % Setting up seed for reproducibility
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -14,7 +14,7 @@ end
 
 function doStuff
     % Declare parameters and variables
-    fbands = {[2 5], [6 10], [30 55]};
+    fbands = {[2 5], [6 10], [12 28], [30 55]};
     wsz = 0.5; % seconds, window to use for causal phase estimation
     min_spikes = 200;
     num_subamples = 1000;

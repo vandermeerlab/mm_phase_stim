@@ -1,6 +1,6 @@
 %% Script to characterize opto_cells on the basis of firing rate changes and mean wave-form
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.labels, summary.nostim_delta, summary.opto_delta, ...
@@ -29,6 +29,8 @@ peak_to_trough = zeros(size(summary.depth));
 for i = 1:length(summary.waveforms)
     norm_wf(i,:) = (summary.waveforms(i,:) - min(summary.waveforms(i,:)))/...
         (max(summary.waveforms(i,:)) - min(summary.waveforms(i,:)));
+    % Reversing the waveform since input was inverted
+    norm_wf(i,:) = -1 * norm_wf(i,:);
     [~, pidx] = max(norm_wf(i,:));
     [~, tidx] = min(norm_wf(i,:));
     peak_to_trough(i) = tidx - pidx;

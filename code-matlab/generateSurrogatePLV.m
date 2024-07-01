@@ -1,6 +1,6 @@
 %% Script to generate fake spike-phase locking data for significance testing (PLV version)
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -14,7 +14,7 @@ end
 
 function doStuff
     % Declare parameters and variables
-    fbands = {[2 5], [6 10], [12 30], [30 55]};
+    fbands = {[2 5], [6 10], [12 28], [30 55]};
     stim_win = 0.25; % seconds around stim to ignore spikes
     spk_dt = 0.0125; % interspike interval for fake spikes to be generated for this session
  
@@ -75,6 +75,9 @@ function doStuff
     this_stop = this_bounds(midx+1);
     csc = restrict(csc, iv([this_start, this_stop]));
 
+    % Inverting csc here, because all data was collected as "input invert"
+    csc.data = -1*csc.data;
+
     % Filter the CSCs in each of the bands, and obtain the hilbert
     % transform phases in each band
     filt_phase = cell(length(fbands),1);
@@ -123,7 +126,5 @@ function doStuff
     fprintf("Total number of fake spikes is %d\n", all_spk_count);
     fake_spk_phase = cellfun(@(x) x(spk_idx), filt_phase, 'UniformOutput', false);
 
-    % Inverting phase because LFP was recorded with invert ON
-    fake_spk_phase = -1 * fake_spk_phase;
     save('surrogate_plv','fake_spk_phase');
 end
