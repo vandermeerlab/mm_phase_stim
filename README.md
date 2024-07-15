@@ -10,4 +10,13 @@ Repository for vStr Phase Stim project
 
 4.  Run "getNonStimSpikePhases.m" to calculate the phases at the time of spikes that occurred outside of stimulation period, to generate "<session_name>\_nonstim_spk_phases.mat". The phases are binned into 25 bins and are later used to approximate the change in firing-rate expected from phase-change alone (in the absence of any stimulation). The spike-phases are also used to calculate spike-phase locking in neurons outside of stimulation periods. ECHT is used to generate phases (correction of input inversion is applied here).
 
-5. Run "getNonStimPLV_causal.m" to calculate the phases at the time of spikes that occurred outside of stimulation period, to generate "<session_name>\_nonstim_spk_phases.mat".
+5. Run "getNonStimPLV_causal.m" to quantify spike phaselocking using PLV using spikes that occurred outside of stimulation period, to generate "<session_name>\_spike_phaselock_causal_plv.mat". Requires 4. to be run prior.
+
+6. Run "searchForLFPArtifacts.m" to generate image dump of how stim affect phase estimation by vanilla Hilbert transform.
+
+7. Run "getPSDandBroadBandfit.m" to generate session-wise PSD and 1/f fit as calculated by IRASA as well as FOOOF
+
+Graveyard stuff
+generateSurrogatePLV.m -> generateShufSpec_PLV.m (Now in graveyard). This generates a null distribution of PLV based on fake spike timings. 
+
+

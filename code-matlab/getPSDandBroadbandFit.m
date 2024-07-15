@@ -1,6 +1,6 @@
 %% Assumes that good LFPs have been picked out
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 
 for iM  = 1:length(mice)
@@ -102,7 +102,7 @@ function doStuff
     cfg.thresh_after = 1;
     cfg.sort_type = 'param';
     cfg.sort_param = 'frequency';
-    cfg.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '10'}; {'beta'},{'12', '30'}
+    cfg.sort_bands = {{'delta'}, {'2', '5'}; {'theta'}, {'6', '10'}; {'beta'},{'12', '28'}
                       {'gamma1'}, {'30',' 55'}};
     [fs, fg] = process_fooof('FOOOF_matlab', reshape(original.powspctrm, 1, 1, length(original.powspctrm)), ...
         original.freq, cfg, 1);

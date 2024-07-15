@@ -1,6 +1,6 @@
 %% Assumes that good LFPs have been picked out
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 
 for iM  = 1:length(mice)
@@ -17,8 +17,8 @@ end
 function doStuff
     % Declaring variables
     % Setting up parameters
-    fbands = {[2 5], [6 10],[30 55]};
-    c_list = {'red', 'blue','green'};
+    fbands = {[2 5], [6 10], [12 28], [30 55]};
+    c_list = {'red', 'blue','magenta', 'cyan'};
     phase_bins = -pi:2*pi/5:pi;
 
     LoadExpKeys;
@@ -88,7 +88,7 @@ function doStuff
         % grab LFP snippet for this window
         this_on_toAdd = csc.data(this_start:this_start+length(this_tvec)-1);
         this_on_snip(iEvt,:) = this_on_toAdd';
-        for iF = 1:3
+        for iF = 1:length(fbands)
             filt_snip(iF,iEvt,:) = filt_csc{iF}.data(this_start:this_start+length(this_tvec)-1)';
             phase_snip(iF,iEvt,:) = filt_phase{iF}(this_start:this_start+length(this_tvec)-1)';
             stim_phase(iF,iEvt) = filt_phase{iF}(nearest_idx3(stim_on(iEvt), csc.tvec));
@@ -100,12 +100,10 @@ function doStuff
 
     % Load the phases at stim_on in various frequency bands
     load('stim_phases.mat');
-    % Get rid of all the 3rd band stuff IF there are 4 bands
-    if size(causal_phase, 1) == 4 causal_phase(3,:) = []; end
 
-fig = figure('WindowState', 'Maximized');
+    fig = figure('WindowState', 'Maximized');
     for iF = 1:length(fbands)
-        subplot(3,7,7*iF-2)
+        subplot(4,7,7*iF-2)
         histogram(stim_phase(iF,:),phase_bins, 'Normalization', 'probability', 'FaceColor',c_list{iF});
         title(sprintf('Hilbert Phase at Stim'));%,fbands{iF}(1), fbands{iF}(2)));
         ylim([0 0.7])
@@ -119,7 +117,7 @@ fig = figure('WindowState', 'Maximized');
         ax = gca;
         ax.TickDir = 'out';
         
-        subplot(3,7,7*iF-1)
+        subplot(4,7,7*iF-1)
         histogram(control_phase(iF,:),phase_bins, 'Normalization', 'probability', 'FaceColor',c_list{iF});
         title(sprintf('Hilbert Phase at Control'));%,fbands{iF}(1), fbands{iF}(2)));
         ylim([0 0.7])
@@ -133,7 +131,7 @@ fig = figure('WindowState', 'Maximized');
         ax = gca;
         ax.TickDir = 'out';
 
-        subplot(3,7,7*iF)
+        subplot(4,7,7*iF)
         histogram(causal_phase(iF,:),phase_bins, 'Normalization', 'probability', 'FaceColor',c_list{iF});
         title(sprintf('ecHT Phase at Stim'));% ,fbands{iF}(1), fbands{iF}(2)));
         ylim([0 0.7])
@@ -157,13 +155,14 @@ fig = figure('WindowState', 'Maximized');
 %     fig = figure('WindowState', 'Maximized');
     
     % Plot example snippets in delta-range
-    ax = subplot(3,7,[1 2]);
+    ax = subplot(4,7,[1 2]);
     hold on
     iStim = 10;
     plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
     plot(this_tvec, squeeze(normfun(filt_snip(1,iStim,:))), 'Color', c_list{1}, 'LineStyle', '--');
     plot(this_tvec, squeeze(normfun(phase_snip(1,iStim,:))), 'Color', c_list{1});
     xline(0, '--black')
+    xline(0.001, '--black')
     xlim([-0.25 0.25])
 %     xlabel('Time (sec)')
     xticks([-0.25 0 0.25])
@@ -173,13 +172,14 @@ fig = figure('WindowState', 'Maximized');
     ax.TickDir = 'out';
     title(sprintf('Trial # %d', iStim));
     
-    ax = subplot(3,7,[3 4]);
+    ax = subplot(4,7,[3 4]);
     hold on
     iStim = 136;
     plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
     plot(this_tvec, squeeze(normfun(filt_snip(1,iStim,:))), 'Color', c_list{1}, 'LineStyle', '--');
     plot(this_tvec, squeeze(normfun(phase_snip(1,iStim,:))), 'Color', c_list{1});
     xline(0, '--black')
+    xline(0.001, '--black')
     xlim([-0.25 0.25])
 %     xlabel('Time (sec)')
     xticks([-0.25 0 0.25])
@@ -190,47 +190,50 @@ fig = figure('WindowState', 'Maximized');
     title(sprintf('Trial # %d', iStim));
 
     % Plot example snippets in theta-range
-    ax = subplot(3,7,[8 9]);
+    ax = subplot(4,7,[8 9]);
     hold on
     iStim = 552;
     plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
     plot(this_tvec, squeeze(normfun(filt_snip(2,iStim,:))), 'Color', c_list{2}, 'LineStyle', '--');
     plot(this_tvec, squeeze(normfun(phase_snip(2,iStim,:))), 'Color', c_list{2});
     xline(0, '--black')
-    xlim([-0.25 0.25])
+    xline(0.001, '--black')
+    xlim([-0.125 0.125])
 %     xlabel('Time (sec)')
-    xticks([-0.25 0 0.25])
+    xticks([-0.125 0 0.125])
     yticks([])
     box off
     ax = gca;
     ax.TickDir = 'out';
     title(sprintf('Trial # %d', iStim));
     
-    ax = subplot(3,7,[10 11]);
+    ax = subplot(4,7,[10 11]);
     hold on
     iStim = 585;
     plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
     plot(this_tvec, squeeze(normfun(filt_snip(2,iStim,:))), 'Color', c_list{2}, 'LineStyle', '--');
     plot(this_tvec, squeeze(normfun(phase_snip(2,iStim,:))), 'Color', c_list{2});
     xline(0, '--black')
-    xlim([-0.25 0.25])
+    xline(0.001, '--black')
+    xlim([-0.125 0.125])
 %     xlabel('Time (sec)')
-    xticks([-0.25 0 0.25])
+    xticks([-0.125 0 0.125])
     yticks([])
     box off
     ax = gca;
     ax.TickDir = 'out';
     title(sprintf('Trial # %d', iStim));
-    
-    % Plot example snippets in gamma-range
-    ax = subplot(3,7,[15 16]);
+
+    % Plot example snippets in beta-range
+    ax = subplot(4,7,[15 16]);
     hold off
-    iStim = 1250;
+    iStim = 143;
     plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
     hold on
     plot(this_tvec, squeeze(normfun(filt_snip(3,iStim,:))), 'Color', c_list{3}, 'LineStyle', '--');
     plot(this_tvec, squeeze(normfun(phase_snip(3,iStim,:))), 'Color', c_list{3});
     xline(0, '--black')
+    xline(0.001, '--black')
     xlim([-0.05 0.05])
     xlabel('Time (sec)')
     xticks([-0.05 0 0.05])
@@ -240,14 +243,52 @@ fig = figure('WindowState', 'Maximized');
     ax.TickDir = 'out';
     title(sprintf('Trial # %d', iStim));
     
-    ax = subplot(3,7,[17 18]);
+    ax = subplot(4,7,[17 18]);
     hold off
-    iStim = 1328;
+    iStim = 353;
     plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
     hold on
     plot(this_tvec, squeeze(normfun(filt_snip(3,iStim,:))), 'Color', c_list{3}, 'LineStyle', '--');
     plot(this_tvec, squeeze(normfun(phase_snip(3,iStim,:))), 'Color', c_list{3});
     xline(0, '--black')
+    xline(0.001, '--black')
+    xlim([-0.05 0.05])
+    xlabel('Time (sec)')
+    xticks([-0.05 0 0.05])
+    yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
+    
+    % Plot example snippets in gamma-range
+    ax = subplot(4,7,[22 23]);
+    hold off
+    iStim = 1250;
+    plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
+    hold on
+    plot(this_tvec, squeeze(normfun(filt_snip(4,iStim,:))), 'Color', c_list{4}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(4,iStim,:))), 'Color', c_list{4});
+    xline(0, '--black')
+    xline(0.001, '--black')
+    xlim([-0.05 0.05])
+    xlabel('Time (sec)')
+    xticks([-0.05 0 0.05])
+    yticks([])
+    box off
+    ax = gca;
+    ax.TickDir = 'out';
+    title(sprintf('Trial # %d', iStim));
+    
+    ax = subplot(4,7,[24 25]);
+    hold off
+    iStim = 1328;
+    plot(this_tvec, normfun(this_on_snip(iStim,:)), 'Color', 'black');
+    hold on
+    plot(this_tvec, squeeze(normfun(filt_snip(4,iStim,:))), 'Color', c_list{4}, 'LineStyle', '--');
+    plot(this_tvec, squeeze(normfun(phase_snip(4,iStim,:))), 'Color', c_list{4});
+    xline(0, '--black')
+    xline(0.001, '--black')
     xlim([-0.05 0.05])
     xlabel('Time (sec)')
     xticks([-0.05 0 0.05])

@@ -102,11 +102,11 @@ function doStuff
                 for iF = 1:length(fbands)
                     this_echt = echt(csc.data(start_idx:end_idx), fbands{iF}(1), fbands{iF}(2), Fs);
                     this_phase = angle(this_echt);
+                    % Inverting the phases here because data was recorded with Input inverted
+                    this_phase = -1*this_phase;
                     all_phase{iF} = [all_phase{iF}, this_phase];
                     all_spk_phase{iF} = [all_spk_phase{iF}, this_phase(real_idx)];
                     this_phase = this_phase(t_idx); % Only the relevant phases
-                    % Inverting the phases here because data was recorded with Input inverted
-                    this_phase = -1*this_phase;
                     [pcounts, ~, pbins] = histcounts(this_phase, ns_bins);
                     [sc_phase, fr_phase] = deal(zeros(length(fbands), nbins));
                     for iBin = 1:nbins

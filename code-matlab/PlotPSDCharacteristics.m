@@ -1,6 +1,6 @@
 %% Assumes that good LFPs have been picked out
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.depth, summary.freq, summary.og, ...
@@ -15,8 +15,7 @@ for iM  = 1:length(mice)
     end
 end
 dStr_mask = summary.depth < 3.5;
-% fband = {[2 5], [6 10], [12 30], [30, 55]};
-fband = {[2 5], [6 10], [30, 55]};
+fband = {[2 5], [6 10], [12 28], [30, 55]};
 %% Normalize all the psds
 for i = 1:length(summary.depth)
     norm_og(i,:) = (summary.og(i,:) - min(summary.og(i,:)))/(max(summary.og(i,:)) - min(summary.og(i,:)));
@@ -108,7 +107,7 @@ for iF = 1:length(fband)
     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
 end
 title('dStr IRASA');
-xticks([2 5 6 10 12 30 55, 60, 100])
+xticks([2 5 6 10 12 28 30 55 60 100])
 xlim([1 100])
 xlabel('Frequency (Hz)')
 ylabel('Sessions')
@@ -129,7 +128,7 @@ for iF = 1:length(fband)
     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
 end
 title('vStr IRASA');
-xticks([2 5 6 10 12 30 55, 60, 100])
+xticks([2 5 6 10 12 28 30 55 60, 100])
 xlim([1 100])
 ylabel('Sessions')
 xlabel('Frequency (Hz)')
@@ -152,7 +151,7 @@ function s_out = doStuff(s_in)
     % Go ahead only if this exists in a list of opto_cells
     
     % Load the list of final opto cells
-    load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
+    load('E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
     if (sum(contains(ExpKeys.goodCell, dStr_opto)) == 0) & (sum(contains(ExpKeys.goodCell, vStr_opto)) == 0)
         return
     end
