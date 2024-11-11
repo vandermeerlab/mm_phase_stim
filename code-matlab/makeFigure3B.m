@@ -20,8 +20,8 @@ for iM  = 1:length(mice)
     end
 end
 
-fbands = {[2 5], [6 10], [30 55]};
-c_list = {'red', 'blue', 'green'};
+fbands = {[2 5], [6 10], [12 28], [30 55]};
+c_list = {'red', 'blue','magenta', 'cyan'};
 
 % Load the list of final opto cells and keep the results from only those
 load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalOptoCells.mat');

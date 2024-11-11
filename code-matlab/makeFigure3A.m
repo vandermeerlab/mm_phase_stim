@@ -201,7 +201,7 @@ function s_out = doStuff(s_in)
         fn_prefix = extractBefore(S.label{iC}, '.t');
         
         % Load the stim_response
-        load(strcat(fn_prefix,'_stim_response.mat'));
+        load(strcat(fn_prefix,'_stim_respons.mat'));
 
 %         nostim_dfr = od.trial_nonstim.fr' - od.trial_nonstim.bfr';
         % Comapare to a similar distribution as before

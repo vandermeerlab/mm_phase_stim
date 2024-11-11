@@ -1,7 +1,7 @@
 %% Script to generate various scatter summary plots
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
@@ -20,11 +20,11 @@ for iM  = 1:length(mice)
     end
 end
 
-fbands = {[2 5], [6 10], [30 55]};
-c_list = {'red', 'blue', 'green'};
+fbands = {[2 5], [6 10], [12 28], [30 55]};
+c_list = {'red', 'blue','magenta', 'cyan'};
 
 % Load the list of final non-opto cells and keep the results from only those
-load('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\FinalNonOptoCells.mat');
+load('E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\FinalNonOptoCells.mat');
 keep = contains(summary.labels, dStr_others) | contains(summary.labels, vStr_others);
 fn = fieldnames(summary);
 for i = 1:numel(fn)
@@ -35,6 +35,55 @@ clear fn temp
 
 dStr_mask = (contains(summary.labels, dStr_others) &  summary.depth < 3.5);
 vStr_mask = (contains(summary.labels, vStr_others) &  summary.depth >= 3.5);
+
+%% Figure without separating into dStr and vStr
+keep = dStr_mask | vStr_mask;
+
+fig = figure('WindowState', 'maximized');
+ax = subplot(1,4,1);
+imagesc([-20:1:20], 1:sum(keep), summary.pre_stim(keep,:));
+yticks([]);
+xticks([-20:10:20]);
+ylabel('Non Opto cells')
+xlabel('Time (ms)')
+xline(0, '--red', 'LineWidth', 2)
+title('Pre-stim')
+ax.Box = 'off';
+ax.TickDir = 'out';
+ax.TickLength = [0.03 0.02];
+
+ax = subplot(1,4,2);
+imagesc([-20:1:20], 1:sum(keep), summary.trial_stim(keep,:));
+yticks([])
+xticks([-20:10:20]);
+xlabel('Time (ms)')
+xline(0, '--red', 'LineWidth', 2)
+title('Trial-stim')
+ax.Box = 'off';
+ax.TickDir = 'out';
+ax.TickLength = [0.03 0.02];
+
+ax = subplot(1,4,3);
+imagesc([-20:1:20], 1:sum(keep), summary.post_stim(keep,:));
+yticks([]);
+xticks([-20:10:20]);
+xlabel('Time (ms)')
+xline(0, '--red', 'LineWidth', 2)
+title('Post-stim')
+ax.Box = 'off';
+ax.TickDir = 'out';
+ax.TickLength = [0.03 0.02];
+
+ax = subplot(1,4,4);
+imagesc([-200:10:200], 1:sum(keep), summary.long_stim(keep,:));
+yticks([]);
+xticks([-200:100:200]);
+xlabel('Time (ms)')
+xline(0, '--red', 'LineWidth', 2)
+title('Long-stim')
+ax.Box = 'off';
+ax.TickDir = 'out';
+ax.TickLength = [0.03 0.02];
 
 %%
 fig = figure('WindowState', 'maximized');
@@ -54,7 +103,7 @@ ax.TickLength = [0.03 0.02];
 
 ax = subplot(2,4,2);
 imagesc([-20:1:20], 1:sum(dStr_mask), summary.trial_stim(dStr_mask,:));
-yticks([]);
+yticks([])
 xticks([-20:10:20]);
 xlabel('Time (ms)')
 xline(0, '--red', 'LineWidth', 2)
@@ -133,6 +182,34 @@ ax.TickLength = [0.03 0.02];
 
 fontname(fig, 'Helvetica');
 fig.Renderer = 'painters';
+%% Diagnosis figure
+
+ax = subplot(1,2,1);
+imagesc([-20:1:20], 1:sum(dStr_mask), summary.trial_stim(dStr_mask,:));
+% yticks([]);
+yticks(1:sum(dStr_mask))
+yticklabels(summary.labels(dStr_mask));
+xticks([-20:10:20]);
+xlabel('Time (ms)')
+xline(0, '--red', 'LineWidth', 2)
+title('Trial-stim')
+ax.Box = 'off';
+ax.TickDir = 'out';
+ax.TickLength = [0.03 0.02];
+
+ax = subplot(1,2,2);
+imagesc([-20:1:20], 1:sum(vStr_mask), summary.trial_stim(vStr_mask,:));
+% yticks([]);
+yticks(1:sum(vStr_mask))
+yticklabels(summary.labels(vStr_mask));
+xticks([-20:10:20]);
+xlabel('Time (ms)')
+xline(0, '--red', 'LineWidth', 2)
+title('Trial-stim')
+ax.Box = 'off';
+ax.TickDir = 'out';
+ax.TickLength = [0.03 0.02];
+
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;
