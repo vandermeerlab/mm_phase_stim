@@ -23,7 +23,7 @@ vStr_mask = summary.depth >= 3.5;
 ks_mask = summary.h == 1; % That the sham and opto difference in firing-rate is different
 og_opto_mask = summary.isopto == 1;
 pct_mask = summary.h_t == 1; 
-
+%%
 peak_to_trough = zeros(size(summary.depth));
 for i = 1:length(summary.waveforms)
     norm_wf(i,:) = (summary.waveforms(i,:) - min(summary.waveforms(i,:)))/...
@@ -35,178 +35,57 @@ for i = 1:length(summary.waveforms)
     peak_to_trough(i) = tidx - pidx;
 end
 %%
-msn_mask = ((summary.labels == 'M295-2022-01-06-TT06_4')| ...
-    (summary.labels == 'M295-2022-01-06-TT08_4'));
+% msn_mask = ((summary.labels == 'M295-2022-01-06-TT06_4')| ...
+%     (summary.labels == 'M295-2022-01-06-TT08_4'));
+msn_mask = (summary.labels == 'M295-2022-01-06-TT06_4');
 opto_fsi = ks_mask & ~msn_mask;
 %%
 fig = figure('WindowState','maximized');
-ax = subplot(2,3,1);
+ax1 = subplot(2,3,1);
 hold on
 
 mean_fsi_wv = mean(norm_wf(opto_fsi,:),1);
-plot((0:1:31)/32, mean_fsi_wv, 'cyan');
+plot((0:1:31)/32, mean_fsi_wv, 'cyan', 'LineWidth', 3);
 sel2 = find(msn_mask);
 for i = 1:length(sel2)
-    h = plot((0:1:31)/32, norm_wf(sel2(i),:), 'magenta');
+    h = plot((0:1:31)/32, norm_wf(sel2(i),:), 'magenta', 'LineWidth', 3);
 %     h.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
+xlabel('Time (ms)')
+ylabel('Normalized Amplitude')
+% legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
+%     mean(peak_to_trough(sel2))/32, std(peak_to_trough(sel2)/32))}, 'FontSize', 12)
+title('Opto Responsive')
+xticks([0 0.5 1]);
+yticks([-1 -0.5 0]);
+yticklabels({'0','0.5','1'});
 title('Spike waveforms')
-legend({'Mean opto-FSI', 'Opto-MSN 1', 'Opto-MSN 2' })
-ax = subplot(2,3,[2,3]);
+box off;
+ax1.FontSize = 26;
+ax1.TickDir = 'out';
+
+ax2 = subplot(2,3,[2,3]);
 hold on;
 mean_fsi_peth = mean(summary.stim_peth(opto_fsi,:));
-plot(summary.stim_tvec(1,:), mean_fsi_peth, 'cyan');
+plot(summary.stim_tvec(1,:), mean_fsi_peth, 'cyan', 'LineWidth', 3);
 for i = 1:length(sel2)
-    h = plot(summary.stim_tvec(1,:), summary.stim_peth(sel2(i),:), 'magenta');
+    h = plot(summary.stim_tvec(1,:), summary.stim_peth(sel2(i),:), 'magenta', 'LineWidth', 3);
 %     h.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
+ylabel('Normalized Firing-rate')
+xlabel('Time from Onset (s)')
 title('Normalized PETH')
-legend({'Mean opto-FSI', 'Opto-MSN 1', 'Opto-MSN 2' })
-%% Figure for showing Sham deltaFR vs Opto deltaFR
-% Plot vStr stuff
-fig = figure('WindowState','maximized');
-
-% Plot dStr stuff
-ax = subplot(2,4,[1 5]);
-hold on
-sel = find(dStr_mask & ks_mask);
-for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'blue');
-end
-
-sel = find(dStr_mask & ~ks_mask);
-for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'magenta');
-end
-xticks([1 2])
-yticks([0 160 320])
-xticklabels({'Sham stim', 'Opto stim'})
-ylabel('\Delta Firing rate (Hz)')
-xlim([0.85 2.15])
-ylim([-25 320])
-title('dStr');
-box off;
-ax.TickLength(1) = 0.03;
-ax.TickDir = 'out';
-
-ax = subplot(2,4,2);
-hold on
-sel1 = find(dStr_mask & ks_mask & summary.sham_delta < summary.opto_delta);
-sel2 = find(dStr_mask & ks_mask & summary.sham_delta >= summary.opto_delta);
-for i = 1:length(sel1)
-    h = plot((0:1:31)/32, norm_wf(sel1(i),:), 'blue');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-for i = 1:length(sel2)
-    h = plot((0:1:31)/32, norm_wf(sel2(i),:), '--blue');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel1,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
-    mean(peak_to_trough(sel1))/32, std(peak_to_trough(sel1)/32))}, 'FontSize', 12)
-title('Opto Responsive')
-xticks([0 0.5 1]);
+legend({'Mean of opto-responsive FSIs', 'Opto-responsive MSN'})
+xticks([-0.02:0.01:0.02]);
 yticks([0 0.5 1]);
 box off;
-ax.TickLength(1) = 0.03;
-ax.TickDir = 'out';
+ax2.FontSize = 26;
+ax2.TickDir = 'out';
 
-ax = subplot(2,4,6);
-hold on
-sel = find(dStr_mask & ~ks_mask);
-for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'magenta');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
-    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
-title('Opto non-responsive')
-xticks([0 0.5 1]);
-yticks([0 0.5 1]);
-box off;
-ax.TickLength(1) = 0.03;
-ax.TickDir = 'out';
-
-% Plot vStr stuff
-ax = subplot(2,4,[3 7]);
-hold on
-sel = find(vStr_mask & ks_mask);
-for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'blue');
-end
-
-sel = find(vStr_mask & ~ks_mask);
-for i = 1:length(sel)
-    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'magenta');
-end
-xticks([1 2])
-xticklabels({'Sham stim', 'Opto stim'})
-ylabel('\Delta Firing rate (Hz)')
-yticks([0 160 320])
-xlim([0.85 2.15])
-ylim([-25 320])
-title('vStr')
-box off;
-ax.TickLength(1) = 0.03;
-ax.TickDir = 'out';
-
-ax = subplot(2,4,4);
-hold on
-sel = find(vStr_mask & ks_mask);
-for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'blue');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough mean: %.2f +/- %.2f ms', ...
-    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
-title('Opto Responsive')
-xticks([0 0.5 1]);
-yticks([0 0.5 1]);
-box off;
-ax.TickLength(1) = 0.03;
-ax.TickDir = 'out';
-
-ax = subplot(2,4,8);
-hold on
-sel = find(vStr_mask & ~ks_mask);
-for i = 1:length(sel)
-    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'magenta');
-    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
-end
-plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
-xlabel('Time (ms)')
-ylabel('Normalized Amplitude')
-legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
-    mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
-title('Opto non-responsive')
-xticks([0 0.5 1]);
-yticks([0 0.5 1]);
-box off;
-ax.TickLength(1) = 0.03;
-ax.TickDir = 'out';
-
-fontsize(fig, 30, 'points');
-fontname(fig, 'Helvetica');
-fig.Renderer = 'painters';
-
-%% Use this to write list of Final Opto Cells
-dStr_opto = summary.labels(ks_mask & dStr_mask & summary.opto_delta > summary.sham_delta);
-vStr_opto = summary.labels(ks_mask & vStr_mask & summary.opto_delta > summary.sham_delta);
-
-dStr_others = summary.labels(dStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
-vStr_others = summary.labels(vStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
-
-%%
-opto_p = [summary.labels(ks_mask),summary.h(ks_mask),summary.p_val(ks_mask), summary.sham_delta(ks_mask), summary.opto_delta(ks_mask)];
-other_p = [summary.labels(~ks_mask),summary.h(~ks_mask), summary.p_val(~ks_mask), summary.sham_delta(~ks_mask), summary.opto_delta(~ks_mask)];
+pause(5);
+% Adjust axes to have similar sizes
+ax1.Position(2) = ax2.Position(2);
+ax1.Position(4) = ax2.Position(4);
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;

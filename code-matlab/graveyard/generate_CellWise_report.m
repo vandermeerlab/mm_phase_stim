@@ -1,5 +1,5 @@
 %% Assumes that spike-sorting has been done
-cd('E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-22\');
+cd('E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\M295\M295-2022-01-06');
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg_spk = [];
@@ -40,9 +40,15 @@ restricted_S = restrict(S, clean_iv);
 %% Set variables and parameters
 % snippet for autocorrelation
 for iC = 1:length(restricted_S.label)
+    if ~any(strcmp(restricted_S.label{iC}, {'M295-2022-01-06-TT06_4.t', ...
+            'M295-2022-01-06-TT08_4.t'}))
+        continue
+    end
+
+
     fn_prefix = extractBefore(restricted_S.label{iC}, '.t');
     fn_prefix = strrep(fn_prefix, '_', '-');
-    
+
     %Extract AD2BitVoltConversioFactor from corresponding .ntt file
     temp_idx = find(fn_prefix == '-');
     ntt_fn = strcat(extractBefore(fn_prefix, temp_idx(end)), '.ntt');
@@ -210,3 +216,17 @@ end
 
 
 
+%%
+% 6_4 is 8
+% 8_4 is 17
+%%
+scatter(S.t{8},repmat(0,size(S.t{8})), 'MarkerFaceColor', 'magenta', 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0, 'SizeData', 200)
+hold on
+scatter(S.t{17},repmat(0,size(S.t{17})), 'MarkerFaceColor', 'cyan', 'MarkerFaceAlpha', 0.1, 'MarkerEdgeAlpha', 0, 'SizeData', 200)
+legend('MSN-1', 'MSN-2')
+%%
+addpath('D:\MClust\vandermeerlab\code-matlab\toolboxes\MClust-3.5\Utilities\StatUtils')
+% Multiplying time stamps by 1e5 because the function expects the timestamps to be in 10000th of a second and in my case, they were in seconds, the third argument is the bin size in milliseconds, the 4th argument is the length of the window centred a 0 (+/- 250 msec in this case)
+[count, bins] = CrossCorr(S.t{8}*1e5, S.t{17}*1e5, 1, 500); 
+bar(bins, count)
+xlabel('Lag (msec)')

@@ -13,7 +13,6 @@ for iM  = 12%1:length(mice)
 %         this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
          this_label = 'M295-2022-01-06-TT06_5.t'; % vStr opto-cell that has co-recorded, clearly inhibited non-opto cells
 %          this_label = 'M295-2022-01-06-TT06_4.t'; % vStr opto-cell that has co-recorded, clearly inhibited non-opto cells
-%          this_label = 'M295-2022-01-06-TT08_4.t'; % vStr opto-cell that has co-recorded, clearly inhibited non-opto cells
          doStuff(this_label)
     end
 
