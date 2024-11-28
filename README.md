@@ -17,3 +17,16 @@ Repository for vStr Phase Stim project
 7. Run "getPSDandBroadBandfit.m" to generate session-wise PSD and 1/f fit as calculated by IRASA as well as FOOOF
 
 
+# Matlab path
+
+addpath(genpath('mm_phase_stim\code-matlab\shared'));
+addpath('mm_phase_stim\fieldtrip');
+addpath(genpath('D:\fieldtrip\fileio\'));
+addpath(genpath('D:\fieldtrip\utilities'));
+addpath(genpath('D:\fieldtrip\contrib\spike'));
+addpath(genpath('D:\fieldtrip\specest'));
+addpath(genpath('D:\fieldtrip\preproc'));
+addpath(genpath('D:\fieldtrip\external\brainstorm')); 
+addpath(genpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\graveyard'));
+addpath(genpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\ECHT'));
+
