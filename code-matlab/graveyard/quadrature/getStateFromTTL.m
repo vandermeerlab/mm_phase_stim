@@ -1,6 +1,6 @@
 %% Script to test if quadrature encoding works on TTL data
 
-cd('E:\Dropbox (Dartmouth College)\manish_data\M322\M322-2022-07-22');
+cd('data\M322\M322-2022-07-22');
 
 evs = LoadEvents([]);
 

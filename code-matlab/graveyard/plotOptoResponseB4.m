@@ -1,7 +1,7 @@
-cd('E:\Dropbox (Dartmouth College)\manish_data\M019\M019-2019-04-14_vStr_4p2_light_cells_TT5 _min\');
-%     cd('E:\Dropbox (Dartmouth College)\manish_data\M018\M018-2019-04-12_dStr_3p8_light_cells_TT7_min\'); % Select Cell
-%     cd('E:\Dropbox (Dartmouth College)\manish_data\M319\M319-2022-06-28\'); % Select Cell
-% cd('E:\Dropbox (Dartmouth College)\manish_data\M019\M019-2019-04-12_vStr_4p2_light_cells_TT7_min');
+cd('data\M019\M019-2019-04-14_vStr_4p2_light_cells_TT5 _min\');
+%     cd('data\M018\M018-2019-04-12_dStr_3p8_light_cells_TT7_min\'); % Select Cell
+%     cd('data\M319\M319-2022-06-28\'); % Select Cell
+% cd('data\M019\M019-2019-04-12_vStr_4p2_light_cells_TT7_min');
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg_spk = [];
@@ -109,7 +109,7 @@ for iC = 1:length(S.label)
             end
             sgtitle(fn_prefix);
             % Save this in some folder
-            print(fig, '-dpng', '-r300', strcat('E:\Dropbox (Dartmouth College)\Presentations\B4\B4-2023-06-06\', ...
+            print(fig, '-dpng', '-r300', strcat('data\', ...
                 fn_prefix, '_stim', num2str(iStim)));
             close;
         end

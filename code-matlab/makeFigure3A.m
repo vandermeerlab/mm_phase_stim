@@ -1,6 +1,6 @@
 %% Script to characterize opto_cells on the basis of firing rate changes and mean wave-form
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.labels, summary.nostim_delta, summary.opto_delta, ...
@@ -187,6 +187,7 @@ function s_out = doStuff(s_in)
     if isempty(ExpKeys.goodCell)
         return
     end
+%     fprintf('%s\n',pwd);
     cfg = [];
 %     cfg.fc = ExpKeys.goodCell;
     if ~strcmp(ExpKeys.experimenter, 'EC')
@@ -201,7 +202,7 @@ function s_out = doStuff(s_in)
         fn_prefix = extractBefore(S.label{iC}, '.t');
         
         % Load the stim_response
-        load(strcat(fn_prefix,'_stim_respons.mat'));
+        load(strcat(fn_prefix,'_stim_response.mat'));
 
 %         nostim_dfr = od.trial_nonstim.fr' - od.trial_nonstim.bfr';
         % Comapare to a similar distribution as before

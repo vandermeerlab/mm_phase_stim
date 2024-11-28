@@ -1,6 +1,6 @@
 %% Script to generate spike-LFP phase locking using PPC
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -765,7 +765,7 @@ function doStuff
         fn_prefix = extractBefore(S.label{iC}, '.t');
         fn_prefix = strrep(fn_prefix, '_', '-');
         print(this_fig, '-dpng', strcat(fn_prefix,'-SpikePhaseLock'));
-        print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\', fn_prefix, '-SpikePhaseLock'));
+        print(this_fig, '-dpng',  strcat('data\', fn_prefix, '-SpikePhaseLock'));
         % Save variables
         save(strcat(fn_prefix, '_spike_phaselock'), 'pre_spk_count', 'pre_clean_spk_count', 'pre_sta', 'pre_clean_sta', 'pre_sts', 'pre_clean_sts', 'pre_ppc', 'pre_clean_ppc', ...
             'trial_spk_count', 'trial_clean_spk_count', 'trial_sta', 'trial_clean_sta', 'trial_sts', 'trial_clean_sts', 'trial_ppc', 'trial_clean_ppc', ...

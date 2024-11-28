@@ -1,6 +1,6 @@
 %% Assumes that spike-sorting has been done
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -402,7 +402,7 @@ function doStuff
         end
         savefig(this_fig, strcat(fn_prefix,'-CellReport'));
 %         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
-%         print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-CellReport'));
+%         print(this_fig, '-dpng',  strcat('data\', fn_prefix, '-CellReport'));
         close;
     end
 end

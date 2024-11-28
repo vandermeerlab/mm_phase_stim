@@ -1,5 +1,5 @@
 %Script to fix funky LFP recordings due to filter settings
-cd('E:\Dropbox (Dartmouth College)\manish_data\M348\M348-2022-05-14');
+cd('data\M348\M348-2022-05-14');
 csc_fl = 1:1:32;
 lfp_fl = [15,18,29];
 ref_fl = [1,4];

@@ -1,15 +1,10 @@
 %% Script to show the problem
 
-% Example Eric Data
-% 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\M18\M18-2019-04-12_dStr_3p4_light_cells_TT4_min'% Laser
-% 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\M18\M18-2019-04-13_dStr_3p8_light_cells_TT6_min' % Laser
-% 'E:\Dropbox (Dartmouth College)\EC_State_inProcess\M19\M19-2019-04-14_vStr_4p2_light_cells_TT5_min' % Laser
-
 % Example Manish Data
-% 'E:\Dropbox (Dartmouth College)\manish_data\M235\M235-2021-07-16' % Laser
-% 'E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-08-03' % LED
+% 'data\M235\M235-2021-07-16' % Laser
+% 'data\M325\M325-2022-08-03' % LED
 
-folder = 'E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-08-03';
+folder = 'data\M325\M325-2022-08-03';
 cd(folder);
 LoadExpKeys;
 evs = LoadEvents([]);

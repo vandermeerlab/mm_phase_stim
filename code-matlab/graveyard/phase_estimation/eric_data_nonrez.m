@@ -3,7 +3,7 @@
 
 
 %% Change folder and restrict data to epoch with no opto-stim
-cd('E:\Dropbox (Dartmouth College)\EC_State_inProcess\M18\M18-2019-04-11_vStr_4p2_light_cells_TT7_min')
+cd('data\M18\M18-2019-04-11_vStr_4p2_light_cells_TT7_min')
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg.fc = {ExpKeys.goodCSC};
@@ -33,7 +33,7 @@ for iB = 1:length(fbands)
 end
 
 %% Add Path for the current method
-% addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\Rosenblum');
+% addpath('mm_phase_stim\code-matlab\phase_estimation\Rosenblum');
 % This method has been implemented by slight modification of the source
 % code (see helper functions at the bottom)
 

@@ -1,6 +1,5 @@
-%% Assumes that good LFPs have been picked out
-
-top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
+%% Script to generate figure 2C
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.sess,  summary.depth, summary.freq, summary.og, ...
@@ -24,70 +23,70 @@ for i = 1:length(summary.depth)
 end
 
 
-%%
-% Plot dStr
-sel =  find(dStr_mask);
-subplot(2,3,1)
-imagesc(norm_og(dStr_mask,:))
-hold on
-for iF = 1:length(fband)
-    F1 = fband{iF}(1);
-    F2 = fband{iF}(2);
-    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
-end
-title('dStr OG');
-
-subplot(2,3,2)
-imagesc(norm_fooof(dStr_mask,:))
-hold on
-for iF = 1:length(fband)
-    F1 = fband{iF}(1);
-    F2 = fband{iF}(2);
-    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
-end
-title('dStr FOOOF');
-
-subplot(2,3,3)
-imagesc(norm_irasa(dStr_mask,:))
-hold on
-for iF = 1:length(fband)
-    F1 = fband{iF}(1);
-    F2 = fband{iF}(2);
-    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
-end
-title('dStr IRASA')
-
-% Plot vStr stuff
-sel =  find(~dStr_mask);
-subplot(2,3,4)
-imagesc(norm_og(~dStr_mask,:))
-hold on
-for iF = 1:length(fband)
-    F1 = fband{iF}(1);
-    F2 = fband{iF}(2);
-    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
-end
-title('vStr OG');
-
-subplot(2,3,5)
-imagesc(norm_fooof(~dStr_mask,:))
-hold on
-for iF = 1:length(fband)
-    F1 = fband{iF}(1);
-    F2 = fband{iF}(2);
-    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
-end
-title('vStr FOOOF');
-
-subplot(2,3,6)
-imagesc(norm_irasa(~dStr_mask,:))
-hold on
-for iF = 1:length(fband)
-    F1 = fband{iF}(1);
-    F2 = fband{iF}(2);
-    rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
-end
-title('vStr IRASA')
+% %%
+% % Plot dStr
+% sel =  find(dStr_mask);
+% subplot(2,3,1)
+% imagesc(norm_og(dStr_mask,:))
+% hold on
+% for iF = 1:length(fband)
+%     F1 = fband{iF}(1);
+%     F2 = fband{iF}(2);
+%     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+% end
+% title('dStr OG');
+% 
+% subplot(2,3,2)
+% imagesc(norm_fooof(dStr_mask,:))
+% hold on
+% for iF = 1:length(fband)
+%     F1 = fband{iF}(1);
+%     F2 = fband{iF}(2);
+%     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+% end
+% title('dStr FOOOF');
+% 
+% subplot(2,3,3)
+% imagesc(norm_irasa(dStr_mask,:))
+% hold on
+% for iF = 1:length(fband)
+%     F1 = fband{iF}(1);
+%     F2 = fband{iF}(2);
+%     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+% end
+% title('dStr IRASA')
+% 
+% % Plot vStr stuff
+% sel =  find(~dStr_mask);
+% subplot(2,3,4)
+% imagesc(norm_og(~dStr_mask,:))
+% hold on
+% for iF = 1:length(fband)
+%     F1 = fband{iF}(1);
+%     F2 = fband{iF}(2);
+%     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+% end
+% title('vStr OG');
+% 
+% subplot(2,3,5)
+% imagesc(norm_fooof(~dStr_mask,:))
+% hold on
+% for iF = 1:length(fband)
+%     F1 = fband{iF}(1);
+%     F2 = fband{iF}(2);
+%     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+% end
+% title('vStr FOOOF');
+% 
+% subplot(2,3,6)
+% imagesc(norm_irasa(~dStr_mask,:))
+% hold on
+% for iF = 1:length(fband)
+%     F1 = fband{iF}(1);
+%     F2 = fband{iF}(2);
+%     rectangle('Position',[F1,0,F2-F1,length(sel)+1],'EdgeColor', 'red', 'LineWidth', 2)
+% end
+% title('vStr IRASA')
 
 %% Plot IRASA  
 % grey out frequencies around 60 Hz 
@@ -141,28 +140,28 @@ fontsize(fig, 30, 'points');
 
 norm_irasa(:,59:61) = nan;
 fig = figure('WindowState', 'maximized');
-%% Diagnostic Figure
-
-norm_irasa(:,59:61) = nan;
-% Plot dStr stuff
-imagesc(norm_irasa)
-hold on
-for iF = 1:length(fband)
-    F1 = fband{iF}(1);
-    F2 = fband{iF}(2);
-    rectangle('Position',[F1,0,F2-F1,51],'EdgeColor', 'red', 'LineWidth', 2)
-end
-title('IRASA');
-xticks([2 5 6 10 12 28 30 55 60 100])
-xlim([1 100])
-xlabel('Frequency (Hz)')
-ylabel('Sessions')
-yticks(1:50)
-yticklabels(summary.sess)
-ax = gca;
-box off;
-ax.TickDir = 'out';
-ax.YAxis.FontSize = 12;
+% %% Diagnostic Figure
+% 
+% norm_irasa(:,59:61) = nan;
+% % Plot dStr stuff
+% imagesc(norm_irasa)
+% hold on
+% for iF = 1:length(fband)
+%     F1 = fband{iF}(1);
+%     F2 = fband{iF}(2);
+%     rectangle('Position',[F1,0,F2-F1,51],'EdgeColor', 'red', 'LineWidth', 2)
+% end
+% title('IRASA');
+% xticks([2 5 6 10 12 28 30 55 60 100])
+% xlim([1 100])
+% xlabel('Frequency (Hz)')
+% ylabel('Sessions')
+% yticks(1:50)
+% yticklabels(summary.sess)
+% ax = gca;
+% box off;
+% ax.TickDir = 'out';
+% ax.YAxis.FontSize = 12;
 %%
 % Pick out 'good' delta and gamma sessions, and write them in byEye.csv (1
 % if good, 0 if not)
@@ -197,7 +196,7 @@ function s_out = doStuff(s_in)
     % Go ahead only if this exists in a list of opto_cells
     
     % Load the list of final opto cells
-    load('E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
+    load('data\FinalOptoCells.mat');
     if (sum(contains(ExpKeys.goodCell, dStr_opto)) == 0) & (sum(contains(ExpKeys.goodCell, vStr_opto)) == 0)
         return
     end

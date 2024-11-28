@@ -1,18 +1,17 @@
-%% Assumes that spike-sorting has been done
-top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
+%% Script to generate Figures 4 (partially), 5 and 8 (partially)
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
-for iM  = 12%1:length(mice)
+for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
     for iS = 1:length(sid)
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
-%         this_label = 'M019-2019-04-14-TT05_1.t'; % vStr Didactic example; choose trials 810-835 for inset
-%         this_label = 'M016-2019-02-18-TT04_1.t'; % vStr
-%         this_label = 'M018-2019-04-14-TT03_1.t'; % vStr
-%         this_label = 'M017-2019-02-19-TT05_1.t'; % dStr
-         this_label = 'M295-2022-01-06-TT06_5.t'; % vStr opto-cell that has co-recorded, clearly inhibited non-opto cells
-%          this_label = 'M295-2022-01-06-TT06_4.t'; % vStr opto-cell that has co-recorded, clearly inhibited non-opto cells
+%         this_label = 'M019-2019-04-14-TT05_1.t'; % Fig 4A vStr Didactic example; choose trials 810-835 for inset
+%         this_label = 'M016-2019-02-18-TT04_1.t'; % Fig 5A vStr
+%         this_label = 'M018-2019-04-14-TT03_1.t'; % Fig 5B vStr
+%         this_label = 'M017-2019-02-19-TT05_1.t'; % Fig 5C dStr
+%          this_label = 'M295-2022-01-06-TT06_4.t'; % vStr clearly inhibited non-opto cell
          doStuff(this_label)
     end
 
@@ -355,10 +354,10 @@ function doStuff(label)
 %         axs(8).Position(1) = axs(7).Position(1);
 %         axs(8).Position(3) = axs(7).Position(3)+0.03;
 
-        exportgraphics(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
-%         savefig(this_fig, strcat('C:\Users\mvdmlab\Desktop\', fn_prefix,'-TrialsGroupedByStimPhase'));
+        exportgraphics(this_fig, strcat('data\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
+%         savefig(this_fig, strcat('data\', fn_prefix,'-TrialsGroupedByStimPhase'));
 %         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
-%         print(this_fig, '-dpng',  strcat('E:\Dropbox (Dartmouth College)\EC_State_inProcess\', fn_prefix, '-CellReport'));
+%         print(this_fig, '-dpng',  strcat('data\', fn_prefix, '-CellReport'));
         close;
     end
 end

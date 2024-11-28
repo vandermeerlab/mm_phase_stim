@@ -1,7 +1,7 @@
 %% Script to generate various scatter summary plots
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
-top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
@@ -24,7 +24,7 @@ fbands = {[2 5], [6 10], [12 28], [30 55]};
 c_list = {'red', 'blue','magenta', 'cyan'};
 
 % Load the list of final non-opto cells and keep the results from only those
-load('E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\FinalNonOptoCells.mat');
+load('data\FinalNonOptoCells.mat');
 keep = contains(summary.labels, dStr_others) | contains(summary.labels, vStr_others);
 fn = fieldnames(summary);
 for i = 1:numel(fn)

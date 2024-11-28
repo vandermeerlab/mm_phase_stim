@@ -1,4 +1,4 @@
-cd('D:\Dropbox (Dartmouth College)\manish_data\M078\M078-2020-11-28');
+cd('data\M078\M078-2020-11-28');
 evs = LoadEvents([]);
 csc_fn = cell(1,16); % cell(1,32);
 for iF = 1:16

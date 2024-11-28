@@ -1,5 +1,5 @@
 %% Script to compare quadrature encoding via TTL and  Wheel Data
-cd('E:\Dropbox (Dartmouth College)\manish_data\WheelEncoderTests\WE-2021-05-10\')
+cd('data\WheelEncoderTests\WE-2021-05-10\')
 evs = LoadEvents([]);
 %%
 cfg = [];

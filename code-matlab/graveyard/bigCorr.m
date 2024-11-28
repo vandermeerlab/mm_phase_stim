@@ -1,5 +1,5 @@
 % Script to generate correlations between wideband signal
-cd('E:\Dropbox (Dartmouth College)\manish_data\M321\M321-2022-07-13');
+cd('data\M321\M321-2022-07-13');
 LoadExpKeys;
 evs = LoadEvents([]);
 %Ordered from shank A top to bottom, then Shank B top to bottom)

@@ -1,5 +1,5 @@
 %% Script to play around with power_thresholds to determine what are good trials
-cd('E:\Dropbox (Dartmouth College)\manish_data\M019\M019-2019-04-14_vStr_4p2_light_cells_TT5 _min')
+cd('data\M019\M019-2019-04-14_vStr_4p2_light_cells_TT5 _min')
 LoadExpKeys;
 if isempty(ExpKeys.goodCell)
         return

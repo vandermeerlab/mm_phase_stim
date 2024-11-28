@@ -1,4 +1,4 @@
-cd('E:\Dropbox (Dartmouth College)\manish_data\M348\M348-2022-05-14\');
+cd('data\M348\M348-2022-05-14\');
 evs = LoadEvents([]);
 clean_start = evs.t{10}(3); % Timestamp associated with the last clean Timestamp
 

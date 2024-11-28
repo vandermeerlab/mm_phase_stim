@@ -1,8 +1,8 @@
-cd('E:\Dropbox (Dartmouth College)\manish_data\IceCreamBet_Part2');
-% cd('/Users/manishm/Dropbox (Dartmouth College)/manish_data/M074/M074-2020-12-04');
-% cd('/Users/manishm/Dropbox (Dartmouth College)/manish_data/M078/M078-2020-11-26');
-% cd ('/Users/manishm/Dropbox (Dartmouth College)/manish_data/M078/M078-2020-11-28');
-% cd('/Users/manishm/Dropbox (Dartmouth College)/manish_data/M077/M077-2021-02-25');
+cd('data\IceCreamBet_Part2');
+% cd('data/M074/M074-2020-12-04');
+% cd('data/M078/M078-2020-11-26');
+% cd ('data/M078/M078-2020-11-28');
+% cd('data/M077/M077-2021-02-25');
 cfg_in.fc = {'Sig1.ncs', 'CopyOfSig1.ncs'};
 % cfg_in.fc = {'LFP3.ncs', 'LFP15.ncs', 'LFP18.ncs', 'LFP29.ncs'};
 % cfg_in.fc = {'LFP3.ncs', 'LFP15.ncs'};

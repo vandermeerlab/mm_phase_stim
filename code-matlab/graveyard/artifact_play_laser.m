@@ -1,4 +1,4 @@
-cd('D:\Dropbox (Dartmouth College)\manish_data\M074\M074-2020-12-04');
+cd('data\M074\M074-2020-12-04');
 cfg_in.fc = {'LFP30.ncs'};
 all_lfp  = LoadCSC(cfg_in);
 cfg_in.fc = {'CSC30.ncs', 'CSC11.ncs'};

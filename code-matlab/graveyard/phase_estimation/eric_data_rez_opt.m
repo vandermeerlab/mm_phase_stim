@@ -4,7 +4,7 @@
 %comes from
 
 %% Change folder and restrict data to epoch with no opto-stim
-cd('E:\Dropbox (Dartmouth College)\EC_State_inProcess\M20\M20-2019-06-07_dStr_4p6_light_cells_TT6_TT8_min')
+cd('data\M20\M20-2019-06-07_dStr_4p6_light_cells_TT6_TT8_min')
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg.fc = {ExpKeys.goodCSC};

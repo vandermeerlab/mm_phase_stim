@@ -4,7 +4,7 @@
 %comes from
 
 %% Change folder and restrict data to epoch with no opto-stim
-cd('E:\Dropbox (Dartmouth College)\EC_State_inProcess\M20\M20-2019-06-07_dStr_4p6_light_cells_TT6_TT8_min')
+cd('data\M20\M20-2019-06-07_dStr_4p6_light_cells_TT6_TT8_min')
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg.fc = {ExpKeys.goodCSC};
@@ -39,7 +39,7 @@ for iB = 1:length(fbands)
 end
 
 %% Add Path for the current method
-addpath('D:\vstr_phase_stim\mm_phase_stim\code-matlab\phase_estimation\ECHT');
+addpath('mm_phase_stim\code-matlab\phase_estimation\ECHT');
 
 %% Try optimization method
 delete(gcp('nocreate'));

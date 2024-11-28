@@ -1,7 +1,7 @@
 %% Script to generate various scatter summary plots
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
-top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
@@ -25,7 +25,7 @@ fbands = {[2 5], [6 10], [12 28], [30 55]};
 c_list = {'red', 'blue','magenta', 'cyan'};
 
 % Load the list of final opto cells
-load('E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\FinalOptoCells.mat');
+load('data\FinalOptoCells.mat');
 dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
 vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 
@@ -36,7 +36,7 @@ vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
 % Significance mask
 z_thresh = 2;
 sig_mask = (summary.fr_z > z_thresh);
-%% Figure6C: Create CSV for UPSET Plot
+%% Figure7C: Create CSV for UPSET Plot
 delta_bool = [0;1;0;0;0;1;1;1;0;0;0;1;1;1;0;1];
 theta_bool = [0;0;1;0;0;1;0;0;1;1;0;1;1;0;1;1];
 beta_bool  = [0;0;0;1;0;0;1;0;1;0;1;1;0;1;1;1];
@@ -108,7 +108,7 @@ writetable(vStr_table, 'C:\Users\mvdmlab\Desktop\vStr_sig.csv');
 writetable(all_table, 'C:\Users\mvdmlab\Desktop\all_sig.csv');
 
 
-%% Figure6A and 6B: Plot depth of modulation and Z-Score side-by side
+%% Figure7A and 7B: Plot depth of modulation and Z-Score side-by side
 fig = figure('WindowState', 'maximized');
 for iF = 1:length(fbands)
     ax = subplot(2,4,iF);
@@ -285,7 +285,7 @@ fig = figure('WindowState', 'maximized');
 keep = dStr_mask | vStr_mask;
 
 keep2 = keep & (summary.delta_byEye==1); % High delta sessions checked by eye
-keep3 = keep & (summary.delta_byEye==0); % High delta sessions checked by eye
+keep3 = keep & (summary.delta_byEye==0); % Low delta sessions checked by eye
 ax = subplot(2,2,1);
 title('2 - 5 Hz', 'FontSize', 35)
 hold on
@@ -329,7 +329,7 @@ ax.TickDir = 'out';
 fontname(fig, 'Helvetica')
 
 fig.Renderer = 'painters'; % makes sure tht the figure is exported with customizable parts
-exportgraphics(fig,'E:\Dartmouth College Dropbox\Manish Mohapatra\Figures\Papers\vStr_phase_stim\RnRFigures\RebuttalFig\rebuttal.eps','BackgroundColor','none','ContentType','vector')
+exportgraphics(fig,'data\rebuttal.eps','BackgroundColor','none','ContentType','vector')
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;

@@ -1,7 +1,7 @@
 %% Script to generate various scatter summary plots
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
-top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
     'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
     'M295', 'M320', 'M319', 'M321', 'M325'};
@@ -227,7 +227,7 @@ function s_out = doStuff(s_in)
         ax1.Legend.Position(1) = ax2.Position(1) - ax1.Legend.Position(3) - 0.05;
         
         % Save png file
-        dest_path = 'E:\Dartmouth College Dropbox\Manish Mohapatra\AnalysisResults\phase_stim_results\Inhibited_cells\';
+        dest_path = 'data\Inhibited_cells\';
         print(this_fig, '-dpng',  ...
             strcat(dest_path,ExpKeys.subject_id,'-',ExpKeys.date, '-inhibPETH'));
         close all;

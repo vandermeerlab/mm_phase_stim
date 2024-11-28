@@ -1,6 +1,6 @@
 %% Script to play around with correlograms of spectrograms
 
-top_dir = 'E:\Dropbox (Dartmouth College)\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 
 all_cm = {};
@@ -47,7 +47,7 @@ end
 caxis([0 0.3]);
 
 %%
-odir = 'E:\Dropbox (Dartmouth College)\AnalysisResults\phase_stim_results\spectrocorrelogram\';
+odir = 'data\spectrocorrelogram\';
 for iS = 1:length(all_cm)
     this_fig = figure;
     cm = all_cm{iS};
@@ -84,8 +84,8 @@ function cm = doStuff
 end
 %%
 % %%
-% % cd('E:\Dropbox (Dartmouth College)\EC_State_inProcess\M018\M018-2019-04-10-dStr_3p8_light_cells_TT4_min\')
-% % cd('E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-07-28')
+% % cd('data\M018\M018-2019-04-10-dStr_3p8_light_cells_TT4_min\')
+% % cd('data\M325\M325-2022-07-28')
 % load('spectrogram_data.mat')
 % P = spec_data.P;
 % P2 = 10*log10(P);

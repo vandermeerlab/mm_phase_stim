@@ -1,6 +1,6 @@
 %% Script to make plots that differentate between the opto-responsive MSNs and other opto-responsive FSIs
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-top_dir = 'E:\Dartmouth College Dropbox\Manish Mohapatra\manish_data\';
+top_dir = 'data\';
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.labels, summary.opto_delta, summary.sham_delta, ...
@@ -34,9 +34,7 @@ for i = 1:length(summary.waveforms)
     [~, tidx] = min(norm_wf(i,:));
     peak_to_trough(i) = tidx - pidx;
 end
-%%
-% msn_mask = ((summary.labels == 'M295-2022-01-06-TT06_4')| ...
-%     (summary.labels == 'M295-2022-01-06-TT08_4'));
+%
 msn_mask = (summary.labels == 'M295-2022-01-06-TT06_4');
 opto_fsi = ks_mask & ~msn_mask;
 %%

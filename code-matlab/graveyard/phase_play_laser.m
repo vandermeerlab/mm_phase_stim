@@ -1,4 +1,4 @@
-cd('/Users/manishm/Dropbox (Dartmouth College)/manish_data/M074/M074-2020-12-04');
+cd('data/M074/M074-2020-12-04');
 cfg_in.fc = {'LFP4.ncs', 'LFP6.ncs', 'LFP28.ncs', 'LFP30.ncs'};
 all_lfp  = LoadCSC(cfg_in);
 evs = LoadEvents([]);

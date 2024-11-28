@@ -12,7 +12,7 @@ clear
 %% load data file
 
 % load([ homedir 'proc\' num2str(subIClist{datai,1}) '_proc.mat' ])
-cd('E:\Dropbox (Dartmouth College)\manish_data\M325\M325-2022-07-28')
+cd('data\M325\M325-2022-07-28')
 LoadExpKeys;
 evs = LoadEvents([]);
 

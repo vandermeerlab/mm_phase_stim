@@ -1,7 +1,7 @@
 %Testbed for comparing various phase estimation methods
 
 %% Change folder and restrict data to epoch with no opto-stim
-cd('E:\Dropbox (Dartmouth College)\EC_State_inProcess\M17\M17-2019-02-16_dStr_3p2_light_cells_TT5_lost_min')
+cd('data\M17\M17-2019-02-16_dStr_3p2_light_cells_TT5_lost_min')
 LoadExpKeys;
 evs = LoadEvents([]);
 cfg.fc = {ExpKeys.goodCSC};

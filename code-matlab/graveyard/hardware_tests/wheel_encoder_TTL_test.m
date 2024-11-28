@@ -1,8 +1,7 @@
 %% Load the data from .evs and .ncs files
 clear;
 close all;
-cd('/Users/manishm/Dropbox (Dartmouth College)/manish_data/WheelEncoderTests/WE-2021-05-10')
-% cd('D:\Dropbox (Dartmouth College)\manish_data\WheelEncoderTests\WE-2021-05-10')
+cd('data/WheelEncoderTests/WE-2021-05-10')
 cfg.fc = {'WE1.ncs', 'WE2.ncs'};
 we_csc = LoadCSC(cfg);
 
@@ -32,8 +31,7 @@ we2_csc_up = find(diff(this_csc.data(2,:) > 0) > 0);
 we2_csc_down = find(diff(this_csc.data(2,:) > 0) < 0);
 
 %% Find up and down transition times from TTL
-fn = '/Users/manishm/Dropbox (Dartmouth College)/manish_data/WheelEncoderTests/WE-2021-05-10/Events.nev';
-% fn = 'D:\Dropbox (Dartmouth College)\manish_data\WheelEncoderTests\WE-2021-05-10\Events.nev';
+fn = 'data/WheelEncoderTests/WE-2021-05-10/Events.nev';
 
 [EVTimeStamps, EventIDs, TTLs, EVExtras, EventStrings, EVHeader] = Nlx2MatEV(fn,[1 1 1 1 1],1,1,[]);
 keep1 = (EventIDs == 11);
