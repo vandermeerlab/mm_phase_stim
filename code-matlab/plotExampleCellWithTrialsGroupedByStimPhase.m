@@ -1,5 +1,5 @@
 %% Script to generate Figures 4 (partially), 5 and 8 (partially)
-top_dir = 'data\';
+top_dir = 'data\'
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -11,8 +11,9 @@ for iM  = 1:length(mice)
 %         this_label = 'M016-2019-02-18-TT04_1.t'; % Fig 5A vStr
 %         this_label = 'M018-2019-04-14-TT03_1.t'; % Fig 5B vStr
 %         this_label = 'M017-2019-02-19-TT05_1.t'; % Fig 5C dStr
-%          this_label = 'M295-2022-01-06-TT06_4.t'; % vStr clearly inhibited non-opto cell
-         doStuff(this_label)
+%          this_label = 'M295-2022-01-06-TT06_4.t'; % dStr clearly inhibited non-opto cell
+        this_label = 'M016-2019-02-15-TT06_2.t'; % 2nd vStr clearly inhibited non-opto cell
+        doStuff(this_label)
     end
 
 end
@@ -103,7 +104,7 @@ function doStuff(label)
     for iC = 1:length(restricted_S.label)
         fn_prefix = extractBefore(restricted_S.label{iC}, '.t');
         % Load 
-        load(strcat(fn_prefix, '_phase_response_', string(nbins), '_bins.mat'));
+        load(strcat(fn_prefix, '_phase_response20ms_', string(nbins), '_bins.mat'));
         delta_fr = out.fr.bin;
           
         this_cell = SelectTS([], S, iC);
@@ -287,8 +288,8 @@ function doStuff(label)
             else
                 ax.YLabel.String = {};
             end
-            ylim([0 50]); % Need to change this in a case by case basis
-            yticks([0 50]);
+            ylim([-10 0]); % Need to change this in a case by case basis
+            yticks([-10 0]);
             ax.XLabel.String = 'Phase bin';
             ax.Box = 'off';
             ax.TickLength = [0.06 0.02];
@@ -354,7 +355,7 @@ function doStuff(label)
 %         axs(8).Position(1) = axs(7).Position(1);
 %         axs(8).Position(3) = axs(7).Position(3)+0.03;
 
-        exportgraphics(this_fig, strcat('data\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
+        exportgraphics(this_fig, strcat('output\', fn_prefix,'-TrialsGroupedByStimPhase.eps'))
 %         savefig(this_fig, strcat('data\', fn_prefix,'-TrialsGroupedByStimPhase'));
 %         print(this_fig, '-dpdf', '-fillpage', strcat(fn_prefix,'-CellReport'));
 %         print(this_fig, '-dpng',  strcat('data\', fn_prefix, '-CellReport'));

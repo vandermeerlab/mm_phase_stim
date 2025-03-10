@@ -1,10 +1,10 @@
 %% Script to generate various scatter summary plots
 % Assumes that *phase_response.mat already exist in each folder
 rng(2023); % Setting the seed for reproducibility
-top_dir = 'data\';
-mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
-    'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
-    'M295', 'M320', 'M319', 'M321', 'M325'};
+top_dir = 'data\'
+mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M295'}; %, ...
+    %'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
+    %'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.labels, summary.stim_mode, summary.short_sw, ...
     summary.long_sw, summary.depth, ...
@@ -210,7 +210,7 @@ function s_out = doStuff(s_in)
         legend(ax1, legend_names, 'Interpreter', 'none', ...
             'FontSize', 10, 'Location', 'westoutside');
 
-        sgtitle(strcat(ExpKeys.subject_id,'-',ExpKeys.date));
+        sgtitle(strcat(ExpKeys.subject_id,'-',ExpKeys.date), 'Interpreter', 'none');
         ax1.Title.FontSize = 13;
         ax2.Title.FontSize = 13;
         ax3.Title.FontSize = 13;
@@ -227,7 +227,7 @@ function s_out = doStuff(s_in)
         ax1.Legend.Position(1) = ax2.Position(1) - ax1.Legend.Position(3) - 0.05;
         
         % Save png file
-        dest_path = 'data\Inhibited_cells\';
+        dest_path = 'output\';
         print(this_fig, '-dpng',  ...
             strcat(dest_path,ExpKeys.subject_id,'-',ExpKeys.date, '-inhibPETH'));
         close all;

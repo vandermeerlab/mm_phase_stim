@@ -1,6 +1,6 @@
 %% Assumes that spike-sorting has been done
 
-top_dir = 'data\';
+top_dir = 'data\'
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
@@ -102,6 +102,13 @@ function doStuff
         od.post_stim = [];
         od.long_stim = [];
         od.sham_stim = [];
+
+        % Change max_delay depending on FSI or MSN
+        if contains(S.label{iC},ExpKeys.goodCell)
+            max_delay = 0.01
+        else
+            max_delay = 0.02
+        end
         
         % Pre-stim response
         if ~isempty(ExpKeys.pre_stim_times)

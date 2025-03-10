@@ -1,11 +1,11 @@
 %% Script to generate the relationships between spiking and LFP Phase
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-top_dir = 'data\';
+top_dir = 'data\'
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
-for iM  = 1:length(mice)
+for iM  = 12%:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
-    for iS = 1:length(sid)
+    for iS = 1%:length(sid)
         rng(491994); % Setting the seed for reproducibility
         this_dir = strcat(top_dir, mice{iM}, '\', all_sess(sid(iS)).name);
         cd(this_dir);
@@ -28,6 +28,7 @@ function doStuff
 
     for iC = 1:length(ExpKeys.goodCell)
         fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
+        fn_prefix = 'M295-2022-01-06-TT06_4'
         % Load the stim_responses
         load(strcat(fn_prefix, '_stim_response.mat'));
         goodTrials = ExpKeys.goodTrials(iC,:);

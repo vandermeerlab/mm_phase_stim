@@ -1,6 +1,6 @@
 %% Script to make plots that differentate between the opto-responsive MSNs and other opto-responsive FSIs
 % Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
-top_dir = 'data\';
+top_dir = 'data\'
 mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
 [summary.labels, summary.opto_delta, summary.sham_delta, ...
@@ -35,18 +35,19 @@ for i = 1:length(summary.waveforms)
     peak_to_trough(i) = tidx - pidx;
 end
 %
-msn_mask = (summary.labels == 'M295-2022-01-06-TT06_4');
+msn_mask = (summary.labels == 'M295-2022-01-06-TT06_4') | ...
+    (summary.labels == 'M016-2019-02-15-TT06_2');
 opto_fsi = ks_mask & ~msn_mask;
 %%
 fig = figure('WindowState','maximized');
 ax1 = subplot(2,3,1);
 hold on
-
+cmap = {'magenta', 'cyan'};
 mean_fsi_wv = mean(norm_wf(opto_fsi,:),1);
-plot((0:1:31)/32, mean_fsi_wv, 'cyan', 'LineWidth', 3);
+plot((0:1:31)/32, mean_fsi_wv, 'black', 'LineWidth', 3);
 sel2 = find(msn_mask);
 for i = 1:length(sel2)
-    h = plot((0:1:31)/32, norm_wf(sel2(i),:), 'magenta', 'LineWidth', 3);
+    h = plot((0:1:31)/32, norm_wf(sel2(i),:), cmap{i}, 'LineWidth', 3);
 %     h.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 xlabel('Time (ms)')
@@ -59,31 +60,38 @@ yticks([-1 -0.5 0]);
 yticklabels({'0','0.5','1'});
 title('Spike waveforms')
 box off;
+ax1.TickLength(1) = 0.02;
 ax1.FontSize = 26;
 ax1.TickDir = 'out';
 
 ax2 = subplot(2,3,[2,3]);
 hold on;
 mean_fsi_peth = mean(summary.stim_peth(opto_fsi,:));
-plot(summary.stim_tvec(1,:), mean_fsi_peth, 'cyan', 'LineWidth', 3);
+plot(summary.stim_tvec(1,:), mean_fsi_peth, 'black', 'LineWidth', 3);
 for i = 1:length(sel2)
-    h = plot(summary.stim_tvec(1,:), summary.stim_peth(sel2(i),:), 'magenta', 'LineWidth', 3);
+    h = plot(summary.stim_tvec(1,:), summary.stim_peth(sel2(i),:), cmap{i}, 'LineWidth', 3);
 %     h.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
 ylabel('Normalized Firing-rate')
 xlabel('Time from Onset (s)')
 title('Normalized PETH')
-legend({'Mean of opto-responsive FSIs', 'Opto-responsive MSN'})
+legend({'Mean of opto-responsive FSIs', 'Opto-responsive MSN #1', ...
+    'Opto-responsive MSN #2'})
 xticks([-0.02:0.01:0.02]);
 yticks([0 0.5 1]);
+xline(0, '--black');
 box off;
 ax2.FontSize = 26;
+ax2.TickLength(1) = 0.02;
 ax2.TickDir = 'out';
 
 pause(5);
 % Adjust axes to have similar sizes
 ax1.Position(2) = ax2.Position(2);
 ax1.Position(4) = ax2.Position(4);
+
+exportgraphics(fig, 'output\fig.eps', 'BackgroundColor', 'none', 'ContentType', 'vector')
+
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;

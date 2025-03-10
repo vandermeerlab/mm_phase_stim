@@ -1,15 +1,17 @@
-%% Script to generate various scatter summary plots
-% Assumes that *phase_response.mat already exist in each folder
-rng(2023); % Setting the seed for reproducibility
-top_dir = 'data\';
-mice = {'M016', 'M017', 'M018', 'M019', 'M020', ...
-    'M074', 'M075', 'M077', 'M078', 'M235', 'M265', ...
-    'M295', 'M320', 'M319', 'M321', 'M325'};
+%% Script to characterize opto_cells on the basis of firing rate changes and mean wave-form
+% Assumes that stim_phases.mat and *stim_response.mat already exist in each folder
+top_dir = 'data\'
+mice = {'M016', 'M017', 'M018', 'M019', 'M020', 'M074', 'M075', 'M077', 'M078', 'M235', 'M265', 'M295', 'M320', 'M319', 'M321', 'M325'};
 summary = [];
-[summary.labels, summary.stim_mode, summary.short_sw, ...
-    summary.long_sw, summary.depth, ...
-    summary.pre_stim, summary.trial_stim, summary.post_stim, ...
-    summary.long_stim, summary.ntrials] = deal([]);
+[summary.labels, summary.nostim_delta, summary.opto_delta, ...
+    summary.sham_delta, summary.poisson_delta, summary.nostim_delta_sd, summary.opto_delta_sd, ...
+    summary.sham_delta_sd, summary.poisson_delta_sd, ...
+    summary.p_val, summary.h, summary.p_val_t, summary.h_t, ...
+    summary.isopto, summary.depth, summary.waveforms, summary.mfr,  ...
+    summary.depth, summary.peth, summary.zpeth, summary.shuf_peth, ...
+    summary.shuf_zpeth, summary.norm_shuf_zpeth, summary.is_opto, ...
+    summary.tvec] = deal([]);
+
 for iM  = 1:length(mice)
     all_sess = dir(strcat(top_dir, mice{iM}));
     sid = find(arrayfun(@(x) contains(x.name, mice{iM}), all_sess));
@@ -20,119 +22,201 @@ for iM  = 1:length(mice)
     end
 end
 
-fbands = {[2 5], [6 10], [12 28], [30 55]};
-c_list = {'red', 'blue','magenta', 'cyan'};
+dStr_mask = summary.depth < 3.5;
+vStr_mask = summary.depth >= 3.5;
+ks_mask = summary.h == 1; % That the sham and opto difference in firing-rate is different
+og_opto_mask = summary.isopto == 1;
+pct_mask = summary.h_t == 1; 
 
-% Load the list of final opto cells and keep the results from only those
-load('data\FinalOptoCells.mat');
-keep = contains(summary.labels, dStr_opto) | contains(summary.labels, vStr_opto);
-fn = fieldnames(summary);
-for i = 1:numel(fn)
-    temp = summary.(fn{i});
-    summary.(fn{i}) = temp(keep,:);
+peak_to_trough = zeros(size(summary.depth));
+for i = 1:length(summary.waveforms)
+    norm_wf(i,:) = (summary.waveforms(i,:) - min(summary.waveforms(i,:)))/...
+        (max(summary.waveforms(i,:)) - min(summary.waveforms(i,:)));
+    % Reversing the waveform since input was inverted
+    norm_wf(i,:) = -1 * norm_wf(i,:);
+    [~, pidx] = max(norm_wf(i,:));
+    [~, tidx] = min(norm_wf(i,:));
+    peak_to_trough(i) = tidx - pidx;
 end
-clear fn temp
+%% Figure for showing Sham deltaFR vs Opto deltaFR
+% Plot vStr stuff
+fig = figure('WindowState','maximized');
 
-dStr_mask = (contains(summary.labels, dStr_opto) &  summary.depth < 3.5);
-vStr_mask = (contains(summary.labels, vStr_opto) &  summary.depth >= 3.5);
+% Plot dStr stuff
+ax = subplot(2,4,[1 5]);
+hold on
+sel = find(ks_mask);
+for i = 1:length(sel)
+    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'blue');
+end
 
-%%
-fig = figure('WindowState', 'maximized');
-
-% dStr stuff
-ax = subplot(2,4,1);
-imagesc([-20:1:20], 1:sum(dStr_mask), summary.pre_stim(dStr_mask,:));
-yticks([]);
-xticks([-20:10:20]);
-ylabel('dStr')
-xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Pre-stim')
-ax.Box = 'off';
+sel = find(~ks_mask);
+for i = 1:length(sel)
+    plot([1,2],[summary.sham_delta(sel(i)), summary.opto_delta(sel(i))], 'red');
+end
+xticks([1 2])
+yticks([0 160 320])
+xticklabels({'Sham stim', 'Opto stim'})
+ylabel('\Delta Firing rate (Hz)')
+xlim([0.85 2.15])
+ylim([-25 320])
+title('All striatal neurons');
+box off;
+ax.TickLength(1) = 0.03;
 ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
+ax.XAxis.FontSize = 30;
+ax.XLabel.FontSize = 25;
+ax.YAxis.FontSize = 30;
+ax.YLabel.FontSize = 25;
+xtickangle(0)
 
 ax = subplot(2,4,2);
-imagesc([-20:1:20], 1:sum(dStr_mask), summary.trial_stim(dStr_mask,:));
-yticks([]);
-xticks([-20:10:20]);
+hold on
+sel1 = find(ks_mask & summary.sham_delta < summary.opto_delta);
+sel2 = find(ks_mask & summary.sham_delta >= summary.opto_delta);
+for i = 1:length(sel1)
+    h = plot((0:1:31)/32, norm_wf(sel1(i),:), 'blue');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+for i = 1:length(sel2)
+    h = plot((0:1:31)/32, norm_wf(sel2(i),:), '--blue');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+plot((0:1:31)/32,mean(norm_wf(sel1,:)), 'black', 'LineWidth', 3);
 xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Trial-stim')
-ax.Box = 'off';
+ylabel('Normalized Amplitude')
+% legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
+%     mean(peak_to_trough(sel1))/32, std(peak_to_trough(sel1)/32))}, 'FontSize', 12)
+title('opto-responsive')
+xticks([0 0.5 1]);
+yticks([0 0.5 1]);
+box off;
+ax.TickLength(1) = 0.03;
 ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
-
-ax = subplot(2,4,3);
-imagesc([-20:1:20], 1:sum(dStr_mask), summary.post_stim(dStr_mask,:));
-yticks([]);
-xticks([-20:10:20]);
-xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Post-stim')
-ax.Box = 'off';
-ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
-
-ax = subplot(2,4,4);
-imagesc([-200:10:200], 1:sum(dStr_mask), summary.long_stim(dStr_mask,:));
-yticks([]);
-xticks([-200:100:200]);
-xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Long-stim')
-ax.Box = 'off';
-ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
-
-% vStr stuff
-ax = subplot(2,4,5);
-imagesc([-20:1:20], 1:sum(vStr_mask), summary.pre_stim(vStr_mask,:));
-yticks([]);
-xticks([-20:10:20]);
-ylabel('vStr')
-xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Pre-stim')
-ax.Box = 'off';
-ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
+ax.XAxis.FontSize = 30;
+ax.XLabel.FontSize = 25;
+ax.YAxis.FontSize = 30;
+ax.YLabel.FontSize = 25;
 
 ax = subplot(2,4,6);
-imagesc([-20:1:20], 1:sum(vStr_mask), summary.trial_stim(vStr_mask,:));
-yticks([]);
-xticks([-20:10:20]);
+hold on
+sel = find(dStr_mask & ~ks_mask);
+for i = 1:length(sel)
+    h = plot((0:1:31)/32, norm_wf(sel(i),:), 'red');
+    h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+end
+plot((0:1:31)/32,mean(norm_wf(sel,:)), 'black', 'LineWidth', 3);
 xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Trial-stim')
-ax.Box = 'off';
+ylabel('Normalized Amplitude')
+% legend({sprintf('Peak to trough %.2f +/- %.2f ms', ...
+%     mean(peak_to_trough(sel))/32, std(peak_to_trough(sel)/32))}, 'FontSize', 12)
+title('non-responsive')
+xticks([0 0.5 1]);
+yticks([0 0.5 1]);
+box off;
+ax.TickLength(1) = 0.03;
 ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
+ax.XAxis.FontSize = 30;
+ax.XLabel.FontSize = 25;
+ax.YAxis.FontSize = 30;
+ax.YLabel.FontSize = 25;
 
-ax = subplot(2,4,7);
-imagesc([-20:1:20], 1:sum(vStr_mask), summary.post_stim(vStr_mask,:));
-yticks([]);
-xticks([-20:10:20]);
-xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Post-stim')
-ax.Box = 'off';
+% Plot the population peths
+opto_keep = summary.is_opto == 1;
+opto_peth = summary.zpeth(opto_keep,:);
+
+% Norm opto_peth row_wise
+row_min = min(opto_peth, [], 2);
+row_max = max(opto_peth,[],2);
+% Create matrices for broadcasting
+min_matrix = repmat(row_min, 1, size(opto_peth, 2));
+max_matrix = repmat(row_max, 1, size(opto_peth, 2));
+% Normalize
+opto_peth = (opto_peth - min_matrix) ./ (max_matrix - min_matrix);
+
+% First smooth and then 
+
+opto_shuf_dist = mean(summary.norm_shuf_zpeth(:,:,opto_keep),3);
+opto_shuf_mean = mean(opto_shuf_dist,1);
+opto_shuf_sd = std(opto_shuf_dist,1);
+
+non_opto_peth = summary.zpeth(~opto_keep,:);
+non_opto_shuf_dist = nanmean(summary.norm_shuf_zpeth(:,:,~opto_keep),3);
+non_opto_shuf_mean = mean(non_opto_shuf_dist,1);
+non_opto_shuf_sd = std(non_opto_shuf_dist,1);
+
+% Parameters for gaussian kernel
+sigma = 0.05;  % Standard deviation in seconds
+timebase = 0.01;  % Your timebase in seconds
+window = 0.2;  % Width of kernel in seconds (e.g., 4*sigma)
+
+% Create gaussian kernel
+kernel_t = -window:timebase:window;  % Kernel time vector
+kernel = exp(-(kernel_t.^2)/(2*sigma^2));
+kernel = kernel/sum(kernel);  % Normalize to sum to 1
+
+ax = subplot(2,4,[3,4]);
+hold on
+plot(summary.tvec, mean(opto_peth, 1), 'Color', 'cyan', 'LineWidth', 2);
+plot(summary.tvec, mean(opto_shuf_mean + 2*opto_shuf_sd, 1), 'Color', 'black', 'LineWidth', 1);
+plot(summary.tvec, mean(opto_shuf_mean - 2*opto_shuf_sd, 1), 'Color', 'black', 'LineWidth', 1);
+fill([summary.tvec, fliplr(summary.tvec)], [mean(opto_shuf_mean + 2*opto_shuf_sd, 1), ...
+    fliplr(mean(opto_shuf_mean - 2*opto_shuf_sd, 1))], 'black', 'FaceAlpha', 0.1);
+
+xline(0, '--black')
+xlabel('Time from stim onset (s)')
+ylabel('Z-scored firing rate')
+title('FSIs')
+ylim([-2 8])
+yticks([-2 0 2 4 6 8])
+box off;
+ax.TickLength(1) = 0.03;
 ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
+ax.XAxis.FontSize = 30;
+ax.XLabel.FontSize = 25;
+ax.YAxis.FontSize = 30;
+ax.YLabel.FontSize = 25;
 
-ax = subplot(2,4,8);
-imagesc([-200:10:200], 1:sum(vStr_mask), summary.long_stim(vStr_mask,:));
-yticks([]);
-xticks([-200:100:200]);
-xlabel('Time (ms)')
-xline(0, '--red', 'LineWidth', 2)
-title('Long-stim')
-ax.Box = 'off';
+ax = subplot(2,4,[7,8]);
+hold on
+% plot(summary.tvec, conv(mean(non_opto_peth, 1),kernel,'same'), 'Color', 'magenta', 'LineWidth', 2);
+plot(summary.tvec, mean(non_opto_shuf_mean + 2*non_opto_shuf_sd, 1), 'Color', 'black', 'LineWidth', 1);
+plot(summary.tvec, mean(non_opto_shuf_mean - 2*non_opto_shuf_sd, 1), 'Color', 'black', 'LineWidth', 1);
+
+fill([summary.tvec, fliplr(summary.tvec)], [mean(non_opto_shuf_mean + 2*non_opto_shuf_sd, 1), ...
+    fliplr(mean(non_opto_shuf_mean - 2*non_opto_shuf_sd, 1))], 'black', 'FaceAlpha', 0.1);
+xline(0, '--black')
+xlabel('Time from stim onset (s)')
+ylabel('Z-scored firing rate')
+title('MSNs')
+ylim([-0.02 0.02])
+box off;
+ax.TickLength(1) = 0.03;
 ax.TickDir = 'out';
-ax.TickLength = [0.03 0.02];
+ax.XAxis.FontSize = 30;
+ax.XLabel.FontSize = 25;
+ax.YAxis.FontSize = 30;
+ax.YLabel.FontSize = 25;
 
+% fontsize(fig, 30, 'points');
 fontname(fig, 'Helvetica');
 fig.Renderer = 'painters';
+
+exportgraphics(fig, 'output\fig.eps', 'BackgroundColor', 'none', 'ContentType', 'vector')
+
+%% Use this to write list of Final Opto Cells
+dStr_opto_fsi = summary.labels(ks_mask & dStr_mask & summary.opto_delta > summary.sham_delta);
+vStr_opto_fsi = summary.labels(ks_mask & vStr_mask & summary.opto_delta > summary.sham_delta);
+
+dStr_opto_msn = summary.labels(ks_mask & dStr_mask & summary.opto_delta < summary.sham_delta);
+vStr_opto_msn = summary.labels(ks_mask & vStr_mask & summary.opto_delta < summary.sham_delta);
+%%
+dStr_others = summary.labels(dStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
+vStr_others = summary.labels(vStr_mask & ~(ks_mask & summary.opto_delta > summary.sham_delta));
+
+%%
+opto_p = [summary.labels(ks_mask),summary.h(ks_mask),summary.p_val(ks_mask), summary.sham_delta(ks_mask), summary.opto_delta(ks_mask)];
+other_p = [summary.labels(~ks_mask),summary.h(~ks_mask), summary.p_val(~ks_mask), summary.sham_delta(~ks_mask), summary.opto_delta(~ks_mask)];
 %%
 function s_out = doStuff(s_in)
     s_out = s_in;
@@ -140,160 +224,105 @@ function s_out = doStuff(s_in)
     if isempty(ExpKeys.goodCell)
         return
     end
-    evs = LoadEvents([]);
+%     fprintf('%s\n',pwd);
     cfg = [];
+%     cfg.fc = ExpKeys.goodCell;
     if ~strcmp(ExpKeys.experimenter, 'EC')
         cfg.min_cluster_quality = 3;
         cfg.getRatings = 1;
         cfg.uint = '64';
     end
-    cfg.fc = ExpKeys.goodCell;
-   
     S = LoadSpikes(cfg);
 
-    % Set Variables
-    max_delay = 0.01; % sec (window for the first response since stimulus)
-    max_long_delay = 0.4; % sec
-    short_win = 0.02; % sec
-    long_win = 0.2; % sec
-    short_dt = 0.001; % sec
-    long_dt = 0.01; % sec
-    fbands = {[2 5], [6 10], [30 55]};
-
-    if contains(ExpKeys.light_source, 'LASER')
-        start_delay = 0.0011;
-        stop_delay = 0.0012; %0.0022 is the spike width in the case of 1 msec laser pulse
-    else
-        start_delay = 0;
-        stop_delay = 0;
-    end
-
-    pre_stim_on = evs.t{strcmp(evs.label, ExpKeys.pre_trial_stim_on)} + start_delay;
-    if ~isempty(pre_stim_on) && ~isempty(ExpKeys.pre_stim_times)
-        pre_stim_on = pre_stim_on(pre_stim_on >= ExpKeys.pre_stim_times(1) & ...
-                                  pre_stim_on <= ExpKeys.pre_stim_times(2));
-    else
-        pre_stim_on = [];
-    end
-
-    stim_on = evs.t{strcmp(evs.label, ExpKeys.trial_stim_on)} + start_delay;
-    if ~isempty(stim_on) && ~isempty(ExpKeys.stim_times)
-        stim_on = stim_on(stim_on >= ExpKeys.stim_times(1) & ...
-                          stim_on <= ExpKeys.stim_times(2));
-    else
-        stim_on = [];
-    end
-
-    post_stim_on = evs.t{strcmp(evs.label, ExpKeys.post_trial_stim_on)} + start_delay;
-    if ~isempty(post_stim_on) && ~isempty(ExpKeys.post_stim_times)
-        post_stim_on = post_stim_on(post_stim_on >= ExpKeys.post_stim_times(1) & ...
-                                    post_stim_on <= ExpKeys.post_stim_times(2));
-    else
-        post_stim_on = [];
-    end
-
-    if sum(strcmp(evs.label, ExpKeys.long_stim_on)) ~= 0
-        long_stim_on = evs.t{strcmp(evs.label, ExpKeys.long_stim_on)} + start_delay;
-    else
-        long_stim_on = [];
-    end
-    if ~isempty(long_stim_on) && ~isempty(ExpKeys.long_stim_times)
-        long_stim_on = long_stim_on(long_stim_on >= ExpKeys.long_stim_times(1) & ...
-                long_stim_on <= ExpKeys.long_stim_times(2));
-        % Take only the first 25 long stim if special stim present
-        if strcmp(ExpKeys.hasSpecialStim, 'Yes')
-            long_stim_on = long_stim_on(1:25); 
-        end
-    end
-
-    for iC = 1:length(ExpKeys.goodCell)
-        fn_prefix = extractBefore(ExpKeys.goodCell{iC}, '.t');
-        this_cell = SelectTS([], S, iC);
-        goodTrials = ExpKeys.goodTrials(iC,:);
+    for iC = 1:length(S.t)
+        s_out.isopto = [s_out.isopto; contains(S.label{iC},ExpKeys.goodCell)];
+        fn_prefix = extractBefore(S.label{iC}, '.t');
         
-        % Bin the pre-stim stuff
-        this_on_events = pre_stim_on;
-        edges = -short_win:short_dt:short_win;
-        bin_spks = zeros(length(this_on_events), length(edges)-1);
-        for iT = 1:length(this_on_events)
-            temp = restrict(this_cell, iv(this_on_events(iT) - short_win, ...
-                this_on_events(iT) + short_win));
-            temp = temp.t{1} - this_on_events(iT); % center it around 0
-            [count, ~, ~] = histcounts(temp, edges);
-            bin_spks(iT,:) = count;
-        end
-        pre_bin_spks = mean(bin_spks);
-        pre_bin_spks = (pre_bin_spks - min(pre_bin_spks))/...
-            (max(pre_bin_spks) - min(pre_bin_spks));
-        
-        % Bin the trial stim stuff
-        this_on_events = stim_on(goodTrials(1):goodTrials(2));
-        edges = -short_win:short_dt:short_win;
-        bin_spks = zeros(length(this_on_events), length(edges)-1);
-        for iT = 1:length(this_on_events)
-            temp = restrict(this_cell, iv(this_on_events(iT) - short_win, ...
-                this_on_events(iT) + short_win));
-            temp = temp.t{1} - this_on_events(iT); % center it around 0
-            [count, ~, ~] = histcounts(temp, edges);
-            bin_spks(iT,:) = count;
-        end
-        trial_bin_spks = mean(bin_spks);
-        trial_bin_spks = (trial_bin_spks - min(trial_bin_spks))/...
-            (max(trial_bin_spks) - min(trial_bin_spks));
-
-        % Bin the post-stim stuff
-        if ~isempty(post_stim_on)
-            this_on_events = post_stim_on;
-            edges = -short_win:short_dt:short_win;
-            bin_spks = zeros(length(this_on_events), length(edges)-1);
-            for iT = 1:length(this_on_events)
-                temp = restrict(this_cell, iv(this_on_events(iT) - short_win, ...
-                    this_on_events(iT) + short_win));
-                temp = temp.t{1} - this_on_events(iT); % center it around 0
-                [count, ~, ~] = histcounts(temp, edges);
-                bin_spks(iT,:) = count;
-            end
-            post_bin_spks = mean(bin_spks);
-            post_bin_spks = (post_bin_spks - min(post_bin_spks))/...
-                (max(post_bin_spks) - min(post_bin_spks));
+        % Load 20 ms if not goodcell, else load normal
+        if contains(S.label{iC},ExpKeys.goodCell)
+            load(strcat(fn_prefix,'_stim_response.mat'));
         else
-            post_bin_spks = zeros(size(trial_bin_spks));
+            load(strcat(fn_prefix,'_stim_response20.mat'));
         end
 
-        % Bin the long-stim stuff
-        if ~isempty(long_stim_on)
-            this_on_events = long_stim_on;
-            edges = -long_win:long_dt:long_win;
-            bin_spks = zeros(length(this_on_events), length(edges)-1);
-            for iT = 1:length(this_on_events)
-                temp = restrict(this_cell, iv(this_on_events(iT) - long_win, ...
-                    this_on_events(iT) + long_win));
-                temp = temp.t{1} - this_on_events(iT); % center it around 0
-                [count, ~, ~] = histcounts(temp, edges);
-                bin_spks(iT,:) = count;
-            end
-            long_bin_spks = mean(bin_spks);
-            long_bin_spks = (long_bin_spks - min(long_bin_spks))/...
-                (max(long_bin_spks) - min(long_bin_spks));
+        s_out.mfr = [s_out.mfr; od.trial_stim.mfr];
+%         nostim_dfr = od.trial_nonstim.fr' - od.trial_nonstim.bfr';
+        % Comapare to a similar distribution as before
+        ridx = randi(1000000,1,10000);
+        sham_dfr = od.sham_stim.fr(ridx)' - od.sham_stim.bfr(ridx)';
+%         poisson_dfr = od.sham_stim.p_fr' - od.sham_stim.p_bfr';
+        opto_idx = find(strcmp(S.label{iC},ExpKeys.goodCell));
+
+        if isempty(opto_idx) % Non opto_cell
+            opto_dfr = od.trial_stim.fr(min(min(ExpKeys.goodTrials)):max(max(ExpKeys.goodTrials))) - ...
+                od.trial_stim.bfr(min(min(ExpKeys.goodTrials)):max(max(ExpKeys.goodTrials)));
         else
-            long_bin_spks = zeros(size(trial_bin_spks));
+            opto_dfr = od.trial_stim.fr(ExpKeys.goodTrials(opto_idx,1):ExpKeys.goodTrials(opto_idx,2)) - ...
+                od.trial_stim.bfr(ExpKeys.goodTrials(opto_idx,1):ExpKeys.goodTrials(opto_idx,2));
         end
+        [h,p,~] = kstest2(sham_dfr, opto_dfr, 'Alpha',0.01);
+        s_out.h = [s_out.h; h];
+        s_out.p_val = [s_out.p_val; p];
         
-        s_out.pre_stim = [s_out.pre_stim; pre_bin_spks];
-        s_out.trial_stim = [s_out.trial_stim; trial_bin_spks];
-        s_out.post_stim = [s_out.post_stim; post_bin_spks];
-        s_out.long_stim = [s_out.long_stim; long_bin_spks];
+        % Do a percentile-test based shuffle
+        nshuf = 1000;
+        sham_dfr_mean = zeros(1,nshuf);
+        sham_dfr_sd = zeros(1,nshuf);
+        for ishuf = 1:nshuf
+            ridx = randi(1000000,1,(max(max(ExpKeys.goodTrials)) - ...
+                min(min(ExpKeys.goodTrials)) + 1));
+            this_shuf_dfr = od.sham_stim.fr(ridx) - od.sham_stim.bfr(ridx);
+            sham_dfr_mean(ishuf) = mean(this_shuf_dfr);
+            sham_dfr_sd(ishuf) = std(this_shuf_dfr);
+        end        
+        h2= (mean(opto_dfr) > prctile(sham_dfr_mean, 99)) | ...
+            (mean(opto_dfr) < prctile(sham_dfr_mean, 1));
+        p2 = max(sum(mean(opto_dfr) > sham_dfr_mean), ...
+            sum(mean(opto_dfr) < sham_dfr_mean))/1000;
+        s_out.h_t = [s_out.h_t; h2];
+        s_out.p_val_t = [s_out.p_val_t; 1- p2];
+
+        
+%         % Plot x
+        s_out.opto_delta = [s_out.opto_delta; mean(opto_dfr)];
+        s_out.opto_delta_sd = [s_out.opto_delta_sd; std(opto_dfr)];
+%         s_out.nostim_delta = [s_out.nostim_delta; mean(nostim_dfr)];
+%         s_out.nostim_delta_sd = [s_out.nostim_delta_sd; std(nostim_dfr)];
+        
+        s_out.sham_delta = [s_out.sham_delta; mean(sham_dfr)];
+        s_out.sham_delta_sd = [s_out.sham_delta_sd; std(sham_dfr)];
+%         s_out.poisson_delta = [s_out.poisson_delta, mean(poisson_dfr)];
+%         s_out.poisson_delta_sd = [s_out.poisson_delta, std(poisson_dfr)];
 
         s_out.labels = [s_out.labels; string(fn_prefix)];
         s_out.depth = [s_out.depth; ExpKeys.probeDepth];
-        s_out.stim_mode = [s_out.stim_mode; string(ExpKeys.stim_mode)];
-        s_out.short_sw = [s_out.short_sw; ExpKeys.short_stim_pulse_width];
-        s_out.long_sw = [s_out.long_sw; ExpKeys.long_stim_pulse_width];
 
-        % Load the stim_responses
-        load('stim_phases.mat');
-        s_out.ntrials = [s_out.ntrials; goodTrials(2) + 1 - goodTrials(1)];  
-
+        fn_prefix = strrep(fn_prefix, '_', '-');
+        % Load the mean waveform
+        load(strcat(fn_prefix,'-wv.mat'));
+        [~,midx]  = max(max(mWV)); % Getting the max amplitude channel waveform
+        s_out.waveforms = [s_out.waveforms; mWV(:,midx)'];
     end
-end
+    % If all_peth.mat doesn't exist, skip
+    if ~isfile('all_pethsv2.mat')
+        return
+    end
 
+
+    load("all_pethsv2.mat");
+    s_out.peth = [s_out.peth; out.stim_peth];
+    s_out.zpeth = [s_out.zpeth; out.stim_zpeth];
+    s_out.shuf_peth = cat(3, s_out.shuf_peth,out.shuf_peth);
+    s_out.shuf_zpeth = cat(3, s_out.shuf_zpeth,out.shuf_zpeth);
+    % Norming trial-wise or row_wise
+    row_min = min(out.shuf_zpeth, [], 2);
+    row_max = max(out.shuf_zpeth,[],2);
+    % Create matrices for broadcasting
+    min_matrix = repmat(row_min, 1, size(out.shuf_zpeth, 2));
+    max_matrix = repmat(row_max, 1, size(out.shuf_zpeth, 2));
+    % Normalize
+    normalized_data = (out.shuf_zpeth - min_matrix) ./ (max_matrix - min_matrix);
+    s_out.norm_shuf_zpeth = cat(3,s_out.norm_shuf_zpeth, normalized_data);
+    s_out.is_opto = [s_out.is_opto; out.is_opto];
+    s_out.tvec = out.tvec;
+end
